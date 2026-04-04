@@ -4,25 +4,19 @@ using System.Collections;
 public class PlayerMovement : MonoBehaviour
 {
     public float moveSpeed = 5f;
-    private bool isMoving = false;
+    public bool isMoving = false;
 
-    private enum Orientation { Standing, FlatX, FlatZ }
-    private Orientation orientation = Orientation.Standing;
+    public enum Orientation { Standing, FlatX, FlatZ }
+    public Orientation orientation = Orientation.Standing;
 
     const float TILE_TOP = 0.1f;
-
-    // Half extents of block in each orientation
-    // Block is 1x2x1 (W x H x D)
-    // Standing:  half height = 1.0,  half width = 0.5
-    // FlatX:     half height = 0.5,  half length on X = 1.0
-    // FlatZ:     half height = 0.5,  half length on Z = 1.0
 
     void Start()
     {
         Vector3 pos = transform.position;
         pos.x = Mathf.Round(pos.x);
         pos.z = Mathf.Round(pos.z);
-        pos.y = TILE_TOP + 1.0f; // tile top + half height when standing
+        pos.y = TILE_TOP + 1.0f;
         transform.position = pos;
         transform.rotation = Quaternion.identity;
     }
@@ -45,18 +39,14 @@ public class PlayerMovement : MonoBehaviour
     {
         isMoving = true;
 
-        // Get the actual bottom center of the block in world space
         float halfHeight = GetHalfHeight();
         Vector3 bottomCenter = transform.position;
-        bottomCenter.y = transform.position.y - halfHeight; // actual bottom face
+        bottomCenter.y = transform.position.y - halfHeight;
 
-        // Pivot = bottom center + leading edge offset in movement direction
         float edgeOffset = GetLeadingEdge(dir);
         Vector3 pivot = bottomCenter + dir * edgeOffset;
-        // Pivot Y must stay exactly on tile top
         pivot.y = TILE_TOP;
 
-        // Rotation axis: tips block forward in movement direction
         Vector3 rotAxis = new Vector3(dir.z, 0f, -dir.x);
 
         float totalAngle = 0f;
@@ -79,8 +69,8 @@ public class PlayerMovement : MonoBehaviour
     {
         switch (orientation)
         {
-            case Orientation.Standing: return 1.0f; // half of 2
-            case Orientation.FlatX:    return 0.5f; // half of 1
+            case Orientation.Standing: return 1.0f;
+            case Orientation.FlatX:    return 0.5f;
             case Orientation.FlatZ:    return 0.5f;
             default: return 1.0f;
         }
@@ -119,7 +109,7 @@ public class PlayerMovement : MonoBehaviour
         Vector3 pos = transform.position;
         pos.x = Mathf.Round(pos.x * 2f) / 2f;
         pos.z = Mathf.Round(pos.z * 2f) / 2f;
-        pos.y = TILE_TOP + halfHeight; // tile top + new half height after orientation change
+        pos.y = TILE_TOP + halfHeight;
         transform.position = pos;
 
         Vector3 euler = transform.eulerAngles;
@@ -127,5 +117,12 @@ public class PlayerMovement : MonoBehaviour
         euler.y = Mathf.Round(euler.y / 90f) * 90f;
         euler.z = Mathf.Round(euler.z / 90f) * 90f;
         transform.eulerAngles = euler;
+    }
+
+    // Called by FallDetection to reset after respawn
+    public void ResetMovement()
+    {
+        isMoving = false;
+        StopAllCoroutines();
     }
 }
