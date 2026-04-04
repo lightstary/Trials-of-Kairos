@@ -3,107 +3,77 @@ using System.Collections;
 
 public class PlayerMovement : MonoBehaviour
 {
-    public Vector2Int gridPos; // Player's main tile
-    public float moveSpeed = 5f;
-
+    public float moveSpeed = 5f; // speed of tip rotation
     private bool isMoving = false;
 
-    public enum PlayerState { Upright, FlatX, FlatZ }
+    public enum PlayerState { Upright, Flat }
     public PlayerState state = PlayerState.Upright;
 
-    private Vector2Int lastMoveDir = Vector2Int.zero;
+    private Vector3 pivot; // rotation pivot point
+    private Vector3 rotationAxis; // axis to rotate around
 
     void Update()
     {
         if (isMoving) return;
 
-        Vector2Int input = GetInput();
-        if (input != Vector2Int.zero)
-        {
-            AttemptMove(input);
-        }
+        Vector3 input = Vector3.zero;
+        if (Input.GetKeyDown(KeyCode.UpArrow)) input = Vector3.forward;
+        else if (Input.GetKeyDown(KeyCode.DownArrow)) input = Vector3.back;
+        else if (Input.GetKeyDown(KeyCode.LeftArrow)) input = Vector3.left;
+        else if (Input.GetKeyDown(KeyCode.RightArrow)) input = Vector3.right;
+
+        if (input != Vector3.zero)
+            StartCoroutine(Roll(input));
     }
 
-    Vector2Int GetInput()
-    {
-        if (Input.GetKeyDown(KeyCode.UpArrow)) return Vector2Int.up;
-        if (Input.GetKeyDown(KeyCode.DownArrow)) return Vector2Int.down;
-        if (Input.GetKeyDown(KeyCode.LeftArrow)) return Vector2Int.left;
-        if (Input.GetKeyDown(KeyCode.RightArrow)) return Vector2Int.right;
-        return Vector2Int.zero;
-    }
-
-    void AttemptMove(Vector2Int dir)
-    {
-        // Determine next state based on current state and move direction
-        PlayerState nextState = state;
-        Vector3 offset = Vector3.zero;
-
-        if (state == PlayerState.Upright)
-        {
-            // Falling flat along move axis
-            if (dir.x != 0)
-            {
-                nextState = PlayerState.FlatX;
-                offset = new Vector3(dir.x * 0.5f, 0, 0);
-            }
-            else
-            {
-                nextState = PlayerState.FlatZ;
-                offset = new Vector3(0, 0, dir.y * 0.5f);
-            }
-        }
-        else if (state == PlayerState.FlatX)
-        {
-            if (dir.x != 0)
-            {
-                nextState = PlayerState.Upright;
-                offset = new Vector3(dir.x * 0.5f, 0.5f, 0);
-            }
-            else
-            {
-                nextState = PlayerState.FlatZ;
-                offset = new Vector3(0, -0.25f, dir.y * 0.5f);
-            }
-        }
-        else if (state == PlayerState.FlatZ)
-        {
-            if (dir.y != 0)
-            {
-                nextState = PlayerState.Upright;
-                offset = new Vector3(0, 0.5f, dir.y * 0.5f);
-            }
-            else
-            {
-                nextState = PlayerState.FlatX;
-                offset = new Vector3(dir.x * 0.5f, -0.25f, 0);
-            }
-        }
-
-        // Update main grid position
-        gridPos += dir;
-
-        state = nextState;
-
-        // Move smoothly to new position
-        StopAllCoroutines();
-        StartCoroutine(MoveTo(gridPos, offset));
-    }
-
-    IEnumerator MoveTo(Vector2Int targetGrid, Vector3 offset)
+    IEnumerator Roll(Vector3 dir)
     {
         isMoving = true;
 
-        Vector3 start = transform.position;
-        Vector3 end = new Vector3(targetGrid.x, 0, targetGrid.y) + offset;
+        // Determine rotation axis (cross with up vector)
+        rotationAxis = Vector3.Cross(Vector3.up, dir);
 
-        while (Vector3.Distance(transform.position, end) > 0.01f)
+        // Determine pivot point based on state
+        float halfHeight = 0.543f; // half of your rectangle height (1.086 / 2)
+        float halfWidth = 0.5f;     // half width of your rectangle (assuming 1)
+
+        if (state == PlayerState.Upright)
         {
-            transform.position = Vector3.MoveTowards(transform.position, end, moveSpeed * Time.deltaTime);
+            // Upright → Flat
+            pivot = transform.position + (dir * halfWidth) + Vector3.down * halfHeight;
+            state = PlayerState.Flat;
+        }
+        else // Flat → Upright
+        {
+            // Flat → Upright: use halfHeight as horizontal offset to pivot
+            pivot = transform.position + (dir * halfHeight) + Vector3.down * halfWidth;
+            state = PlayerState.Upright;
+        }
+
+        float angle = 0f;
+        while (angle < 90f)
+        {
+            float step = moveSpeed * Time.deltaTime * 90f; // degrees per frame
+            if (angle + step > 90f) step = 90f - angle;
+
+            transform.RotateAround(pivot, rotationAxis, step);
+
+            // Lock Y at tile top (0.6)
+            Vector3 pos = transform.position;
+            pos.y = 0.6f;
+            transform.position = pos;
+
+            angle += step;
             yield return null;
         }
 
-        transform.position = end;
+        // Snap X/Z to grid, Y stays at 0.6
+        transform.position = new Vector3(
+            Mathf.Round(transform.position.x),
+            0.6f,
+            Mathf.Round(transform.position.z)
+        );
+
         isMoving = false;
     }
 }
