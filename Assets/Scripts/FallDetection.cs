@@ -24,7 +24,6 @@ public class FallDetection : MonoBehaviour
 
     void CheckFall()
     {
-        // Don't check while rolling — wait until block has fully landed
         if (playerMovement.isMoving) return;
 
         bool supported = false;
@@ -39,9 +38,7 @@ public class FallDetection : MonoBehaviour
         }
 
         if (!supported)
-        {
             Respawn();
-        }
     }
 
     Vector3[] GetFootprintPoints()
@@ -90,5 +87,17 @@ public class FallDetection : MonoBehaviour
         transform.rotation = spawnRotation;
         playerMovement.orientation = PlayerMovement.Orientation.Standing;
         playerMovement.ResetMovement();
+    }
+
+    // Called by Checkpoint to update respawn point
+    public void UpdateSpawnPoint(Vector3 newPosition, Quaternion newRotation)
+    {
+        spawnPosition = new Vector3(
+            Mathf.Round(newPosition.x),
+            newPosition.y + 1.1f, // tile top + half block height
+            Mathf.Round(newPosition.z)
+        );
+        spawnRotation = Quaternion.identity; // always respawn upright
+        Debug.Log("Spawn point updated to: " + spawnPosition);
     }
 }
