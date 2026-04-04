@@ -24,7 +24,7 @@ public class Checkpoint : MonoBehaviour
         Vector3 rayOrigin = transform.position + Vector3.up * 0.2f;
         RaycastHit hit;
 
-        // Draw the ray in scene view so you can see it
+        
         Debug.DrawRay(rayOrigin, Vector3.up * 2f, Color.green);
 
         if (Physics.Raycast(rayOrigin, Vector3.up, out hit, 2f))
@@ -52,7 +52,7 @@ public class Checkpoint : MonoBehaviour
         }
         else
         {
-            // Uncomment this if you want to see when nothing is hit
+            //  when nothing is hit
             // Debug.Log("Ray hit nothing");
         }
     }

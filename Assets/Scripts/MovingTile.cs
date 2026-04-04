@@ -10,7 +10,7 @@ public class MovingTile : MonoBehaviour
     private Vector3 startPosition;
     private Vector3 endPosition;
     private float journeyProgress = 0f;
-    private float currentDirection = 1f; // 1 = toward end, -1 = toward start
+    private float currentDirection = 1f; 
 
     void Start()
     {
