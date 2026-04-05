@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73d31c8b6291e9b478fb02786a405561, type: 3}
+  m_Name: Level_BOSS
+  m_EditorClassIdentifier: 
+  levelIndex: 9
+  trialName: Chronos the Unyielding
+  chapterName: Chapter III
+  timeMechanic: All Stances
+  hazardDescription: Boss encounter
+  isUnlocked: 0
+  isCompleted: 0
+  isBossLevel: 1
+  completionStars: 0
+  bestTimeSeconds: 0
+  bossVariant: 0
+  bossName: Chronos the Unyielding
