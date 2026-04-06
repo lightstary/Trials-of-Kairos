@@ -2,37 +2,42 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Diagonal gradient shimmer that sweeps across the screen behind all UI.
-/// Cycles through time-state colors (gold, blue, purple, teal).
-/// Exposes static color/intensity so other systems (e.g. rotating squares)
-/// can tint themselves when the shimmer passes through.
-/// Runs on unscaled time so it works during menus (timeScale = 0).
+/// Diagonal gradient shimmer that sweeps very slowly across the menu.
+/// Exposes static color, intensity and normalized progress so other
+/// systems can react (e.g. rotating squares absorb the color as the
+/// band passes through them).
 /// </summary>
 public class MenuShimmerController : MonoBehaviour
 {
-    // ── Shimmer palette ──────────────────────────────────────────────────────
+    // ── Palette ──────────────────────────────────────────────────────────────
     private static readonly Color[] PALETTE = new Color[]
     {
-        new Color(0.961f, 0.784f, 0.259f, 1f),   // Gold   (Forward)
-        new Color(0.353f, 0.706f, 0.941f, 1f),   // Blue   (Frozen)
-        new Color(0.608f, 0.365f, 0.898f, 1f),   // Purple (Reverse)
-        new Color(0.200f, 0.780f, 0.860f, 1f),   // Teal   (cosmic accent)
+        new Color(0.961f, 0.784f, 0.259f, 1f),   // Gold
+        new Color(0.353f, 0.706f, 0.941f, 1f),   // Blue
+        new Color(0.608f, 0.365f, 0.898f, 1f),   // Purple
+        new Color(0.200f, 0.780f, 0.860f, 1f),   // Teal
     };
 
     // ── Timing ───────────────────────────────────────────────────────────────
-    private const float SWEEP_DURATION   = 6f;
-    private const float PAUSE_BETWEEN    = 5f;
-    private const float BAND_WIDTH_RATIO = 1.0f;
-    private const float MAX_ALPHA        = 0.045f;
+    private const float SWEEP_DURATION   = 10f;
+    private const float PAUSE_BETWEEN    = 7f;
+    private const float BAND_WIDTH_RATIO = 1.2f;
+    private const float MAX_ALPHA        = 0.025f;
     private const float SWEEP_ANGLE      = 25f;
 
-    // ── Static API for other systems ─────────────────────────────────────────
+    // ── Static API ───────────────────────────────────────────────────────────
 
-    /// <summary>The current shimmer color (valid when Intensity > 0).</summary>
+    /// <summary>Current shimmer color.</summary>
     public static Color CurrentColor { get; private set; } = Color.clear;
 
-    /// <summary>Current shimmer intensity 0-1 (0 = not sweeping).</summary>
+    /// <summary>Shimmer intensity 0-1 (0 = idle).</summary>
     public static float Intensity { get; private set; }
+
+    /// <summary>Normalized sweep progress 0-1 (0 = left edge, 1 = right edge).</summary>
+    public static float Progress { get; private set; }
+
+    /// <summary>True while the band is actively sweeping.</summary>
+    public static bool IsSweeping { get; private set; }
 
     // ── Internal ─────────────────────────────────────────────────────────────
     private RectTransform _bandRT;
@@ -42,7 +47,6 @@ public class MenuShimmerController : MonoBehaviour
 
     private float _timer;
     private int   _colorIndex;
-    private bool  _sweeping;
 
     void Start()
     {
@@ -54,22 +58,24 @@ public class MenuShimmerController : MonoBehaviour
         CreateBand();
         _colorIndex = Random.Range(0, PALETTE.Length);
         _timer      = 0f;
-        _sweeping   = false;
+        IsSweeping  = false;
         Intensity   = 0f;
+        Progress    = 0f;
     }
 
     void Update()
     {
         _timer += Time.unscaledDeltaTime;
 
-        if (!_sweeping)
+        if (!IsSweeping)
         {
             Intensity = 0f;
+            Progress  = 0f;
             if (_timer >= PAUSE_BETWEEN)
             {
-                _timer    = 0f;
-                _sweeping = true;
-                _colorIndex = (_colorIndex + 1) % PALETTE.Length;
+                _timer     = 0f;
+                IsSweeping = true;
+                _colorIndex  = (_colorIndex + 1) % PALETTE.Length;
                 CurrentColor = PALETTE[_colorIndex];
                 ApplyColor(CurrentColor);
             }
@@ -81,35 +87,40 @@ public class MenuShimmerController : MonoBehaviour
         }
 
         float progress = Mathf.Clamp01(_timer / SWEEP_DURATION);
+        Progress = progress;
+
         if (progress >= 1f)
         {
-            _timer    = 0f;
-            _sweeping = false;
-            Intensity = 0f;
+            _timer     = 0f;
+            IsSweeping = false;
+            Intensity  = 0f;
+            Progress   = 0f;
             ApplyAlpha(0f);
             return;
         }
 
-        // Position: sweep across the diagonal
+        // Position
         float canvasW  = _canvasRT.rect.width;
         float canvasH  = _canvasRT.rect.height;
         float diagonal = Mathf.Sqrt(canvasW * canvasW + canvasH * canvasH);
-        float travel   = diagonal * 2.0f;
+        float travel   = diagonal * 2.2f;
         float posX     = Mathf.Lerp(-travel * 0.5f, travel * 0.5f, progress);
-
         _bandRT.anchoredPosition = new Vector2(posX, 0f);
 
-        // Alpha: very smooth sine bell curve
+        // Alpha: smooth sine with smoothstep for organic swell
         float bell  = Mathf.Sin(progress * Mathf.PI);
-        float alpha = bell * bell * MAX_ALPHA;
+        bell = bell * bell * (3f - 2f * bell); // smoothstep the bell curve
+        float alpha = bell * MAX_ALPHA;
         ApplyAlpha(alpha);
-        Intensity = bell * bell;
+        Intensity = bell;
     }
 
     void OnDestroy()
     {
         if (_gradientTex != null) Destroy(_gradientTex);
-        Intensity = 0f;
+        Intensity  = 0f;
+        IsSweeping = false;
+        Progress   = 0f;
     }
 
     private void CreateBand()
@@ -141,8 +152,8 @@ public class MenuShimmerController : MonoBehaviour
     }
 
     /// <summary>
-    /// Creates a wide gradient texture using a steep Gaussian that reaches
-    /// true zero at the edges, eliminating any visible hard lines.
+    /// Very wide, soft gradient. Gaussian multiplied by smoothstep squared
+    /// to ensure true zero at edges with no visible seams.
     /// </summary>
     private Texture2D CreateGradientTexture()
     {
@@ -156,13 +167,11 @@ public class MenuShimmerController : MonoBehaviour
         for (int x = 0; x < width; x++)
         {
             float t = x / (float)(width - 1);
-            float d = (t - 0.5f) * 2f; // -1 to 1
-            // Steep Gaussian: fully transparent at edges, smooth peak at center
-            float bell = Mathf.Exp(-6f * d * d);
-            // Extra smoothstep at the edges to guarantee zero
+            float d = (t - 0.5f) * 2f;
+            float bell = Mathf.Exp(-4f * d * d);
             float edge = Mathf.SmoothStep(0f, 1f, 1f - Mathf.Abs(d));
-            float alpha = bell * edge;
-            tex.SetPixel(x, 0, new Color(1f, 1f, 1f, alpha));
+            float a    = bell * edge * edge;
+            tex.SetPixel(x, 0, new Color(1f, 1f, 1f, a));
         }
         tex.Apply();
         return tex;
@@ -171,8 +180,7 @@ public class MenuShimmerController : MonoBehaviour
     private void ApplyColor(Color c)
     {
         if (_bandImage == null) return;
-        float a = _bandImage.color.a;
-        _bandImage.color = new Color(c.r, c.g, c.b, a);
+        _bandImage.color = new Color(c.r, c.g, c.b, _bandImage.color.a);
     }
 
     private void ApplyAlpha(float a)

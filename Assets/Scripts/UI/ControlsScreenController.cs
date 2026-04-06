@@ -181,12 +181,8 @@ public class ControlsScreenController : MonoBehaviour
         _scrollRect.inertia = true;
         _scrollRect.decelerationRate = 0.12f;
 
-        Image scrollBg = scrollGO.AddComponent<Image>();
-        scrollBg.color = Color.clear;
-        scrollBg.raycastTarget = true;
-
-        // Mask
-        scrollGO.AddComponent<Mask>().showMaskGraphic = false;
+        // RectMask2D clips without needing an Image alpha
+        scrollGO.AddComponent<RectMask2D>();
 
         // Viewport
         GameObject viewportGO = new GameObject("Viewport");

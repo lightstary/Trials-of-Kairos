@@ -3,6 +3,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 /// <summary>
 /// In-scene main menu with rotating squares, shimmer tinting, crossfade transitions,
@@ -38,30 +41,30 @@ public class MainMenuController : MonoBehaviour
 
     private const float TITLE_SPACE_START    = 60f;
     private const float TITLE_SPACE_END      = 20f;
-    private const float LARGE_SQ_SPEED       = 6.5f;
-    private const float SMALL_SQ_SPEED       = 11f;
-    private const float LARGE_SQ_SIZE        = 550f;
-    private const float SMALL_SQ_SIZE        = 360f;
     private const float BREATH_ALPHA_MIN     = 0.72f;
     private const float BREATH_ALPHA_MAX     = 1.0f;
     private const float BREATH_SPEED         = 2.1f;
     private const float BREATH_SPACING_RANGE = 3f;
-    private const float SQ_BREATH_SPEED      = 0.7f;
-    private const float SQ_SCALE_RANGE       = 0.03f;
-    private const float SQ_ALPHA_MIN         = 0.015f;
-    private const float SQ_ALPHA_MAX_LARGE   = 0.04f;
-    private const float SQ_ALPHA_MAX_SMALL   = 0.06f;
-    private const float SQ_TINT_LERP_SPEED   = 2.0f;
     private const float CROSSFADE_DURATION   = 0.35f;
+
+    private const float LARGE_SQ_SPEED     = 6.5f;
+    private const float SMALL_SQ_SPEED     = 11f;
+    private const float LARGE_SQ_SIZE      = 550f;
+    private const float SMALL_SQ_SIZE      = 360f;
+    private const float SQ_BREATH_SPEED    = 0.7f;
+    private const float SQ_SCALE_RANGE     = 0.03f;
+    private const float SQ_ALPHA_MIN       = 0.015f;
+    private const float SQ_ALPHA_MAX_LARGE = 0.04f;
+    private const float SQ_ALPHA_MAX_SMALL = 0.06f;
 
     private static readonly Color SQ_DEFAULT_COLOR = new Color(1f, 0.843f, 0f);
     private static readonly Color MENU_BG_COLOR    = new Color(0.02f, 0.025f, 0.05f, 1f);
 
     private RectTransform _largeSqRT, _smallSqRT;
     private Image _largeSqImg, _smallSqImg;
-    private bool _entranceDone, _menuContentHidden, _transitioning;
     private Color _currentSquareHue = SQ_DEFAULT_COLOR;
     private Color _targetSquareHue  = SQ_DEFAULT_COLOR;
+    private bool _entranceDone, _menuContentHidden, _transitioning;
     private GameObject _titleGroup, _buttonPanel, _sharedDustLayer, _shimmerLayer, _menuBgPanel;
     private CanvasGroup _menuContentGroup, _controlsCG, _trialSelectCG;
 
@@ -131,6 +134,7 @@ public class MainMenuController : MonoBehaviour
     {
         float dt = Time.unscaledDeltaTime;
         float t  = Time.unscaledTime;
+
         if (_largeSqRT != null) _largeSqRT.Rotate(0f, 0f, -LARGE_SQ_SPEED * dt);
         if (_smallSqRT != null) _smallSqRT.Rotate(0f, 0f,  SMALL_SQ_SPEED * dt);
         AnimateSquareBreathing(t, dt);
@@ -139,49 +143,42 @@ public class MainMenuController : MonoBehaviour
         {
             if (titleLabel != null)
             {
-                float breath = (Mathf.Sin(t * BREATH_SPEED) + 1f) * 0.5f;
+                float wave = Mathf.Sin(t * BREATH_SPEED) * 0.5f
+                           + Mathf.Sin(t * BREATH_SPEED * 0.618f + 1.1f) * 0.3f
+                           + Mathf.Sin(t * BREATH_SPEED * 1.47f + 2.6f) * 0.2f;
+                float breath = (wave + 1f) * 0.5f;
+                breath = breath * breath * (3f - 2f * breath);
                 titleLabel.alpha = Mathf.Lerp(BREATH_ALPHA_MIN, BREATH_ALPHA_MAX, breath);
-                titleLabel.characterSpacing = TITLE_SPACE_END + Mathf.Sin(t * 1.3f) * BREATH_SPACING_RANGE;
+                float spaceWave = Mathf.Sin(t * 1.3f) * 0.6f + Mathf.Sin(t * 0.7f + 1.4f) * 0.4f;
+                titleLabel.characterSpacing = TITLE_SPACE_END + spaceWave * BREATH_SPACING_RANGE;
             }
             if (subtitleLabel != null)
             {
-                float sb = (Mathf.Sin(t * 1.6f + 1.2f) + 1f) * 0.5f;
+                float wave = Mathf.Sin(t * 1.6f + 1.2f) * 0.5f
+                           + Mathf.Sin(t * 0.9f + 3.1f) * 0.3f
+                           + Mathf.Sin(t * 2.3f + 0.5f) * 0.2f;
+                float sb = (wave + 1f) * 0.5f;
+                sb = sb * sb * (3f - 2f * sb);
                 subtitleLabel.alpha = Mathf.Lerp(0.55f, 0.85f, sb);
             }
+
+            // Ensure a button is always selected for controller navigation
+            if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject == null)
+                SelectFirstButton();
         }
 
         if (menuPanel != null && menuPanel.activeSelf && !_transitioning)
         {
-            if (Input.GetKeyDown(KeyCode.JoystickButton1) || Input.GetKeyDown(KeyCode.Escape))
+            bool backPressed = Input.GetKeyDown(KeyCode.JoystickButton1) || Input.GetKeyDown(KeyCode.Escape);
+#if ENABLE_INPUT_SYSTEM
+            if (Gamepad.current != null)
+                backPressed = backPressed || Gamepad.current.buttonEast.wasPressedThisFrame;
+#endif
+            if (backPressed)
             {
                 if (controlsScreen    != null && controlsScreen.activeSelf)    { CloseControls();    return; }
                 if (trialSelectScreen != null && trialSelectScreen.activeSelf) { CloseTrialSelect(); return; }
             }
-        }
-    }
-
-    private void AnimateSquareBreathing(float time, float dt)
-    {
-        // When shimmer sweeps, adopt its color permanently
-        if (MenuShimmerController.Intensity > 0.05f)
-            _targetSquareHue = MenuShimmerController.CurrentColor;
-
-        // Smoothly lerp toward the target color (never fades back to default)
-        _currentSquareHue = Color.Lerp(_currentSquareHue, _targetSquareHue, SQ_TINT_LERP_SPEED * dt);
-
-        if (_largeSqImg != null)
-        {
-            float w = (Mathf.Sin(time * SQ_BREATH_SPEED) + 1f) * 0.5f;
-            _largeSqImg.color = new Color(_currentSquareHue.r, _currentSquareHue.g, _currentSquareHue.b,
-                Mathf.Lerp(SQ_ALPHA_MIN, SQ_ALPHA_MAX_LARGE, w));
-            _largeSqRT.localScale = Vector3.one * (1f + Mathf.Sin(time * SQ_BREATH_SPEED * 0.5f) * SQ_SCALE_RANGE);
-        }
-        if (_smallSqImg != null)
-        {
-            float w = (Mathf.Sin(time * SQ_BREATH_SPEED * 1.3f + 1.5f) + 1f) * 0.5f;
-            _smallSqImg.color = new Color(_currentSquareHue.r, _currentSquareHue.g, _currentSquareHue.b,
-                Mathf.Lerp(SQ_ALPHA_MIN, SQ_ALPHA_MAX_SMALL, w));
-            _smallSqRT.localScale = Vector3.one * (1f + Mathf.Sin(time * SQ_BREATH_SPEED * 0.7f + 0.8f) * SQ_SCALE_RANGE);
         }
     }
 
@@ -249,8 +246,22 @@ public class MainMenuController : MonoBehaviour
     private void DiscoverSharedLayers()
     {
         Canvas canvas = GetComponentInParent<Canvas>(); if (canvas == null) return;
-        Transform dl = canvas.transform.Find("DustLayer"); if (dl != null) _sharedDustLayer = dl.gameObject;
-        Transform sl = canvas.transform.Find("ShimmerLayer"); if (sl != null) _shimmerLayer = sl.gameObject;
+
+        // DustLayer lives inside MainMenu; reparent it to canvas root so it stays visible on sub-screens
+        if (menuPanel != null)
+        {
+            Transform dl = menuPanel.transform.Find("DustLayer");
+            if (dl != null)
+            {
+                dl.SetParent(canvas.transform, false);
+                dl.SetSiblingIndex(1); // after MenuBackground
+                _sharedDustLayer = dl.gameObject;
+            }
+        }
+
+        // ShimmerLayer is created later by EnsureShimmerLayer if needed
+        Transform sl = canvas.transform.Find("ShimmerLayer");
+        if (sl != null) _shimmerLayer = sl.gameObject;
     }
 
     private void EnsureCanvasGroups()
@@ -356,6 +367,9 @@ public class MainMenuController : MonoBehaviour
     private IEnumerator CrossfadeToScreen(GameObject screen, CanvasGroup screenCG)
     {
         if (screen == null) yield break; _transitioning = true;
+        // Hide squares on sub-screens (shimmer stays visible)
+        if (_largeSqRT != null) _largeSqRT.gameObject.SetActive(false);
+        if (_smallSqRT != null) _smallSqRT.gameObject.SetActive(false);
         screen.SetActive(true); if (screenCG != null) screenCG.alpha = 0f;
         float elapsed = 0f;
         while (elapsed < CROSSFADE_DURATION)
@@ -374,7 +388,11 @@ public class MainMenuController : MonoBehaviour
     private IEnumerator CrossfadeFromScreen(GameObject screen, CanvasGroup screenCG)
     {
         if (screen == null) yield break; _transitioning = true;
-        ShowMenuContent(); if (_menuContentGroup != null) _menuContentGroup.alpha = 0f;
+        ShowMenuContent();
+        // Restore squares when returning to main menu
+        if (_largeSqRT != null) _largeSqRT.gameObject.SetActive(true);
+        if (_smallSqRT != null) _smallSqRT.gameObject.SetActive(true);
+        if (_menuContentGroup != null) _menuContentGroup.alpha = 0f;
         float elapsed = 0f;
         while (elapsed < CROSSFADE_DURATION)
         {
@@ -389,22 +407,74 @@ public class MainMenuController : MonoBehaviour
         _transitioning = false; SelectFirstButton();
     }
 
+    // ── Rotating squares ────────────────────────────────────────────────────
+
+    private void AnimateSquareBreathing(float time, float dt)
+    {
+        // Absorb shimmer color as the band passes through center
+        if (MenuShimmerController.IsSweeping)
+        {
+            float p = MenuShimmerController.Progress;
+            float absorb = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.30f, 0.55f, p));
+            if (absorb > 0.01f)
+                _targetSquareHue = Color.Lerp(_currentSquareHue, MenuShimmerController.CurrentColor, absorb);
+        }
+
+        _currentSquareHue = Color.Lerp(_currentSquareHue, _targetSquareHue, 1.2f * dt);
+
+        // Layered sine waves for organic, flowing breathing
+        if (_largeSqImg != null)
+        {
+            float wave = Mathf.Sin(time * SQ_BREATH_SPEED) * 0.5f
+                       + Mathf.Sin(time * SQ_BREATH_SPEED * 1.618f + 0.9f) * 0.3f
+                       + Mathf.Sin(time * SQ_BREATH_SPEED * 0.41f + 2.1f) * 0.2f;
+            float w = (wave + 1f) * 0.5f;
+            w = w * w * (3f - 2f * w); // smoothstep for softer peaks
+            _largeSqImg.color = new Color(_currentSquareHue.r, _currentSquareHue.g, _currentSquareHue.b,
+                Mathf.Lerp(SQ_ALPHA_MIN, SQ_ALPHA_MAX_LARGE, w));
+            float scaleWave = Mathf.Sin(time * SQ_BREATH_SPEED * 0.37f) * 0.6f
+                            + Mathf.Sin(time * SQ_BREATH_SPEED * 0.71f + 1.3f) * 0.4f;
+            _largeSqRT.localScale = Vector3.one * (1f + scaleWave * SQ_SCALE_RANGE);
+        }
+        if (_smallSqImg != null)
+        {
+            float wave = Mathf.Sin(time * SQ_BREATH_SPEED * 1.3f + 1.5f) * 0.5f
+                       + Mathf.Sin(time * SQ_BREATH_SPEED * 0.87f + 3.2f) * 0.3f
+                       + Mathf.Sin(time * SQ_BREATH_SPEED * 2.1f + 0.4f) * 0.2f;
+            float w = (wave + 1f) * 0.5f;
+            w = w * w * (3f - 2f * w);
+            _smallSqImg.color = new Color(_currentSquareHue.r, _currentSquareHue.g, _currentSquareHue.b,
+                Mathf.Lerp(SQ_ALPHA_MIN, SQ_ALPHA_MAX_SMALL, w));
+            float scaleWave = Mathf.Sin(time * SQ_BREATH_SPEED * 0.53f + 0.8f) * 0.6f
+                            + Mathf.Sin(time * SQ_BREATH_SPEED * 0.91f + 2.7f) * 0.4f;
+            _smallSqRT.localScale = Vector3.one * (1f + scaleWave * SQ_SCALE_RANGE);
+        }
+    }
+
     private void CreateRotatingSquares()
     {
         if (menuPanel == null) return;
         _largeSqRT = MkSq("CCW_Square", menuPanel.transform, LARGE_SQ_SIZE, new Color(SQ_DEFAULT_COLOR.r, SQ_DEFAULT_COLOR.g, SQ_DEFAULT_COLOR.b, 0.03f));
-        _largeSqRT.SetAsFirstSibling(); _largeSqImg = _largeSqRT.GetComponent<Image>();
+        _largeSqRT.SetAsFirstSibling();
+        _largeSqImg = _largeSqRT.GetComponent<Image>();
         _smallSqRT = MkSq("CW_Square", menuPanel.transform, SMALL_SQ_SIZE, new Color(SQ_DEFAULT_COLOR.r, SQ_DEFAULT_COLOR.g, SQ_DEFAULT_COLOR.b, 0.04f));
-        _smallSqRT.SetSiblingIndex(1); _smallSqImg = _smallSqRT.GetComponent<Image>();
+        _smallSqRT.SetSiblingIndex(1);
+        _smallSqImg = _smallSqRT.GetComponent<Image>();
     }
 
     private static RectTransform MkSq(string n, Transform p, float sz, Color c)
     {
-        var go = new GameObject(n); go.transform.SetParent(p, false);
-        var img = go.AddComponent<Image>(); img.color = c; img.raycastTarget = false;
+        var go = new GameObject(n);
+        go.transform.SetParent(p, false);
+        var img = go.AddComponent<Image>();
+        img.color = c;
+        img.raycastTarget = false;
         var rt = go.GetComponent<RectTransform>();
-        rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f); rt.pivot = new Vector2(0.5f, 0.5f);
-        rt.sizeDelta = new Vector2(sz, sz); rt.anchoredPosition = Vector2.zero; return rt;
+        rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.sizeDelta = new Vector2(sz, sz);
+        rt.anchoredPosition = Vector2.zero;
+        return rt;
     }
 
     private static float EaseOut(float t) => 1f - Mathf.Pow(1f - t, 3f);

@@ -3,6 +3,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 /// <summary>
 /// Pause menu with Resume, Restart Trial, Controls, Trial Selection, Return to Hub.
@@ -77,7 +80,16 @@ public class PauseMenuController : MonoBehaviour
     {
         if (_inputCooldown > 0f) _inputCooldown -= Time.unscaledDeltaTime;
 
-        if (Input.GetKeyDown(KeyCode.JoystickButton7))
+        bool startPressed = Input.GetKeyDown(KeyCode.JoystickButton7)
+                         || Input.GetKeyDown(KeyCode.JoystickButton9)
+                         || Input.GetKeyDown(KeyCode.Escape);
+
+#if ENABLE_INPUT_SYSTEM
+        if (Gamepad.current != null)
+            startPressed = startPressed || Gamepad.current.startButton.wasPressedThisFrame;
+#endif
+
+        if (startPressed)
         {
             if (_isPaused)
             {

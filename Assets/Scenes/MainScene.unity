@@ -11599,10 +11599,10 @@ RectTransform:
   - {fileID: 670585851}
   m_Father: {fileID: 1349801828}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 140, y: -191}
-  m_SizeDelta: {x: 280, y: 52}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 52}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &940813782
 CanvasGroup:
@@ -11640,7 +11640,7 @@ MonoBehaviour:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
     m_HighlightedColor: {r: 0.961, g: 0.784, b: 0.259, a: 1}
     m_PressedColor: {r: 0.7, g: 0.55, b: 0.1, a: 1}
-    m_SelectedColor: {r: 1, g: 1, b: 1, a: 1}
+    m_SelectedColor: {r: 0.961, g: 0.784, b: 0.259, a: 1}
     m_DisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 0.4}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
@@ -12058,7 +12058,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.024, g: 0.031, b: 0.059, a: 0.97}
+  m_Color: {r: 0.024, g: 0.031, b: 0.059, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -12132,10 +12132,10 @@ RectTransform:
   - {fileID: 1962228450}
   m_Father: {fileID: 1349801828}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 140, y: -129}
-  m_SizeDelta: {x: 280, y: 52}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 52}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &1069406061
 CanvasGroup:
@@ -12173,7 +12173,7 @@ MonoBehaviour:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
     m_HighlightedColor: {r: 0.961, g: 0.784, b: 0.259, a: 1}
     m_PressedColor: {r: 0.7, g: 0.55, b: 0.1, a: 1}
-    m_SelectedColor: {r: 1, g: 1, b: 1, a: 1}
+    m_SelectedColor: {r: 0.961, g: 0.784, b: 0.259, a: 1}
     m_DisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 0.4}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
@@ -12871,6 +12871,7 @@ GameObject:
   - component: {fileID: 1114732513}
   - component: {fileID: 1114732512}
   - component: {fileID: 1114732511}
+  - component: {fileID: 1114732514}
   m_Layer: 0
   m_Name: EventSystem
   m_TagString: Untagged
@@ -12910,7 +12911,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 76c392e42b5098c458856cdf6ecaaaa1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_FirstSelected: {fileID: 0}
+  m_FirstSelected: {fileID: 1943002611}
   m_sendNavigationEvents: 1
   m_DragThreshold: 10
 --- !u!4 &1114732513
@@ -12928,6 +12929,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1114732514
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1114732510}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a105c0ee12890247b377b41f3902e14, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1115049727
 GameObject:
   m_ObjectHideFlags: 0
@@ -21481,7 +21494,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.024, g: 0.031, b: 0.059, a: 0.97}
+  m_Color: {r: 0.024, g: 0.031, b: 0.059, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -21748,10 +21761,10 @@ RectTransform:
   - {fileID: 448447006}
   m_Father: {fileID: 1349801828}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 140, y: -253}
-  m_SizeDelta: {x: 280, y: 52}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 52}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &1837420774
 CanvasGroup:
@@ -21789,7 +21802,7 @@ MonoBehaviour:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
     m_HighlightedColor: {r: 0.961, g: 0.784, b: 0.259, a: 1}
     m_PressedColor: {r: 0.7, g: 0.55, b: 0.1, a: 1}
-    m_SelectedColor: {r: 1, g: 1, b: 1, a: 1}
+    m_SelectedColor: {r: 0.961, g: 0.784, b: 0.259, a: 1}
     m_DisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 0.4}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
@@ -22925,10 +22938,10 @@ RectTransform:
   - {fileID: 580403269}
   m_Father: {fileID: 1349801828}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 140, y: -67}
-  m_SizeDelta: {x: 280, y: 52}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 52}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &1943002613
 CanvasGroup:
@@ -22966,7 +22979,7 @@ MonoBehaviour:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
     m_HighlightedColor: {r: 0.961, g: 0.784, b: 0.259, a: 1}
     m_PressedColor: {r: 0.7, g: 0.55, b: 0.1, a: 1}
-    m_SelectedColor: {r: 1, g: 1, b: 1, a: 1}
+    m_SelectedColor: {r: 0.961, g: 0.784, b: 0.259, a: 1}
     m_DisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 0.4}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1

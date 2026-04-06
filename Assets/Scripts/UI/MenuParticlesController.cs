@@ -51,12 +51,23 @@ public class MenuParticlesController : MonoBehaviour
         Canvas canvas = GetComponentInParent<Canvas>();
         _canvasRect   = canvas != null ? canvas.GetComponent<RectTransform>() : GetComponent<RectTransform>();
 
+        float halfW = _canvasRect.rect.width  * 0.5f;
+        float halfH = _canvasRect.rect.height * 0.5f;
+
         _motes = new Mote[MOTE_COUNT];
         for (int i = 0; i < MOTE_COUNT; i++)
         {
             _motes[i] = CreateMote(i);
-            // Stagger initial life so the screen fills immediately
-            _motes[i].life = Random.Range(0f, _motes[i].maxLife);
+            // Stagger life and simulate drift from the bottom edge
+            float staggerLife = Random.Range(0f, _motes[i].maxLife);
+            _motes[i].life = staggerLife;
+            float startX = Random.Range(-halfW, halfW);
+            float startY = -halfH - 12f;
+            _motes[i].pos = new Vector2(
+                startX + _motes[i].vel.x * staggerLife,
+                startY + _motes[i].vel.y * staggerLife
+            );
+            _motes[i].rect.anchoredPosition = _motes[i].pos;
         }
     }
 
