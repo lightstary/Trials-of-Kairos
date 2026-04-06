@@ -51,9 +51,7 @@ public class MainMenuController : MonoBehaviour
     private const float SQ_ALPHA_MIN         = 0.015f;
     private const float SQ_ALPHA_MAX_LARGE   = 0.04f;
     private const float SQ_ALPHA_MAX_SMALL   = 0.06f;
-    private const float SQ_TINT_LERP_IN      = 1.5f;
-    private const float SQ_TINT_LERP_OUT     = 0.6f;
-    private const float SQ_TINT_MAX          = 0.7f;
+    private const float SQ_TINT_LERP_SPEED   = 2.0f;
     private const float CROSSFADE_DURATION   = 0.35f;
 
     private static readonly Color SQ_DEFAULT_COLOR = new Color(1f, 0.843f, 0f);
@@ -63,7 +61,7 @@ public class MainMenuController : MonoBehaviour
     private Image _largeSqImg, _smallSqImg;
     private bool _entranceDone, _menuContentHidden, _transitioning;
     private Color _currentSquareHue = SQ_DEFAULT_COLOR;
-    private float _shimmerBlend;
+    private Color _targetSquareHue  = SQ_DEFAULT_COLOR;
     private GameObject _titleGroup, _buttonPanel, _sharedDustLayer, _shimmerLayer, _menuBgPanel;
     private CanvasGroup _menuContentGroup, _controlsCG, _trialSelectCG;
 
@@ -164,17 +162,12 @@ public class MainMenuController : MonoBehaviour
 
     private void AnimateSquareBreathing(float time, float dt)
     {
-        if (MenuShimmerController.Intensity > 0.01f)
-        {
-            float target = Mathf.Min(MenuShimmerController.Intensity, SQ_TINT_MAX);
-            _shimmerBlend = Mathf.MoveTowards(_shimmerBlend, target, SQ_TINT_LERP_IN * dt);
-            _currentSquareHue = Color.Lerp(SQ_DEFAULT_COLOR, MenuShimmerController.CurrentColor, _shimmerBlend);
-        }
-        else
-        {
-            _shimmerBlend = Mathf.MoveTowards(_shimmerBlend, 0f, SQ_TINT_LERP_OUT * dt);
-            if (_shimmerBlend < 0.01f) _currentSquareHue = SQ_DEFAULT_COLOR;
-        }
+        // When shimmer sweeps, adopt its color permanently
+        if (MenuShimmerController.Intensity > 0.05f)
+            _targetSquareHue = MenuShimmerController.CurrentColor;
+
+        // Smoothly lerp toward the target color (never fades back to default)
+        _currentSquareHue = Color.Lerp(_currentSquareHue, _targetSquareHue, SQ_TINT_LERP_SPEED * dt);
 
         if (_largeSqImg != null)
         {

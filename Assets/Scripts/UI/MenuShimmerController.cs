@@ -20,11 +20,11 @@ public class MenuShimmerController : MonoBehaviour
     };
 
     // ── Timing ───────────────────────────────────────────────────────────────
-    private const float SWEEP_DURATION   = 8f;
-    private const float PAUSE_BETWEEN    = 4f;
-    private const float BAND_WIDTH_RATIO = 0.55f;
-    private const float MAX_ALPHA        = 0.22f;
-    private const float SWEEP_ANGLE      = 30f;
+    private const float SWEEP_DURATION   = 6f;
+    private const float PAUSE_BETWEEN    = 5f;
+    private const float BAND_WIDTH_RATIO = 1.0f;
+    private const float MAX_ALPHA        = 0.045f;
+    private const float SWEEP_ANGLE      = 25f;
 
     // ── Static API for other systems ─────────────────────────────────────────
 
@@ -36,10 +36,9 @@ public class MenuShimmerController : MonoBehaviour
 
     // ── Internal ─────────────────────────────────────────────────────────────
     private RectTransform _bandRT;
-    private Image         _bandImage;
+    private RawImage      _bandImage;
     private RectTransform _canvasRT;
     private Texture2D     _gradientTex;
-    private Sprite        _gradientSprite;
 
     private float _timer;
     private int   _colorIndex;
@@ -52,10 +51,6 @@ public class MenuShimmerController : MonoBehaviour
         _canvasRT = canvas.GetComponent<RectTransform>();
 
         _gradientTex = CreateGradientTexture();
-        _gradientSprite = Sprite.Create(_gradientTex,
-            new Rect(0, 0, _gradientTex.width, _gradientTex.height),
-            new Vector2(0.5f, 0.5f));
-
         CreateBand();
         _colorIndex = Random.Range(0, PALETTE.Length);
         _timer      = 0f;
@@ -99,22 +94,21 @@ public class MenuShimmerController : MonoBehaviour
         float canvasW  = _canvasRT.rect.width;
         float canvasH  = _canvasRT.rect.height;
         float diagonal = Mathf.Sqrt(canvasW * canvasW + canvasH * canvasH);
-        float travel   = diagonal * 1.8f;
+        float travel   = diagonal * 2.0f;
         float posX     = Mathf.Lerp(-travel * 0.5f, travel * 0.5f, progress);
 
         _bandRT.anchoredPosition = new Vector2(posX, 0f);
 
-        // Alpha: smooth cubic bell curve for fluid feel
+        // Alpha: very smooth sine bell curve
         float bell  = Mathf.Sin(progress * Mathf.PI);
-        float alpha = bell * bell * bell * MAX_ALPHA;
+        float alpha = bell * bell * MAX_ALPHA;
         ApplyAlpha(alpha);
-        Intensity = bell * bell * bell;
+        Intensity = bell * bell;
     }
 
     void OnDestroy()
     {
-        if (_gradientSprite != null) Destroy(_gradientSprite);
-        if (_gradientTex    != null) Destroy(_gradientTex);
+        if (_gradientTex != null) Destroy(_gradientTex);
         Intensity = 0f;
     }
 
@@ -136,17 +130,23 @@ public class MenuShimmerController : MonoBehaviour
         _bandRT.sizeDelta     = new Vector2(bandW, diagonal * 1.5f);
         _bandRT.localRotation = Quaternion.Euler(0f, 0f, SWEEP_ANGLE);
 
-        _bandImage = go.AddComponent<Image>();
+        _bandImage = go.AddComponent<RawImage>();
         _bandImage.raycastTarget = false;
-        _bandImage.sprite = _gradientSprite;
-        _bandImage.type   = Image.Type.Simple;
-        _bandImage.color  = new Color(1f, 1f, 1f, 0f);
+        _bandImage.texture       = _gradientTex;
+        _bandImage.color         = new Color(1f, 1f, 1f, 0f);
+
+        CanvasGroup cg    = go.AddComponent<CanvasGroup>();
+        cg.interactable   = false;
+        cg.blocksRaycasts = false;
     }
 
-    /// <summary>Creates a wide soft Gaussian gradient texture.</summary>
+    /// <summary>
+    /// Creates a wide gradient texture using a steep Gaussian that reaches
+    /// true zero at the edges, eliminating any visible hard lines.
+    /// </summary>
     private Texture2D CreateGradientTexture()
     {
-        const int width = 256;
+        const int width = 512;
         var tex = new Texture2D(width, 1, TextureFormat.RGBA32, false)
         {
             wrapMode   = TextureWrapMode.Clamp,
@@ -156,8 +156,13 @@ public class MenuShimmerController : MonoBehaviour
         for (int x = 0; x < width; x++)
         {
             float t = x / (float)(width - 1);
-            float bell = Mathf.Exp(-8f * (t - 0.5f) * (t - 0.5f));
-            tex.SetPixel(x, 0, new Color(1f, 1f, 1f, bell));
+            float d = (t - 0.5f) * 2f; // -1 to 1
+            // Steep Gaussian: fully transparent at edges, smooth peak at center
+            float bell = Mathf.Exp(-6f * d * d);
+            // Extra smoothstep at the edges to guarantee zero
+            float edge = Mathf.SmoothStep(0f, 1f, 1f - Mathf.Abs(d));
+            float alpha = bell * edge;
+            tex.SetPixel(x, 0, new Color(1f, 1f, 1f, alpha));
         }
         tex.Apply();
         return tex;

@@ -8,7 +8,7 @@ using UnityEngine.UI;
 /// </summary>
 public class MenuParticlesController : MonoBehaviour
 {
-    private const int   MOTE_COUNT    = 90;
+    private const int   MOTE_COUNT    = 100;
     private const float MIN_LIFE      = 5f;
     private const float MAX_LIFE      = 14f;
     private const float MIN_SIZE      = 1.5f;
@@ -17,6 +17,18 @@ public class MenuParticlesController : MonoBehaviour
     private const float DRIFT_X_MAX   = 42f;
     private const float DRIFT_Y_MIN   = 16f;
     private const float DRIFT_Y_MAX   = 65f;
+
+    /// <summary>Color palette matching the shimmer time-state colors.</summary>
+    private static readonly Color[] MOTE_PALETTE = new Color[]
+    {
+        new Color(0.96f, 0.78f, 0.26f),   // Gold
+        new Color(0.96f, 0.84f, 0.42f),   // Warm gold
+        new Color(0.35f, 0.71f, 0.94f),   // Blue
+        new Color(0.45f, 0.65f, 0.95f),   // Light blue
+        new Color(0.61f, 0.37f, 0.90f),   // Purple
+        new Color(0.20f, 0.78f, 0.86f),   // Teal
+        new Color(0.85f, 0.75f, 0.50f),   // Sand
+    };
 
     private struct Mote
     {
@@ -120,11 +132,12 @@ public class MenuParticlesController : MonoBehaviour
                                   Random.Range(DRIFT_Y_MIN, DRIFT_Y_MAX));
         m.baseSize  = Random.Range(MIN_SIZE, MAX_SIZE);
 
-        // Warm gold → dim cream palette
+        // Pick a random color from the palette with slight variation
+        Color baseCol = MOTE_PALETTE[Random.Range(0, MOTE_PALETTE.Length)];
         m.baseColor = new Color(
-            Random.Range(0.88f, 0.99f),
-            Random.Range(0.68f, 0.88f),
-            Random.Range(0.18f, 0.45f),
+            Mathf.Clamp01(baseCol.r + Random.Range(-0.06f, 0.06f)),
+            Mathf.Clamp01(baseCol.g + Random.Range(-0.06f, 0.06f)),
+            Mathf.Clamp01(baseCol.b + Random.Range(-0.06f, 0.06f)),
             0f
         );
 
