@@ -6,9 +6,6 @@ public class TimeState : MonoBehaviour
     public enum State { Forward, Frozen, Reverse }
     public State currentState { get; private set; } = State.Forward;
 
-    /// <summary>
-    /// Fired whenever the time state changes. Passes the new state.
-    /// </summary>
     public event Action<State> OnStateChanged;
 
     public static TimeState Instance;
@@ -45,15 +42,21 @@ public class TimeState : MonoBehaviour
                 currentState = State.Frozen;
                 break;
 
-            // Reverse will go here later when upside down is implemented
+            case PlayerMovement.Orientation.UpsideDown:
+                currentState = State.Reverse;
+                break;
+
+            case PlayerMovement.Orientation.FlatX_R:
+            case PlayerMovement.Orientation.FlatZ_R:
+                currentState = State.Frozen;
+                break;
+
             default:
                 currentState = State.Forward;
                 break;
         }
 
         if (currentState != previous)
-        {
             OnStateChanged?.Invoke(currentState);
-        }
     }
 }
