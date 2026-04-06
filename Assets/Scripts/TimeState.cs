@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class TimeState : MonoBehaviour
@@ -5,7 +6,11 @@ public class TimeState : MonoBehaviour
     public enum State { Forward, Frozen, Reverse }
     public State currentState { get; private set; } = State.Forward;
 
-    // Static instance so any script can access it easily
+    /// <summary>
+    /// Fired whenever the time state changes. Passes the new state.
+    /// </summary>
+    public event Action<State> OnStateChanged;
+
     public static TimeState Instance;
 
     private PlayerMovement playerMovement;
@@ -27,6 +32,8 @@ public class TimeState : MonoBehaviour
 
     void UpdateTimeState()
     {
+        State previous = currentState;
+
         switch (playerMovement.orientation)
         {
             case PlayerMovement.Orientation.Standing:
@@ -42,6 +49,11 @@ public class TimeState : MonoBehaviour
             default:
                 currentState = State.Forward;
                 break;
+        }
+
+        if (currentState != previous)
+        {
+            OnStateChanged?.Invoke(currentState);
         }
     }
 }

@@ -9,7 +9,12 @@ public class PlayerMovement : MonoBehaviour
     public enum Orientation { Standing, FlatX, FlatZ }
     public Orientation orientation = Orientation.Standing;
 
-    const float TILE_TOP = 0.1f;
+    private const float TILE_TOP       = 0.1f;
+    private const float AXIS_THRESHOLD = 0.5f;
+
+    // Previous-frame axis values for rising-edge detection
+    private float prevH = 0f;
+    private float prevV = 0f;
 
     void Start()
     {
@@ -23,13 +28,23 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        if (isMoving) return;
+        // Skip while rolling or while the menu/pause has frozen time
+        if (isMoving || Time.timeScale == 0f) return;
+
+        // "Horizontal" / "Vertical" axes map to Xbox left stick (Axis 1 & 2) in Unity's default Input Manager
+        float h = Input.GetAxis("Horizontal");
+        float v = Input.GetAxis("Vertical");
 
         Vector3 input = Vector3.zero;
-        if (Input.GetKeyDown(KeyCode.UpArrow))         input = Vector3.forward;
-        else if (Input.GetKeyDown(KeyCode.DownArrow))  input = Vector3.back;
-        else if (Input.GetKeyDown(KeyCode.LeftArrow))  input = Vector3.left;
-        else if (Input.GetKeyDown(KeyCode.RightArrow)) input = Vector3.right;
+
+        // Rising-edge detection: only fire once per tilt, not while held
+        if      (v >  AXIS_THRESHOLD && prevV <=  AXIS_THRESHOLD) input = Vector3.forward;
+        else if (v < -AXIS_THRESHOLD && prevV >= -AXIS_THRESHOLD) input = Vector3.back;
+        else if (h < -AXIS_THRESHOLD && prevH >= -AXIS_THRESHOLD) input = Vector3.left;
+        else if (h >  AXIS_THRESHOLD && prevH <=  AXIS_THRESHOLD) input = Vector3.right;
+
+        prevH = h;
+        prevV = v;
 
         if (input != Vector3.zero)
             StartCoroutine(Roll(input));
