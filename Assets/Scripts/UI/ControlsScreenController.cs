@@ -4,16 +4,19 @@ using TMPro;
 
 /// <summary>
 /// Manages the controls reference screen. Hides the existing Card hierarchy
-/// and rebuilds a centered, vertically-stacked layout at runtime with two
-/// sections (MOVEMENT, TIME MECHANICS AND ACTIONS), sand/dust particles,
-/// and MainMenuAtmosphere for rotating squares + grain.
-///
-/// Attach to the ControlsScreen GameObject.
+/// and rebuilds a centered, vertically-stacked layout at runtime.
+/// Supports origin-aware back navigation (MainMenu vs PauseMenu).
 /// </summary>
 public class ControlsScreenController : MonoBehaviour
 {
     [Header("Existing References (auto-discovered if null)")]
     [SerializeField] private GameObject existingCard;
+
+    /// <summary>Where this screen was opened from.</summary>
+    public enum ControlsOrigin { MainMenu, PauseMenu }
+
+    /// <summary>Set before enabling to control where B/back returns to.</summary>
+    public ControlsOrigin Origin { get; set; } = ControlsOrigin.MainMenu;
 
     // ── Row definitions ──────────────────────────────────────────────────────
     private static readonly Color Gold   = new Color(0.961f, 0.784f, 0.259f, 1f);
@@ -53,28 +56,34 @@ public class ControlsScreenController : MonoBehaviour
 
     // ── State ────────────────────────────────────────────────────────────────
     private bool _built;
-    private MenuParticlesController _dustLayer;
     private GameObject _layoutRoot;
-    private GameObject _bgPanel;
 
     // ── Lifecycle ────────────────────────────────────────────────────────────
 
     void OnEnable()
     {
         if (!_built) BuildLayout();
-        EnsureBackground();
-        EnsureDustLayer();
-    }
-
-    void OnDisable()
-    {
-        if (_dustLayer != null) _dustLayer.SetPlaying(false);
     }
 
     void Update()
     {
         // B button / Escape = go back
         if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.JoystickButton1))
+        {
+            GoBack();
+        }
+    }
+
+    /// <summary>Navigates back to the origin screen.</summary>
+    private void GoBack()
+    {
+        if (Origin == ControlsOrigin.PauseMenu)
+        {
+            gameObject.SetActive(false);
+            PauseMenuController pmc = FindObjectOfType<PauseMenuController>();
+            if (pmc != null) pmc.ReturnFromControls();
+        }
+        else
         {
             MainMenuController mmc = FindObjectOfType<MainMenuController>();
             if (mmc != null) mmc.CloseControls();
@@ -243,23 +252,20 @@ public class ControlsScreenController : MonoBehaviour
         le.preferredHeight = 46f;
 
         Image bg       = go.AddComponent<Image>();
-        bg.color       = new Color(0.059f, 0.102f, 0.188f, 0.80f);
+        bg.color       = Color.white;
         bg.raycastTarget = true;
 
         Button btn = go.AddComponent<Button>();
         btn.targetGraphic = bg;
         ColorBlock cb       = btn.colors;
-        cb.normalColor      = Color.white;
+        cb.normalColor      = new Color(0.059f, 0.102f, 0.188f, 0.80f);
         cb.highlightedColor = new Color(0.961f, 0.784f, 0.259f, 1f);
         cb.pressedColor     = new Color(0.7f, 0.55f, 0.1f, 1f);
+        cb.selectedColor    = new Color(0.059f, 0.102f, 0.188f, 0.80f);
         cb.fadeDuration     = 0.1f;
         btn.colors          = cb;
 
-        btn.onClick.AddListener(() =>
-        {
-            MainMenuController mmc = FindObjectOfType<MainMenuController>();
-            if (mmc != null) mmc.CloseControls();
-        });
+        btn.onClick.AddListener(() => GoBack());
 
         // Label
         GameObject labelGO = new GameObject("Label");
@@ -275,55 +281,6 @@ public class ControlsScreenController : MonoBehaviour
         RectTransform lrt = labelGO.GetComponent<RectTransform>();
         lrt.anchorMin = Vector2.zero; lrt.anchorMax = Vector2.one;
         lrt.offsetMin = Vector2.zero; lrt.offsetMax = Vector2.zero;
-    }
-
-    // ── Dust / Atmosphere ─────────────────────────────────────────────────────
-
-    /// <summary>Spawns sand/dust particles as background.</summary>
-    private void EnsureDustLayer()
-    {
-        if (_dustLayer != null) { _dustLayer.SetPlaying(true); return; }
-
-        Transform existing = transform.Find("DustLayer");
-        if (existing != null)
-        {
-            _dustLayer = existing.GetComponent<MenuParticlesController>();
-            if (_dustLayer != null) { _dustLayer.SetPlaying(true); return; }
-        }
-
-        GameObject go = new GameObject("DustLayer");
-        go.transform.SetParent(transform, false);
-        go.transform.SetSiblingIndex(1); // after BgPanel
-
-        RectTransform rt = go.AddComponent<RectTransform>();
-        rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
-        rt.offsetMin = Vector2.zero; rt.offsetMax = Vector2.zero;
-
-        CanvasGroup cg    = go.AddComponent<CanvasGroup>();
-        cg.interactable   = false;
-        cg.blocksRaycasts = false;
-
-        _dustLayer = go.AddComponent<MenuParticlesController>();
-    }
-
-    // ── Background ────────────────────────────────────────────────────────────
-
-    /// <summary>Creates a dark background panel so the main menu doesn't bleed through.</summary>
-    private void EnsureBackground()
-    {
-        if (_bgPanel != null) return;
-
-        _bgPanel = new GameObject("BgPanel");
-        _bgPanel.transform.SetParent(transform, false);
-        _bgPanel.transform.SetAsFirstSibling();
-
-        RectTransform bgRT = _bgPanel.AddComponent<RectTransform>();
-        bgRT.anchorMin = Vector2.zero; bgRT.anchorMax = Vector2.one;
-        bgRT.offsetMin = Vector2.zero; bgRT.offsetMax = Vector2.zero;
-
-        Image img         = _bgPanel.AddComponent<Image>();
-        img.color         = new Color(0.02f, 0.025f, 0.05f, 0.95f);
-        img.raycastTarget = false;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

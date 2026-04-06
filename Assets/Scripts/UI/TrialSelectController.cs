@@ -33,8 +33,6 @@ public class TrialSelectController : MonoBehaviour
     private Image       _lbHintBg;
     private Image       _rbHintBg;
     private bool        _hintsBuilt;
-    private MenuParticlesController _dustLayer;
-    private GameObject  _bgPanel;
 
     // Enter Trial button (created in code)
     private Button      _enterButton;
@@ -48,6 +46,7 @@ public class TrialSelectController : MonoBehaviour
     private static readonly Color HintResting  = new Color(0.08f, 0.08f, 0.16f, 0.72f);
     private static readonly Color HintPressed  = new Color(0.95f, 0.78f, 0.10f, 0.95f);
     private static readonly Color EnterBtnBg   = new Color(0.059f, 0.102f, 0.188f, 0.85f);
+    private static readonly Color EnterBtnGold = new Color(0.961f, 0.784f, 0.259f, 1f);
     private static readonly Color LabelWhite   = new Color(0.91f, 0.918f, 0.965f, 1f);
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -55,8 +54,6 @@ public class TrialSelectController : MonoBehaviour
     void OnEnable()
     {
         GatherCards();
-        EnsureBackground();
-        EnsureDustLayer();
         EnsureEnterButton();
         UpdateBackButtonLabel();
 
@@ -69,11 +66,6 @@ public class TrialSelectController : MonoBehaviour
 
         if (!_hintsBuilt)
             StartCoroutine(BuildHintsDeferred());
-    }
-
-    void OnDisable()
-    {
-        if (_dustLayer != null) _dustLayer.SetPlaying(false);
     }
 
     void Update()
@@ -241,15 +233,16 @@ public class TrialSelectController : MonoBehaviour
         rt.anchoredPosition = new Vector2(0f, 120f);
 
         Image bg       = _enterGO.AddComponent<Image>();
-        bg.color       = EnterBtnBg;
+        bg.color       = Color.white;
         bg.raycastTarget = true;
 
         _enterButton = _enterGO.AddComponent<Button>();
         _enterButton.targetGraphic = bg;
         ColorBlock cb       = _enterButton.colors;
-        cb.normalColor      = Color.white;
-        cb.highlightedColor = new Color(0.961f, 0.784f, 0.259f, 1f);
+        cb.normalColor      = EnterBtnBg;
+        cb.highlightedColor = EnterBtnGold;
         cb.pressedColor     = new Color(0.7f, 0.55f, 0.1f, 1f);
+        cb.selectedColor    = EnterBtnBg;
         cb.fadeDuration     = 0.1f;
         _enterButton.colors = cb;
         _enterButton.onClick.AddListener(EnterTrial);
@@ -399,55 +392,6 @@ public class TrialSelectController : MonoBehaviour
             yield return null;
         }
         img.color = HintResting;
-    }
-
-    // ── Dust / Atmosphere ─────────────────────────────────────────────────────
-
-    /// <summary>Spawns a MenuParticlesController child for sand/dust background.</summary>
-    private void EnsureDustLayer()
-    {
-        if (_dustLayer != null) { _dustLayer.SetPlaying(true); return; }
-
-        Transform existing = transform.Find("DustLayer");
-        if (existing != null)
-        {
-            _dustLayer = existing.GetComponent<MenuParticlesController>();
-            if (_dustLayer != null) { _dustLayer.SetPlaying(true); return; }
-        }
-
-        GameObject go = new GameObject("DustLayer");
-        go.transform.SetParent(transform, false);
-        go.transform.SetSiblingIndex(1); // after BgPanel
-
-        RectTransform rt = go.AddComponent<RectTransform>();
-        rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
-        rt.offsetMin = Vector2.zero; rt.offsetMax = Vector2.zero;
-
-        CanvasGroup cg    = go.AddComponent<CanvasGroup>();
-        cg.interactable   = false;
-        cg.blocksRaycasts = false;
-
-        _dustLayer = go.AddComponent<MenuParticlesController>();
-    }
-
-    // ── Background ────────────────────────────────────────────────────────────
-
-    /// <summary>Creates a dark background panel so the main menu doesn't bleed through.</summary>
-    private void EnsureBackground()
-    {
-        if (_bgPanel != null) return;
-
-        _bgPanel = new GameObject("BgPanel");
-        _bgPanel.transform.SetParent(transform, false);
-        _bgPanel.transform.SetAsFirstSibling();
-
-        RectTransform bgRT = _bgPanel.AddComponent<RectTransform>();
-        bgRT.anchorMin = Vector2.zero; bgRT.anchorMax = Vector2.one;
-        bgRT.offsetMin = Vector2.zero; bgRT.offsetMax = Vector2.zero;
-
-        Image img         = _bgPanel.AddComponent<Image>();
-        img.color         = new Color(0.02f, 0.025f, 0.05f, 0.95f);
-        img.raycastTarget = false;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

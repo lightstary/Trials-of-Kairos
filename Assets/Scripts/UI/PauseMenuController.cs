@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 using TMPro;
 
 /// <summary>
-/// Pause menu — toggle with Escape or P. Runs on unscaled time while paused.
+/// Pause menu with Resume, Restart Trial, Controls, Trial Selection, Return to Hub.
 /// </summary>
 public class PauseMenuController : MonoBehaviour
 {
@@ -32,41 +32,70 @@ public class PauseMenuController : MonoBehaviour
 
     [Header("Config")]
     [SerializeField] private float  animationDuration = 0.2f;
-    [SerializeField] private string hubSceneName      = "LevelSelect";
     [SerializeField] private string currentTrialInfo  = "TRIAL I";
 
-    private const float SCALE_START        = 0.9f;
-    private const float OVERLAY_MAX_ALPHA  = 0.6f;
+    private const float SCALE_START       = 0.9f;
+    private const float OVERLAY_MAX_ALPHA = 0.6f;
+    private const float INPUT_COOLDOWN    = 0.25f;
 
-    private bool isPaused;
+    private bool  _isPaused;
+    private bool  _subScreenOpen;
+    private float _inputCooldown;
+
+    /// <summary>True when game is paused.</summary>
+    public bool IsPaused => _isPaused;
+
+    /// <summary>True when a sub-screen is covering the pause panel.</summary>
+    public bool HasSubScreenOpen => _subScreenOpen;
+
+    /// <summary>True during input cooldown after returning from a sub-screen.</summary>
+    public bool IsInInputCooldown => _inputCooldown > 0f;
+
+    void Awake()
+    {
+        SetVisible(false);
+    }
 
     void Start()
     {
         if (resumeButton      != null) resumeButton.onClick.AddListener(Resume);
         if (restartButton     != null) restartButton.onClick.AddListener(RestartTrial);
         if (controlsButton    != null) controlsButton.onClick.AddListener(ShowControls);
-        if (settingsButton    != null) settingsButton.onClick.AddListener(ShowSettings);
+        if (settingsButton    != null)
+        {
+            settingsButton.onClick.RemoveAllListeners();
+            settingsButton.onClick.AddListener(OpenTrialSelection);
+            TextMeshProUGUI lbl = settingsButton.GetComponentInChildren<TextMeshProUGUI>();
+            if (lbl != null) lbl.text = "TRIAL SELECTION";
+        }
         if (returnToHubButton != null) returnToHubButton.onClick.AddListener(ReturnToHub);
-        if (quitButton        != null) quitButton.onClick.AddListener(QuitGame);
-
-        if (trialInfoLabel != null) trialInfoLabel.text = currentTrialInfo;
-        SetVisible(false);
+        if (quitButton        != null) quitButton.gameObject.SetActive(false);
+        if (trialInfoLabel    != null) trialInfoLabel.text = currentTrialInfo;
     }
 
     void Update()
     {
-        // Xbox Menu button (joystick button 7 on Windows) toggles pause
+        if (_inputCooldown > 0f) _inputCooldown -= Time.unscaledDeltaTime;
+
         if (Input.GetKeyDown(KeyCode.JoystickButton7))
         {
-            if (isPaused) Resume(); else Pause();
+            if (_isPaused)
+            {
+                if (_subScreenOpen || _inputCooldown > 0f) return;
+                Resume();
+            }
+            else
+            {
+                Pause();
+            }
         }
     }
 
     /// <summary>Pauses the game and shows the pause menu.</summary>
     public void Pause()
     {
-        if (isPaused) return;
-        isPaused = true;
+        if (_isPaused) return;
+        _isPaused = true;
         Time.timeScale = 0f;
         SetVisible(true);
         HideSubPanels();
@@ -76,45 +105,62 @@ public class PauseMenuController : MonoBehaviour
     /// <summary>Resumes the game and hides the pause menu.</summary>
     public void Resume()
     {
-        if (!isPaused) return;
-        isPaused = false;
+        if (!_isPaused) return;
+        _isPaused = false;
         Time.timeScale = 1f;
         StartCoroutine(AnimateOut());
     }
 
-    /// <summary>Updates the trial info footer text.</summary>
-    public void SetTrialInfo(string info)
+    /// <summary>Called by ControlsScreenController when B is pressed.</summary>
+    public void ReturnFromControls()
     {
-        currentTrialInfo = info;
-        if (trialInfoLabel != null) trialInfoLabel.text = info;
+        _subScreenOpen = false;
+        _inputCooldown = INPUT_COOLDOWN;
+        HideSubPanels();
     }
+
+    /// <summary>Updates the trial info footer text.</summary>
+    public void SetTrialInfo(string info) { currentTrialInfo = info; if (trialInfoLabel != null) trialInfoLabel.text = info; }
 
     private void RestartTrial()
     {
-        Time.timeScale = 1f; isPaused = false;
+        Time.timeScale = 1f; _isPaused = false;
+        MainMenuController.RequestRestartTrialOnLoad();
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-    private void ShowControls()  { HideSubPanels(); if (controlsPanel != null) controlsPanel.SetActive(true); }
-    private void ShowSettings()  { HideSubPanels(); if (settingsPanel  != null) settingsPanel.SetActive(true);  }
-    private void HideSubPanels() { if (controlsPanel != null) controlsPanel.SetActive(false); if (settingsPanel != null) settingsPanel.SetActive(false); }
+    private void ShowControls()
+    {
+        _subScreenOpen = true;
+        HideSubPanels();
+        Canvas canvas = GetComponentInParent<Canvas>();
+        if (canvas == null) return;
+        Transform cs = canvas.transform.Find("ControlsScreen");
+        if (cs != null)
+        {
+            ControlsScreenController ctrl = cs.GetComponent<ControlsScreenController>();
+            if (ctrl != null) ctrl.Origin = ControlsScreenController.ControlsOrigin.PauseMenu;
+            cs.gameObject.SetActive(true);
+        }
+    }
+
+    private void OpenTrialSelection()
+    {
+        Time.timeScale = 1f; _isPaused = false;
+        MainMenuController.RequestTrialSelectOnLoad();
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    private void HideSubPanels()
+    {
+        if (controlsPanel != null) controlsPanel.SetActive(false);
+        if (settingsPanel != null) settingsPanel.SetActive(false);
+    }
 
     private void ReturnToHub()
     {
-        Time.timeScale = 1f; isPaused = false;
-        if (ScreenTransitionManager.Instance != null)
-            ScreenTransitionManager.Instance.FadeToScene(hubSceneName);
-        else
-            SceneManager.LoadScene(hubSceneName);
-    }
-
-    private void QuitGame()
-    {
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#else
-        Application.Quit();
-#endif
+        Time.timeScale = 1f; _isPaused = false;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     private void SetVisible(bool visible)

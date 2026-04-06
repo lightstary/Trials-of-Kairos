@@ -61,7 +61,7 @@ public class HUDController : MonoBehaviour
     void Start()
     {
         if (pauseButton != null && pauseMenu != null)
-            pauseButton.onClick.AddListener(() => pauseMenu.Pause());
+            pauseButton.onClick.AddListener(() => TogglePause());
 
         if (TimeState.Instance != null)
             HandleTimeStateChanged(TimeState.Instance.currentState);
@@ -93,6 +93,20 @@ public class HUDController : MonoBehaviour
             gold.a = Mathf.Sin(Time.time * 6f) * 0.3f + 0.7f;
             objectiveDiamond.color = gold;
         }
+    }
+
+    /// <summary>Toggles the pause menu with sub-screen and cooldown checks.</summary>
+    private void TogglePause()
+    {
+        if (pauseMenu == null) return;
+        if (pauseMenu.IsPaused)
+        {
+            if (pauseMenu.HasSubScreenOpen || pauseMenu.IsInInputCooldown) return;
+            pauseMenu.Resume();
+            return;
+        }
+        pauseMenu.gameObject.SetActive(true);
+        pauseMenu.Pause();
     }
 
     /// <summary>Sets objective text and trial progress display.</summary>
