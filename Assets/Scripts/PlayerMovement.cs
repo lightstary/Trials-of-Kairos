@@ -6,10 +6,14 @@ public class PlayerMovement : MonoBehaviour
     public float moveSpeed = 5f;
     public bool isMoving = false;
 
-    public enum Orientation { Standing, FlatX, FlatZ }
+    public enum Orientation { Standing, FlatX, FlatZ, UpsideDown, FlatX_R, FlatZ_R }
     public Orientation orientation = Orientation.Standing;
 
-    const float TILE_TOP = 0.1f;
+    private const float TILE_TOP       = 0.1f;
+    private const float AXIS_THRESHOLD = 0.5f;
+
+    private float prevH = 0f;
+    private float prevV = 0f;
 
     void Start()
     {
@@ -23,13 +27,20 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        if (isMoving) return;
+        if (isMoving || Time.timeScale == 0f) return;
+
+        float h = Input.GetAxis("Horizontal");
+        float v = Input.GetAxis("Vertical");
 
         Vector3 input = Vector3.zero;
-        if (Input.GetKeyDown(KeyCode.UpArrow))         input = Vector3.forward;
-        else if (Input.GetKeyDown(KeyCode.DownArrow))  input = Vector3.back;
-        else if (Input.GetKeyDown(KeyCode.LeftArrow))  input = Vector3.left;
-        else if (Input.GetKeyDown(KeyCode.RightArrow)) input = Vector3.right;
+
+        if      (v >  AXIS_THRESHOLD && prevV <=  AXIS_THRESHOLD) input = Vector3.forward;
+        else if (v < -AXIS_THRESHOLD && prevV >= -AXIS_THRESHOLD) input = Vector3.back;
+        else if (h < -AXIS_THRESHOLD && prevH >= -AXIS_THRESHOLD) input = Vector3.left;
+        else if (h >  AXIS_THRESHOLD && prevH <=  AXIS_THRESHOLD) input = Vector3.right;
+
+        prevH = h;
+        prevV = v;
 
         if (input != Vector3.zero)
             StartCoroutine(Roll(input));
@@ -69,9 +80,12 @@ public class PlayerMovement : MonoBehaviour
     {
         switch (orientation)
         {
-            case Orientation.Standing: return 1.0f;
-            case Orientation.FlatX:    return 0.5f;
-            case Orientation.FlatZ:    return 0.5f;
+            case Orientation.Standing:   return 1.0f;
+            case Orientation.UpsideDown: return 1.0f;
+            case Orientation.FlatX:
+            case Orientation.FlatX_R:   return 0.5f;
+            case Orientation.FlatZ:
+            case Orientation.FlatZ_R:   return 0.5f;
             default: return 1.0f;
         }
     }
@@ -82,9 +96,12 @@ public class PlayerMovement : MonoBehaviour
 
         switch (orientation)
         {
-            case Orientation.Standing: return 0.5f;
-            case Orientation.FlatX:    return alongX ? 1.0f : 0.5f;
-            case Orientation.FlatZ:    return alongX ? 0.5f : 1.0f;
+            case Orientation.Standing:
+            case Orientation.UpsideDown: return 0.5f;
+            case Orientation.FlatX:
+            case Orientation.FlatX_R:   return alongX ? 1.0f : 0.5f;
+            case Orientation.FlatZ:
+            case Orientation.FlatZ_R:   return alongX ? 0.5f : 1.0f;
             default: return 0.5f;
         }
     }
@@ -95,9 +112,22 @@ public class PlayerMovement : MonoBehaviour
 
         switch (orientation)
         {
-            case Orientation.Standing: return alongX ? Orientation.FlatX : Orientation.FlatZ;
-            case Orientation.FlatX:    return alongX ? Orientation.Standing : Orientation.FlatX;
-            case Orientation.FlatZ:    return alongX ? Orientation.FlatZ : Orientation.Standing;
+            case Orientation.Standing:
+                return alongX ? Orientation.FlatX : Orientation.FlatZ;
+
+            case Orientation.FlatX:
+                return alongX ? Orientation.UpsideDown : Orientation.FlatX;
+            case Orientation.FlatZ:
+                return alongX ? Orientation.FlatZ : Orientation.UpsideDown;
+
+            case Orientation.UpsideDown:
+                return alongX ? Orientation.FlatX_R : Orientation.FlatZ_R;
+
+            case Orientation.FlatX_R:
+                return alongX ? Orientation.Standing : Orientation.FlatX_R;
+            case Orientation.FlatZ_R:
+                return alongX ? Orientation.FlatZ_R : Orientation.Standing;
+
             default: return Orientation.Standing;
         }
     }
@@ -119,7 +149,6 @@ public class PlayerMovement : MonoBehaviour
         transform.eulerAngles = euler;
     }
 
-    // Called by FallDetection to reset after respawn
     public void ResetMovement()
     {
         isMoving = false;
