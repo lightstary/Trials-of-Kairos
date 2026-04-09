@@ -26,18 +26,16 @@ public class FallDetection : MonoBehaviour
     {
         if (playerMovement.isMoving) return;
 
-        bool supported = false;
+        int supported = 0;
+        Vector3[] points = GetFootprintPoints();
 
-        foreach (Vector3 checkPoint in GetFootprintPoints())
+        foreach (Vector3 checkPoint in points)
         {
             if (IsTileBelow(checkPoint))
-            {
-                supported = true;
-                break;
-            }
+                supported++;
         }
 
-        if (!supported)
+        if (supported == 0)
             Respawn();
     }
 
@@ -49,20 +47,33 @@ public class FallDetection : MonoBehaviour
         switch (playerMovement.orientation)
         {
             case PlayerMovement.Orientation.Standing:
-                return new Vector3[] { center };
-
-            case PlayerMovement.Orientation.FlatX:
+            case PlayerMovement.Orientation.UpsideDown:
                 return new Vector3[]
                 {
-                    center + Vector3.right * 0.5f,
-                    center + Vector3.left  * 0.5f
+                    center + new Vector3( 0.4f, 0,  0.4f),
+                    center + new Vector3(-0.4f, 0,  0.4f),
+                    center + new Vector3( 0.4f, 0, -0.4f),
+                    center + new Vector3(-0.4f, 0, -0.4f)
+                };
+
+            case PlayerMovement.Orientation.FlatX:
+            case PlayerMovement.Orientation.FlatX_R:
+                return new Vector3[]
+                {
+                    center + new Vector3( 0.9f, 0,  0.4f),
+                    center + new Vector3(-0.9f, 0,  0.4f),
+                    center + new Vector3( 0.9f, 0, -0.4f),
+                    center + new Vector3(-0.9f, 0, -0.4f)
                 };
 
             case PlayerMovement.Orientation.FlatZ:
+            case PlayerMovement.Orientation.FlatZ_R:
                 return new Vector3[]
                 {
-                    center + Vector3.forward * 0.5f,
-                    center + Vector3.back    * 0.5f
+                    center + new Vector3( 0.4f, 0,  0.9f),
+                    center + new Vector3(-0.4f, 0,  0.9f),
+                    center + new Vector3( 0.4f, 0, -0.9f),
+                    center + new Vector3(-0.4f, 0, -0.9f)
                 };
 
             default:
@@ -81,7 +92,7 @@ public class FallDetection : MonoBehaviour
         return false;
     }
 
-    void Respawn()
+    public void Respawn()
     {
         transform.position = spawnPosition;
         transform.rotation = spawnRotation;
@@ -89,15 +100,14 @@ public class FallDetection : MonoBehaviour
         playerMovement.ResetMovement();
     }
 
-    // Called by Checkpoint to update respawn point
     public void UpdateSpawnPoint(Vector3 newPosition, Quaternion newRotation)
     {
         spawnPosition = new Vector3(
             Mathf.Round(newPosition.x),
-            newPosition.y + 1.1f, // tile top + half block height
+            newPosition.y + 1.1f,
             Mathf.Round(newPosition.z)
         );
-        spawnRotation = Quaternion.identity; // always respawn upright
+        spawnRotation = Quaternion.identity;
         Debug.Log("Spawn point updated to: " + spawnPosition);
     }
 }
