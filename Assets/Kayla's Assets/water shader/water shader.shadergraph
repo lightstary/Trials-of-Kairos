@@ -855,19 +855,9 @@
     "m_SubDatas": [],
     "m_ActiveTargets": [
         {
-            "m_Id": "38f8212a04c4405393341a9e3e96fadf"
+            "m_Id": "65a2bbdd562341828ae179288b067111"
         }
     ]
-}
-
-{
-    "m_SGVersion": 2,
-    "m_Type": "UnityEditor.Rendering.Universal.ShaderGraph.UniversalLitSubTarget",
-    "m_ObjectId": "0202571252254739a085d75c6bcb8d88",
-    "m_WorkflowMode": 1,
-    "m_NormalDropOffSpace": 0,
-    "m_ClearCoat": false,
-    "m_BlendModePreserveSpecular": true
 }
 
 {
@@ -1112,7 +1102,7 @@
     "m_Title": "foam whole",
     "m_Position": {
         "x": -2267.000244140625,
-        "y": 718.0000610351563
+        "y": 718.5001220703125
     }
 }
 
@@ -2114,28 +2104,6 @@
     "m_Property": {
         "m_Id": "80d2daea72914ee283ea53bd5dd13610"
     }
-}
-
-{
-    "m_SGVersion": 1,
-    "m_Type": "UnityEditor.Rendering.Universal.ShaderGraph.UniversalTarget",
-    "m_ObjectId": "38f8212a04c4405393341a9e3e96fadf",
-    "m_Datas": [],
-    "m_ActiveSubTarget": {
-        "m_Id": "0202571252254739a085d75c6bcb8d88"
-    },
-    "m_AllowMaterialOverride": false,
-    "m_SurfaceType": 1,
-    "m_ZTestMode": 4,
-    "m_ZWriteControl": 0,
-    "m_AlphaMode": 0,
-    "m_RenderFace": 2,
-    "m_AlphaClip": false,
-    "m_CastShadows": true,
-    "m_ReceiveShadows": true,
-    "m_SupportsLODCrossFade": false,
-    "m_CustomEditorGUI": "",
-    "m_SupportVFX": false
 }
 
 {
@@ -3309,6 +3277,23 @@
     "m_CustomColors": {
         "m_SerializableColors": []
     }
+}
+
+{
+    "m_SGVersion": 2,
+    "m_Type": "UnityEditor.Rendering.BuiltIn.ShaderGraph.BuiltInTarget",
+    "m_ObjectId": "65a2bbdd562341828ae179288b067111",
+    "m_ActiveSubTarget": {
+        "m_Id": "c7779d7e7c6844fc81d8be2cf9845907"
+    },
+    "m_AllowMaterialOverride": false,
+    "m_SurfaceType": 0,
+    "m_ZWriteControl": 0,
+    "m_ZTestMode": 4,
+    "m_AlphaMode": 0,
+    "m_RenderFace": 2,
+    "m_AlphaClip": false,
+    "m_CustomEditorGUI": ""
 }
 
 {
@@ -4488,8 +4473,8 @@
     "m_ObjectId": "abd504d195cc485bbcc873e79e5c459a",
     "m_Title": "water color",
     "m_Position": {
-        "x": -1467.9998779296875,
-        "y": 240.99998474121095
+        "x": -1468.000244140625,
+        "y": 241.4999542236328
     }
 }
 
@@ -5346,6 +5331,14 @@
 
 {
     "m_SGVersion": 0,
+    "m_Type": "UnityEditor.Rendering.BuiltIn.ShaderGraph.BuiltInLitSubTarget",
+    "m_ObjectId": "c7779d7e7c6844fc81d8be2cf9845907",
+    "m_WorkflowMode": 1,
+    "m_NormalDropOffSpace": 0
+}
+
+{
+    "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.Vector4MaterialSlot",
     "m_ObjectId": "c78572d0d8bb41e896bd66f1f7bb88f6",
     "m_Id": 0,
@@ -6131,8 +6124,8 @@
     "m_ObjectId": "f2cc3bfa844746c5837579d3fe1563cf",
     "m_Title": "water movement",
     "m_Position": {
-        "x": -2402.0,
-        "y": -1329.0
+        "x": -2402.000244140625,
+        "y": -1328.5001220703125
     }
 }
 
