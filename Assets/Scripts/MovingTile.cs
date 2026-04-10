@@ -5,12 +5,15 @@ public class MovingTile : MonoBehaviour
     [Header("Movement Settings")]
     public Vector3 moveDirection = Vector3.right;
     public float moveDistance = 2f;
-    public float tickInterval = 1f; // seconds between each snap
+    public float tickInterval = 1f;
+
+    [Header("Timeline Settings")]
+    public float minTime = -4f;
+    public float maxTime = 4f;
 
     private Vector3 startPosition;
     private Vector3 endPosition;
-    private float journeyProgress = 0f;
-    private float currentDirection = 1f;
+    private float currentTime = 0f;
     private float tickTimer = 0f;
 
     void Start()
@@ -26,46 +29,38 @@ public class MovingTile : MonoBehaviour
         switch (TimeState.Instance.currentState)
         {
             case TimeState.State.Forward:
+                if (currentTime >= maxTime) return;
                 tickTimer += Time.deltaTime;
                 if (tickTimer >= tickInterval)
                 {
                     tickTimer = 0f;
-                    SnapMove(1f);
+                    currentTime += 1f;
+                    currentTime = Mathf.Clamp(currentTime, minTime, maxTime);
+                    UpdatePosition();
                 }
                 break;
 
             case TimeState.State.Frozen:
-                tickTimer = 0f; // reset so it waits full second after unfreezing
+                tickTimer = 0f;
                 break;
 
             case TimeState.State.Reverse:
+                if (currentTime <= minTime) return;
                 tickTimer += Time.deltaTime;
                 if (tickTimer >= tickInterval)
                 {
                     tickTimer = 0f;
-                    SnapMove(-1f);
+                    currentTime -= 1f;
+                    currentTime = Mathf.Clamp(currentTime, minTime, maxTime);
+                    UpdatePosition();
                 }
                 break;
         }
     }
 
-    void SnapMove(float timeDirection)
+    void UpdatePosition()
     {
-        // Move one snap step in the current direction
-        journeyProgress += currentDirection * timeDirection * (1f / moveDistance);
-
-        // Flip direction at each end
-        if (journeyProgress >= 1f)
-        {
-            journeyProgress = 1f;
-            currentDirection = -1f;
-        }
-        else if (journeyProgress <= 0f)
-        {
-            journeyProgress = 0f;
-            currentDirection = 1f;
-        }
-
-        transform.position = Vector3.Lerp(startPosition, endPosition, journeyProgress);
+        float progress = Mathf.InverseLerp(minTime, maxTime, currentTime);
+        transform.position = Vector3.Lerp(startPosition, endPosition, progress);
     }
 }

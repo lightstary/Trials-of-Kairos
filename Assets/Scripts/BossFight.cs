@@ -4,6 +4,8 @@ using System.Collections.Generic;
 
 public class BossFight : MonoBehaviour
 {
+    public static BossFight Instance;
+
     [Header("Boss Arena Tiles")]
     public List<GameObject> allTiles = new List<GameObject>();
 
@@ -32,11 +34,12 @@ public class BossFight : MonoBehaviour
 
     void Awake()
     {
+        Instance = this;
+
         foreach (GameObject tile in allTiles)
             if (tile != null)
                 originalPositions[tile] = tile.transform.position;
 
-        // Calculate arena center from all tiles
         arenaCenter = Vector3.zero;
         foreach (GameObject tile in allTiles)
             if (tile != null)
@@ -57,6 +60,12 @@ public class BossFight : MonoBehaviour
         bossActive = false;
         currentRound = 0;
         ResetArena();
+
+        if (TimeScaleLogic.Instance != null)
+            TimeScaleLogic.Instance.ResetMeter();
+
+        // Swap back to game music
+        SoundManager.Instance?.PlayGameMusic();
     }
 
     IEnumerator RunBossFight()
@@ -71,11 +80,13 @@ public class BossFight : MonoBehaviour
                 StopBossFight();
                 if (BossPopup.Instance != null)
                     BossPopup.Instance.ShowLose();
+                SoundManager.Instance?.PlayLose();
                 FindObjectOfType<FallDetection>().Respawn();
                 yield break;
             }
 
             yield return StartCoroutine(FlashSafeTiles());
+            SoundManager.Instance?.PlayRoundClear();
             yield return new WaitForSeconds(roundResetDelay);
             ResetArena();
             yield return new WaitForSeconds(1f);
@@ -83,6 +94,7 @@ public class BossFight : MonoBehaviour
 
         if (BossPopup.Instance != null)
             BossPopup.Instance.ShowWin();
+        SoundManager.Instance?.PlayWin();
     }
 
     IEnumerator RunRound(System.Action<bool> callback)
@@ -111,7 +123,6 @@ public class BossFight : MonoBehaviour
 
         yield return StartCoroutine(BlinkTiles(dangerTiles));
 
-        // Use fall pattern for this round
         List<GameObject> orderedDangerTiles = GetFallOrder(dangerTiles, currentRound);
 
         foreach (GameObject tile in orderedDangerTiles)
@@ -130,7 +141,6 @@ public class BossFight : MonoBehaviour
     {
         List<GameObject> ordered = new List<GameObject>(tiles);
 
-        // Find average position of safe tiles
         Vector3 safeCenter = Vector3.zero;
         foreach (GameObject safeTile in safeTiles)
             if (safeTile != null)
@@ -140,7 +150,6 @@ public class BossFight : MonoBehaviour
         switch (round)
         {
             case 0:
-                // Round 1 — random BUT tiles near safe zone fall last
                 Shuffle(ordered);
                 ordered.Sort((a, b) =>
                 {
@@ -151,7 +160,6 @@ public class BossFight : MonoBehaviour
                 break;
 
             case 1:
-                // Round 2 — left to right wave BUT tiles near safe zone fall last
                 ordered.Sort((a, b) =>
                 {
                     float scoreA = a.transform.position.x -
@@ -163,7 +171,6 @@ public class BossFight : MonoBehaviour
                 break;
 
             case 2:
-                // Round 3 — outside in BUT tiles near safe zone fall last
                 ordered.Sort((a, b) =>
                 {
                     float distFromCenterA = Vector3.Distance(a.transform.position, arenaCenter);

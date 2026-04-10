@@ -114,7 +114,10 @@ public class FallDetection : MonoBehaviour
         playerMovement.ResetMovement();
         playerMovement.enabled = false;
 
-        // Fall into the abyss
+        // Play fall sound if u want one
+        SoundManager.Instance?.PlayFall();
+
+        // Fall into the abyss hehe
         float elapsed = 0f;
         float fallTime = 0.8f;
         Vector3 startPos = transform.position;
@@ -133,6 +136,9 @@ public class FallDetection : MonoBehaviour
         transform.rotation = spawnRotation;
         playerMovement.orientation = PlayerMovement.Orientation.Standing;
         playerMovement.ResetMovement();
+
+        // Play respawn sound
+        SoundManager.Instance?.PlayRespawn();
 
         isFalling = false;
     }

@@ -76,6 +76,9 @@ public class PlayerMovement : MonoBehaviour
     {
         isMoving = true;
 
+        // Play move sound
+        SoundManager.Instance?.PlayMove();
+
         float halfHeight = GetHalfHeight();
         Vector3 bottomCenter = transform.position;
         bottomCenter.y = transform.position.y - halfHeight;
