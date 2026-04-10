@@ -28,12 +28,20 @@ public class BossFight : MonoBehaviour
     private int currentRound = 0;
     public bool bossActive = false;
     private Dictionary<GameObject, Vector3> originalPositions = new Dictionary<GameObject, Vector3>();
+    private Vector3 arenaCenter;
 
     void Awake()
     {
         foreach (GameObject tile in allTiles)
             if (tile != null)
                 originalPositions[tile] = tile.transform.position;
+
+        // Calculate arena center from all tiles
+        arenaCenter = Vector3.zero;
+        foreach (GameObject tile in allTiles)
+            if (tile != null)
+                arenaCenter += tile.transform.position;
+        arenaCenter /= allTiles.Count;
     }
 
     public void StartBossFight()
@@ -61,7 +69,6 @@ public class BossFight : MonoBehaviour
             if (!survived)
             {
                 StopBossFight();
-                // Show lose popup then respawn
                 if (BossPopup.Instance != null)
                     BossPopup.Instance.ShowLose();
                 FindObjectOfType<FallDetection>().Respawn();
@@ -74,10 +81,8 @@ public class BossFight : MonoBehaviour
             yield return new WaitForSeconds(1f);
         }
 
-        // All rounds cleared — show win popup then go to main menu
         if (BossPopup.Instance != null)
             BossPopup.Instance.ShowWin();
-        // SceneManager is handled by BossPopup after fade out
     }
 
     IEnumerator RunRound(System.Action<bool> callback)
@@ -106,7 +111,10 @@ public class BossFight : MonoBehaviour
 
         yield return StartCoroutine(BlinkTiles(dangerTiles));
 
-        foreach (GameObject tile in dangerTiles)
+        // Use fall pattern for this round
+        List<GameObject> orderedDangerTiles = GetFallOrder(dangerTiles, currentRound);
+
+        foreach (GameObject tile in orderedDangerTiles)
         {
             StartCoroutine(DropTile(tile));
             yield return new WaitForSeconds(fallDelay);
@@ -116,6 +124,61 @@ public class BossFight : MonoBehaviour
 
         bool survived = PlayerOnSafeTile();
         callback(survived);
+    }
+
+    List<GameObject> GetFallOrder(List<GameObject> tiles, int round)
+    {
+        List<GameObject> ordered = new List<GameObject>(tiles);
+
+        // Find average position of safe tiles
+        Vector3 safeCenter = Vector3.zero;
+        foreach (GameObject safeTile in safeTiles)
+            if (safeTile != null)
+                safeCenter += safeTile.transform.position;
+        safeCenter /= safeTiles.Count;
+
+        switch (round)
+        {
+            case 0:
+                // Round 1 — random BUT tiles near safe zone fall last
+                Shuffle(ordered);
+                ordered.Sort((a, b) =>
+                {
+                    float distA = Vector3.Distance(a.transform.position, safeCenter);
+                    float distB = Vector3.Distance(b.transform.position, safeCenter);
+                    return distB.CompareTo(distA);
+                });
+                break;
+
+            case 1:
+                // Round 2 — left to right wave BUT tiles near safe zone fall last
+                ordered.Sort((a, b) =>
+                {
+                    float scoreA = a.transform.position.x -
+                        (Vector3.Distance(a.transform.position, safeCenter) * 0.3f);
+                    float scoreB = b.transform.position.x -
+                        (Vector3.Distance(b.transform.position, safeCenter) * 0.3f);
+                    return scoreA.CompareTo(scoreB);
+                });
+                break;
+
+            case 2:
+                // Round 3 — outside in BUT tiles near safe zone fall last
+                ordered.Sort((a, b) =>
+                {
+                    float distFromCenterA = Vector3.Distance(a.transform.position, arenaCenter);
+                    float distFromSafeA = Vector3.Distance(a.transform.position, safeCenter);
+                    float distFromCenterB = Vector3.Distance(b.transform.position, arenaCenter);
+                    float distFromSafeB = Vector3.Distance(b.transform.position, safeCenter);
+
+                    float scoreA = distFromCenterB - (distFromSafeA * 0.5f);
+                    float scoreB = distFromCenterA - (distFromSafeB * 0.5f);
+                    return scoreA.CompareTo(scoreB);
+                });
+                break;
+        }
+
+        return ordered;
     }
 
     IEnumerator BlinkTiles(List<GameObject> tiles)
