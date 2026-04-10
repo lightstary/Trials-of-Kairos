@@ -11866,7 +11866,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 2
-  moveSpeed: 1
+  tickInterval: 1
+  minTime: -4
+  maxTime: 4
 --- !u!65 &706326132
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -12420,7 +12422,7 @@ MonoBehaviour:
   safeColor: {r: 0, g: 1, b: 0.3, a: 1}
   dangerColor: {r: 1, g: 0.2, b: 0, a: 1}
   defaultColor: {r: 1, g: 1, b: 1, a: 1}
-  nextSceneName: Level2
+  mainMenuScene: MainMenu
   bossActive: 0
 --- !u!4 &735964032
 Transform:
@@ -14589,6 +14591,58 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: baebfce464e12034ea593ab88cb9d3c8, type: 3}
+--- !u!1 &851431765
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 851431767}
+  - component: {fileID: 851431766}
+  m_Layer: 0
+  m_Name: SoundManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &851431766
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 851431765}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9790e3f55a3a97f469214de68c64051a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  winSound: {fileID: 0}
+  loseSound: {fileID: 0}
+  roundClearSound: {fileID: 0}
+  fallSound: {fileID: 0}
+  respawnSound: {fileID: 0}
+  moveSound: {fileID: 0}
+  gameMusic: {fileID: 0}
+  bossFightMusic: {fileID: 0}
+--- !u!4 &851431767
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 851431765}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -3.377133, y: -10.956033, z: 22.393549}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &851910194
 GameObject:
   m_ObjectHideFlags: 0
@@ -27027,7 +27081,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 2
-  moveSpeed: 1
+  tickInterval: 1
+  minTime: -4
+  maxTime: 4
 --- !u!65 &1759034088
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -27239,6 +27295,9 @@ MonoBehaviour:
   followSpeed: 5
   lookOffset: {x: 0, y: 1, z: 0}
   rotateSpeed: 5
+  zoomOffset: {x: 0.3, y: 1.5, z: -2.5}
+  zoomFollowSpeed: 8
+  mouseSensitivity: 2
 --- !u!114 &1759268774
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -28398,6 +28457,55 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 30b5a273a46cf26409fb1c52916270b2, type: 3}
   m_PrefabInstance: {fileID: 1077739640}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1889438388
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1889438390}
+  - component: {fileID: 1889438389}
+  m_Layer: 0
+  m_Name: TimeScaleLogic
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1889438389
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1889438388}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c9670cfe7160fe947928ba28213ed1f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  meter: {fileID: 0}
+  tickInterval: 1
+  minValue: -10
+  maxValue: 10
+  dangerZone: 8
+--- !u!4 &1889438390
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1889438388}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -3.377133, y: -10.956033, z: 22.393549}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1891673221
 GameObject:
   m_ObjectHideFlags: 0
@@ -31397,7 +31505,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 2
-  moveSpeed: 1
+  tickInterval: 1
+  minTime: -4
+  maxTime: 4
 --- !u!65 &2023957590
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -32498,3 +32608,5 @@ SceneRoots:
   - {fileID: 1730157744}
   - {fileID: 735964032}
   - {fileID: 1505208372}
+  - {fileID: 1889438390}
+  - {fileID: 851431767}
