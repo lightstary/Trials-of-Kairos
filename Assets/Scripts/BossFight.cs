@@ -20,8 +20,8 @@ public class BossFight : MonoBehaviour
     public Color dangerColor = new Color(1f, 0.2f, 0f);
     public Color defaultColor = new Color(1f, 1f, 1f);
 
-    [Header("Next Level")]
-    public string nextSceneName = "Level2";
+    [Header("Scene Names")]
+    public string mainMenuScene = "MainMenu";
 
     private List<GameObject> safeTiles = new List<GameObject>();
     private List<GameObject> dangerTiles = new List<GameObject>();
@@ -61,20 +61,23 @@ public class BossFight : MonoBehaviour
             if (!survived)
             {
                 StopBossFight();
+                // Show lose popup then respawn
+                if (BossPopup.Instance != null)
+                    BossPopup.Instance.ShowLose();
                 FindObjectOfType<FallDetection>().Respawn();
                 yield break;
             }
 
-            // Player survived! Flash and reset for next round
             yield return StartCoroutine(FlashSafeTiles());
             yield return new WaitForSeconds(roundResetDelay);
             ResetArena();
             yield return new WaitForSeconds(1f);
         }
 
-        Debug.Log("Boss defeated! Loading next level...");
-        yield return new WaitForSeconds(1.5f);
-        UnityEngine.SceneManagement.SceneManager.LoadScene(nextSceneName);
+        // All rounds cleared — show win popup then go to main menu
+        if (BossPopup.Instance != null)
+            BossPopup.Instance.ShowWin();
+        // SceneManager is handled by BossPopup after fade out
     }
 
     IEnumerator RunRound(System.Action<bool> callback)
@@ -93,30 +96,24 @@ public class BossFight : MonoBehaviour
                 dangerTiles.Add(shuffled[i]);
         }
 
-        // Show safe tiles green
         foreach (GameObject tile in safeTiles)
             SetTileColor(tile, safeColor);
 
         yield return new WaitForSeconds(glowDuration);
 
-        // Turn off all glows
         foreach (GameObject tile in allTiles)
             SetTileColor(tile, defaultColor);
 
-        // Blink danger tiles
         yield return StartCoroutine(BlinkTiles(dangerTiles));
 
-        // Drop danger tiles one by one
         foreach (GameObject tile in dangerTiles)
         {
             StartCoroutine(DropTile(tile));
             yield return new WaitForSeconds(fallDelay);
         }
 
-        // Wait for tiles to finish falling
         yield return new WaitForSeconds(1f);
 
-        // Check if player survived
         bool survived = PlayerOnSafeTile();
         callback(survived);
     }
@@ -172,33 +169,24 @@ public class BossFight : MonoBehaviour
         tile.SetActive(false);
     }
 
- bool PlayerOnSafeTile()
-{
-    GameObject player = GameObject.FindGameObjectWithTag("Player");
-    if (player == null) return false;
-
-    Debug.Log("Checking player position: " + player.transform.position);
-    Debug.Log("Safe tiles count: " + safeTiles.Count);
-
-    // Cast ray DOWN from player to find what tile they're standing on
-    RaycastHit[] hits = Physics.RaycastAll(player.transform.position, Vector3.down, 3f);
-    
-    foreach (RaycastHit hit in hits)
+    bool PlayerOnSafeTile()
     {
-        Debug.Log("Ray hit: " + hit.collider.gameObject.name);
-        foreach (GameObject safeTile in safeTiles)
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null) return false;
+
+        RaycastHit[] hits = Physics.RaycastAll(player.transform.position, Vector3.down, 3f);
+
+        foreach (RaycastHit hit in hits)
         {
-            if (safeTile != null && hit.collider.gameObject == safeTile)
+            foreach (GameObject safeTile in safeTiles)
             {
-                Debug.Log("Player is on safe tile: " + safeTile.name);
-                return true;
+                if (safeTile != null && hit.collider.gameObject == safeTile)
+                    return true;
             }
         }
-    }
 
-    Debug.Log("Player NOT on safe tile!");
-    return false;
-}
+        return false;
+    }
 
     void ResetArena()
     {
