@@ -5,20 +5,20 @@ using System.Collections.Generic;
 public class BossFight : MonoBehaviour
 {
     [Header("Boss Arena Tiles")]
-    public List<GameObject> allTiles = new List<GameObject>(); // drag all boss tiles here
+    public List<GameObject> allTiles = new List<GameObject>();
 
     [Header("Settings")]
     public int totalRounds = 3;
     public int safeTilesPerRound = 2;
-    public float glowDuration = 3f;    // how long safe tiles glow before round starts
-    public float blinkDuration = 2f;   // how long unsafe tiles blink before falling
-    public float fallDelay = 0.3f;     // delay between each tile falling
-    public float roundResetDelay = 2f; // delay before next round starts
+    public float glowDuration = 4f;
+    public float blinkDuration = 3f;
+    public float fallDelay = 0.3f;
+    public float roundResetDelay = 2f;
 
     [Header("Colors")]
-    public Color safeColor = new Color(0f, 1f, 0.3f);    // green
-    public Color dangerColor = new Color(1f, 0.2f, 0f);  // red
-    public Color defaultColor = new Color(1f, 1f, 1f);   // white
+    public Color safeColor = new Color(0f, 1f, 0.3f);
+    public Color dangerColor = new Color(1f, 0.2f, 0f);
+    public Color defaultColor = new Color(1f, 1f, 1f);
 
     [Header("Next Level")]
     public string nextSceneName = "Level2";
@@ -26,10 +26,16 @@ public class BossFight : MonoBehaviour
     private List<GameObject> safeTiles = new List<GameObject>();
     private List<GameObject> dangerTiles = new List<GameObject>();
     private int currentRound = 0;
-    private bool bossActive = false;
-    private bool roundActive = false;
+    public bool bossActive = false;
+    private Dictionary<GameObject, Vector3> originalPositions = new Dictionary<GameObject, Vector3>();
 
-    // Call this when player enters the boss arena
+    void Awake()
+    {
+        foreach (GameObject tile in allTiles)
+            if (tile != null)
+                originalPositions[tile] = tile.transform.position;
+    }
+
     public void StartBossFight()
     {
         if (bossActive) return;
@@ -37,42 +43,45 @@ public class BossFight : MonoBehaviour
         StartCoroutine(RunBossFight());
     }
 
+    public void StopBossFight()
+    {
+        StopAllCoroutines();
+        bossActive = false;
+        currentRound = 0;
+        ResetArena();
+    }
+
     IEnumerator RunBossFight()
     {
         for (currentRound = 0; currentRound < totalRounds; currentRound++)
         {
-            yield return StartCoroutine(RunRound());
+            bool survived = false;
+            yield return StartCoroutine(RunRound(result => survived = result));
 
-            // Check if player survived
-            if (!PlayerOnSafeTile())
+            if (!survived)
             {
-                // Player failed — respawn
+                StopBossFight();
                 FindObjectOfType<FallDetection>().Respawn();
-                // Reset boss fight
-                ResetArena();
-                currentRound = -1; // will increment to 0
-                yield return new WaitForSeconds(roundResetDelay);
-                continue;
+                yield break;
             }
 
-            // Wait before next round
+            // Player survived! Flash and reset for next round
+            yield return StartCoroutine(FlashSafeTiles());
             yield return new WaitForSeconds(roundResetDelay);
             ResetArena();
+            yield return new WaitForSeconds(1f);
         }
 
-        // All rounds cleared!
         Debug.Log("Boss defeated! Loading next level...");
         yield return new WaitForSeconds(1.5f);
         UnityEngine.SceneManagement.SceneManager.LoadScene(nextSceneName);
     }
 
-    IEnumerator RunRound()
+    IEnumerator RunRound(System.Action<bool> callback)
     {
-        roundActive = true;
-
-        // Pick random safe tiles
         safeTiles.Clear();
         dangerTiles.Clear();
+
         List<GameObject> shuffled = new List<GameObject>(allTiles);
         Shuffle(shuffled);
 
@@ -84,20 +93,18 @@ public class BossFight : MonoBehaviour
                 dangerTiles.Add(shuffled[i]);
         }
 
-        // Glow safe tiles green
+        // Show safe tiles green
         foreach (GameObject tile in safeTiles)
             SetTileColor(tile, safeColor);
 
-        // Wait for player to see safe tiles
         yield return new WaitForSeconds(glowDuration);
 
-        // Reset safe tile color so player has to remember
-        foreach (GameObject tile in safeTiles)
+        // Turn off all glows
+        foreach (GameObject tile in allTiles)
             SetTileColor(tile, defaultColor);
 
-        // Blink danger tiles red
-        StartCoroutine(BlinkTiles(dangerTiles));
-        yield return new WaitForSeconds(blinkDuration);
+        // Blink danger tiles
+        yield return StartCoroutine(BlinkTiles(dangerTiles));
 
         // Drop danger tiles one by one
         foreach (GameObject tile in dangerTiles)
@@ -106,9 +113,12 @@ public class BossFight : MonoBehaviour
             yield return new WaitForSeconds(fallDelay);
         }
 
-        // Wait for all tiles to fall
-        yield return new WaitForSeconds(0.5f);
-        roundActive = false;
+        // Wait for tiles to finish falling
+        yield return new WaitForSeconds(1f);
+
+        // Check if player survived
+        bool survived = PlayerOnSafeTile();
+        callback(survived);
     }
 
     IEnumerator BlinkTiles(List<GameObject> tiles)
@@ -122,8 +132,24 @@ public class BossFight : MonoBehaviour
                 SetTileColor(tile, colorToggle ? dangerColor : defaultColor);
 
             colorToggle = !colorToggle;
-            elapsed += 0.2f;
-            yield return new WaitForSeconds(0.2f);
+            elapsed += 0.3f;
+            yield return new WaitForSeconds(0.3f);
+        }
+
+        foreach (GameObject tile in tiles)
+            SetTileColor(tile, dangerColor);
+    }
+
+    IEnumerator FlashSafeTiles()
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            foreach (GameObject tile in safeTiles)
+                SetTileColor(tile, safeColor);
+            yield return new WaitForSeconds(0.3f);
+            foreach (GameObject tile in safeTiles)
+                SetTileColor(tile, defaultColor);
+            yield return new WaitForSeconds(0.3f);
         }
     }
 
@@ -131,7 +157,6 @@ public class BossFight : MonoBehaviour
     {
         if (tile == null) yield break;
 
-        // Animate tile falling down
         float elapsed = 0f;
         float dropTime = 0.5f;
         Vector3 startPos = tile.transform.position;
@@ -149,14 +174,10 @@ public class BossFight : MonoBehaviour
 
     bool PlayerOnSafeTile()
     {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player == null) return false;
-
         foreach (GameObject safeTile in safeTiles)
         {
             if (safeTile == null) continue;
 
-            // Check if player is above this safe tile
             Vector3 rayOrigin = safeTile.transform.position + Vector3.up * 0.2f;
             RaycastHit hit;
             if (Physics.Raycast(rayOrigin, Vector3.up, out hit, 3f))
@@ -175,38 +196,43 @@ public class BossFight : MonoBehaviour
             if (tile != null)
             {
                 tile.SetActive(true);
+                tile.transform.position = originalPositions[tile];
                 SetTileColor(tile, defaultColor);
-                // Reset position if it fell
-                tile.transform.position = GetOriginalPosition(tile);
             }
         }
-    }
-
-    // Store original positions on start
-    private Dictionary<GameObject, Vector3> originalPositions = new Dictionary<GameObject, Vector3>();
-
-    void Awake()
-    {
-        // Cache all original tile positions
-        foreach (GameObject tile in allTiles)
-        {
-            if (tile != null)
-                originalPositions[tile] = tile.transform.position;
-        }
-    }
-
-    Vector3 GetOriginalPosition(GameObject tile)
-    {
-        if (originalPositions.ContainsKey(tile))
-            return originalPositions[tile];
-        return tile.transform.position;
     }
 
     void SetTileColor(GameObject tile, Color color)
     {
         if (tile == null) return;
-        Renderer r = tile.GetComponent<Renderer>();
-        if (r != null) r.material.color = color;
+
+        Transform lightTransform = tile.transform.Find("BossGlow");
+        Light glowLight;
+
+        if (lightTransform == null)
+        {
+            GameObject lightObj = new GameObject("BossGlow");
+            lightObj.transform.SetParent(tile.transform);
+            lightObj.transform.localPosition = new Vector3(0f, 0.1f, 0f);
+            lightObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            glowLight = lightObj.AddComponent<Light>();
+            glowLight.type = LightType.Spot;
+            glowLight.spotAngle = 15f;
+            glowLight.range = 8f;
+            glowLight.intensity = 3f;
+        }
+        else
+        {
+            glowLight = lightTransform.GetComponent<Light>();
+        }
+
+        if (color == defaultColor)
+            glowLight.enabled = false;
+        else
+        {
+            glowLight.enabled = true;
+            glowLight.color = color;
+        }
     }
 
     void Shuffle<T>(List<T> list)

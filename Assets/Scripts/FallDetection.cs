@@ -94,6 +94,11 @@ public class FallDetection : MonoBehaviour
 
     public void Respawn()
     {
+        // Stop boss fight if active
+        BossFight bossFight = FindObjectOfType<BossFight>();
+        if (bossFight != null)
+            bossFight.StopBossFight();
+
         transform.position = spawnPosition;
         transform.rotation = spawnRotation;
         playerMovement.orientation = PlayerMovement.Orientation.Standing;
