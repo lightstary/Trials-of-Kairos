@@ -94,7 +94,8 @@ public class FallDetection : MonoBehaviour
 
     public void Respawn()
     {
-        // Stop boss fight if active
+        Debug.Log("Respawn called from: " + System.Environment.StackTrace);
+
         BossFight bossFight = FindObjectOfType<BossFight>();
         if (bossFight != null)
             bossFight.StopBossFight();

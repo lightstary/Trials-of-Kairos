@@ -172,22 +172,33 @@ public class BossFight : MonoBehaviour
         tile.SetActive(false);
     }
 
-    bool PlayerOnSafeTile()
+ bool PlayerOnSafeTile()
+{
+    GameObject player = GameObject.FindGameObjectWithTag("Player");
+    if (player == null) return false;
+
+    Debug.Log("Checking player position: " + player.transform.position);
+    Debug.Log("Safe tiles count: " + safeTiles.Count);
+
+    // Cast ray DOWN from player to find what tile they're standing on
+    RaycastHit[] hits = Physics.RaycastAll(player.transform.position, Vector3.down, 3f);
+    
+    foreach (RaycastHit hit in hits)
     {
+        Debug.Log("Ray hit: " + hit.collider.gameObject.name);
         foreach (GameObject safeTile in safeTiles)
         {
-            if (safeTile == null) continue;
-
-            Vector3 rayOrigin = safeTile.transform.position + Vector3.up * 0.2f;
-            RaycastHit hit;
-            if (Physics.Raycast(rayOrigin, Vector3.up, out hit, 3f))
+            if (safeTile != null && hit.collider.gameObject == safeTile)
             {
-                if (hit.collider.CompareTag("Player"))
-                    return true;
+                Debug.Log("Player is on safe tile: " + safeTile.name);
+                return true;
             }
         }
-        return false;
     }
+
+    Debug.Log("Player NOT on safe tile!");
+    return false;
+}
 
     void ResetArena()
     {
