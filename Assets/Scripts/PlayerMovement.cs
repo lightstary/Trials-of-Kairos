@@ -10,10 +10,14 @@ public class PlayerMovement : MonoBehaviour
     public Orientation orientation = Orientation.Standing;
 
     private const float TILE_TOP       = 0.1f;
-    private const float AXIS_THRESHOLD = 0.5f;
+    private const float AXIS_THRESHOLD = 0.5f; // lowered for more responsive input
 
     private float prevH = 0f;
     private float prevV = 0f;
+
+    private float inputBufferTime = 0.8f;
+    private float inputBufferTimer = 0f;
+    private Vector3 bufferedInput = Vector3.zero;
 
     void Start()
     {
@@ -27,23 +31,50 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        if (isMoving || Time.timeScale == 0f) return;
-
-        float h = Input.GetAxis("Horizontal");
-        float v = Input.GetAxis("Vertical");
+        if (Time.timeScale == 0f) return;
 
         Vector3 input = Vector3.zero;
 
-        if      (v >  AXIS_THRESHOLD && prevV <=  AXIS_THRESHOLD) input = Vector3.forward;
-        else if (v < -AXIS_THRESHOLD && prevV >= -AXIS_THRESHOLD) input = Vector3.back;
-        else if (h < -AXIS_THRESHOLD && prevH >= -AXIS_THRESHOLD) input = Vector3.left;
-        else if (h >  AXIS_THRESHOLD && prevH <=  AXIS_THRESHOLD) input = Vector3.right;
+        // Keyboard direct check
+        if (Input.GetKeyDown(KeyCode.UpArrow)         || Input.GetKeyDown(KeyCode.W)) input = Vector3.forward;
+        else if (Input.GetKeyDown(KeyCode.DownArrow)  || Input.GetKeyDown(KeyCode.S)) input = Vector3.back;
+        else if (Input.GetKeyDown(KeyCode.LeftArrow)  || Input.GetKeyDown(KeyCode.A)) input = Vector3.left;
+        else if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D)) input = Vector3.right;
+        else
+        {
+            // Xbox controller axis
+            float h = Input.GetAxis("Horizontal");
+            float v = Input.GetAxis("Vertical");
 
-        prevH = h;
-        prevV = v;
+            if      (v >  AXIS_THRESHOLD && prevV <=  AXIS_THRESHOLD) input = Vector3.forward;
+            else if (v < -AXIS_THRESHOLD && prevV >= -AXIS_THRESHOLD) input = Vector3.back;
+            else if (h < -AXIS_THRESHOLD && prevH >= -AXIS_THRESHOLD) input = Vector3.left;
+            else if (h >  AXIS_THRESHOLD && prevH <=  AXIS_THRESHOLD) input = Vector3.right;
 
+            prevH = h;
+            prevV = v;
+        }
+
+        // Buffer input so it doesnt get lost mid roll
         if (input != Vector3.zero)
-            StartCoroutine(Roll(input));
+        {
+            bufferedInput = input;
+            inputBufferTimer = inputBufferTime;
+        }
+
+        // Count down buffer
+        if (inputBufferTimer > 0f)
+            inputBufferTimer -= Time.deltaTime;
+        else
+            bufferedInput = Vector3.zero;
+
+        // Fire when not moving and buffer has input
+        if (!isMoving && bufferedInput != Vector3.zero)
+        {
+            StartCoroutine(Roll(bufferedInput));
+            bufferedInput = Vector3.zero;
+            inputBufferTimer = 0f;
+        }
     }
 
     IEnumerator Roll(Vector3 dir)
