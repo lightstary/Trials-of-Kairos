@@ -31,30 +31,15 @@ public class TimeState : MonoBehaviour
     {
         State previous = currentState;
 
-        switch (playerMovement.orientation)
-        {
-            case PlayerMovement.Orientation.Standing:
-                currentState = State.Forward;
-                break;
+        // Get actual up direction of player in world space
+        Vector3 playerUp = playerMovement.transform.up;
 
-            case PlayerMovement.Orientation.FlatX:
-            case PlayerMovement.Orientation.FlatZ:
-                currentState = State.Frozen;
-                break;
-
-            case PlayerMovement.Orientation.UpsideDown:
-                currentState = State.Reverse;
-                break;
-
-            case PlayerMovement.Orientation.FlatX_R:
-            case PlayerMovement.Orientation.FlatZ_R:
-                currentState = State.Frozen;
-                break;
-
-            default:
-                currentState = State.Forward;
-                break;
-        }
+        if (playerUp.y > 0.7f)
+            currentState = State.Forward;   // Y+ facing up = standing = time forward
+        else if (playerUp.y < -0.7f)
+            currentState = State.Reverse;   // Y- facing up = upside down = time reverse
+        else
+            currentState = State.Frozen;    // X or Z facing up = on its side = frozen
 
         if (currentState != previous)
             OnStateChanged?.Invoke(currentState);
