@@ -10,7 +10,7 @@ public class PlayerMovement : MonoBehaviour
     public Orientation orientation = Orientation.Standing;
 
     private const float TILE_TOP       = 0.1f;
-    private const float AXIS_THRESHOLD = 0.5f; // lowered for more responsive input
+    private const float AXIS_THRESHOLD = 0.5f;
 
     private float prevH = 0f;
     private float prevV = 0f;
@@ -35,14 +35,12 @@ public class PlayerMovement : MonoBehaviour
 
         Vector3 input = Vector3.zero;
 
-        // Keyboard direct check
         if (Input.GetKeyDown(KeyCode.UpArrow)         || Input.GetKeyDown(KeyCode.W)) input = Vector3.forward;
         else if (Input.GetKeyDown(KeyCode.DownArrow)  || Input.GetKeyDown(KeyCode.S)) input = Vector3.back;
         else if (Input.GetKeyDown(KeyCode.LeftArrow)  || Input.GetKeyDown(KeyCode.A)) input = Vector3.left;
         else if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D)) input = Vector3.right;
         else
         {
-            // Xbox controller axis
             float h = Input.GetAxis("Horizontal");
             float v = Input.GetAxis("Vertical");
 
@@ -55,20 +53,17 @@ public class PlayerMovement : MonoBehaviour
             prevV = v;
         }
 
-        // Buffer input so it doesnt get lost mid roll
         if (input != Vector3.zero)
         {
             bufferedInput = input;
             inputBufferTimer = inputBufferTime;
         }
 
-        // Count down buffer
         if (inputBufferTimer > 0f)
             inputBufferTimer -= Time.deltaTime;
         else
             bufferedInput = Vector3.zero;
 
-        // Fire when not moving and buffer has input
         if (!isMoving && bufferedInput != Vector3.zero)
         {
             StartCoroutine(Roll(bufferedInput));

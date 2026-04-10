@@ -5,12 +5,13 @@ public class MovingTile : MonoBehaviour
     [Header("Movement Settings")]
     public Vector3 moveDirection = Vector3.right;
     public float moveDistance = 2f;
-    public float moveSpeed = 2f;
+    public float tickInterval = 1f; // seconds between each snap
 
     private Vector3 startPosition;
     private Vector3 endPosition;
     private float journeyProgress = 0f;
-    private float currentDirection = 1f; 
+    private float currentDirection = 1f;
+    private float tickTimer = 0f;
 
     void Start()
     {
@@ -25,23 +26,33 @@ public class MovingTile : MonoBehaviour
         switch (TimeState.Instance.currentState)
         {
             case TimeState.State.Forward:
-                MoveTile(1f);
+                tickTimer += Time.deltaTime;
+                if (tickTimer >= tickInterval)
+                {
+                    tickTimer = 0f;
+                    SnapMove(1f);
+                }
                 break;
 
             case TimeState.State.Frozen:
-                // Do nothing
+                tickTimer = 0f; // reset so it waits full second after unfreezing
                 break;
 
             case TimeState.State.Reverse:
-                MoveTile(-1f);
+                tickTimer += Time.deltaTime;
+                if (tickTimer >= tickInterval)
+                {
+                    tickTimer = 0f;
+                    SnapMove(-1f);
+                }
                 break;
         }
     }
 
-    void MoveTile(float timeDirection)
+    void SnapMove(float timeDirection)
     {
-        // Advance progress
-        journeyProgress += currentDirection * timeDirection * moveSpeed * Time.deltaTime / moveDistance;
+        // Move one snap step in the current direction
+        journeyProgress += currentDirection * timeDirection * (1f / moveDistance);
 
         // Flip direction at each end
         if (journeyProgress >= 1f)
