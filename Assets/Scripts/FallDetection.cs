@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Collections;
 
 public class FallDetection : MonoBehaviour
 {
@@ -9,6 +10,7 @@ public class FallDetection : MonoBehaviour
     private Vector3 spawnPosition;
     private Quaternion spawnRotation;
     private PlayerMovement playerMovement;
+    private bool isFalling = false;
 
     void Start()
     {
@@ -25,6 +27,7 @@ public class FallDetection : MonoBehaviour
     void CheckFall()
     {
         if (playerMovement.isMoving) return;
+        if (isFalling) return;
 
         int supported = 0;
         Vector3[] points = GetFootprintPoints();
@@ -94,16 +97,44 @@ public class FallDetection : MonoBehaviour
 
     public void Respawn()
     {
-        Debug.Log("Respawn called from: " + System.Environment.StackTrace);
+        if (isFalling) return;
+        StartCoroutine(FallThenRespawn());
+    }
 
+    IEnumerator FallThenRespawn()
+    {
+        isFalling = true;
+
+        // Stop boss fight if active
         BossFight bossFight = FindObjectOfType<BossFight>();
         if (bossFight != null)
             bossFight.StopBossFight();
 
+        // Disable movement while falling
+        playerMovement.ResetMovement();
+        playerMovement.enabled = false;
+
+        // Fall into the abyss
+        float elapsed = 0f;
+        float fallTime = 0.8f;
+        Vector3 startPos = transform.position;
+        Vector3 endPos = startPos + Vector3.down * 10f;
+
+        while (elapsed < fallTime)
+        {
+            elapsed += Time.deltaTime;
+            transform.position = Vector3.Lerp(startPos, endPos, elapsed / fallTime);
+            yield return null;
+        }
+
+        // Respawn
+        playerMovement.enabled = true;
         transform.position = spawnPosition;
         transform.rotation = spawnRotation;
         playerMovement.orientation = PlayerMovement.Orientation.Standing;
         playerMovement.ResetMovement();
+
+        isFalling = false;
     }
 
     public void UpdateSpawnPoint(Vector3 newPosition, Quaternion newRotation)
