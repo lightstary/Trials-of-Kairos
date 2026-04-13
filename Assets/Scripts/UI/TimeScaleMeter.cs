@@ -14,6 +14,12 @@ public class TimeScaleMeter : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private float fillLerpSpeed = 12f;
 
+    /// <summary>
+    /// When true, warning and danger zones are always visible on the bar,
+    /// not just during boss fights. Used in the Hub after the intro modal.
+    /// </summary>
+    public bool AlwaysShowZones { get; set; }
+
     private const float BAR_W = 400f;
     private const float TOTAL_H = 52f;
     private const float GLOW_SPEED = 2.5f;
@@ -121,20 +127,21 @@ public class TimeScaleMeter : MonoBehaviour
         if (_posFill != null) _posFill.color = stateCol;
         if (_negFill != null) _negFill.color = stateCol;
 
-        // ── Danger/Warning zones (boss fights only) ─────────────────────
+        // ── Danger/Warning zones (boss fights or always-show mode) ───────
         bool bossActive = BossFight.Instance != null && BossFight.Instance.bossActive;
+        bool showZones = bossActive || AlwaysShowZones;
 
         // Warning zone: subtle orange at warning threshold
         bool inWarning = bossActive && threat >= TimeScaleLogic.ThreatState.Warning;
         float wp = inWarning ? Mathf.Sin(Time.time * 3f) * 0.15f + 0.25f : 0.08f;
-        if (_warnR != null) { _warnR.enabled = bossActive; Color c = WARN_COL; c.a = wp * (raw >= wrn ? 1f : 0.3f); _warnR.color = c; }
-        if (_warnL != null) { _warnL.enabled = bossActive; Color c = WARN_COL; c.a = wp * (raw <= -wrn ? 1f : 0.3f); _warnL.color = c; }
+        if (_warnR != null) { _warnR.enabled = showZones; Color c = WARN_COL; c.a = wp * (raw >= wrn ? 1f : 0.3f); _warnR.color = c; }
+        if (_warnL != null) { _warnL.enabled = showZones; Color c = WARN_COL; c.a = wp * (raw <= -wrn ? 1f : 0.3f); _warnL.color = c; }
 
         // Danger zone: red pulse at danger threshold
         bool inDanger = bossActive && threat >= TimeScaleLogic.ThreatState.Danger;
         float dp = inDanger ? Mathf.Sin(Time.time * 6f) * 0.3f + 0.7f : 0.15f;
-        if (_dangerR != null) { _dangerR.enabled = bossActive; Color c = DANGER_COL; c.a = dp * (raw >= dng ? 1f : 0.3f); _dangerR.color = c; }
-        if (_dangerL != null) { _dangerL.enabled = bossActive; Color c = DANGER_COL; c.a = dp * (raw <= -dng ? 1f : 0.3f); _dangerL.color = c; }
+        if (_dangerR != null) { _dangerR.enabled = showZones; Color c = DANGER_COL; c.a = dp * (raw >= dng ? 1f : 0.3f); _dangerR.color = c; }
+        if (_dangerL != null) { _dangerL.enabled = showZones; Color c = DANGER_COL; c.a = dp * (raw <= -dng ? 1f : 0.3f); _dangerL.color = c; }
 
         // ── Marker glow ─────────────────────────────────────────────────
         if (_posMarker != null)

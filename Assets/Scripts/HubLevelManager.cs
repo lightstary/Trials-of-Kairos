@@ -3,11 +3,18 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Manages the HUB tutorial level. Builds the tile layout at runtime using
-/// the real game tile mesh (TileNew.fbx) and materials from Zutzuy's Assets.
+/// Manages the HUB tutorial level. Can build the tile layout either at runtime
+/// or in the Editor via the context menu (right-click component → Build Hub Layout).
 /// Tiles match MainScene setup exactly: scale (1,0.2,1), BoxCollider center=(0,0,0) size=(1,1,1).
 /// Also bootstraps the PauseMenu UI if its references are null (HubScene ships with an empty PauseMenu).
+///
+/// To edit the Hub in the Scene view without Play mode:
+///   1. Right-click this component in the Inspector
+///   2. Choose "Build Hub Layout" to generate all tiles
+///   3. Edit tiles freely (move, delete, change materials)
+///   4. Use "Clear Hub Layout" to remove generated tiles and rebuild fresh
 /// </summary>
+[ExecuteAlways]
 public class HubLevelManager : MonoBehaviour
 {
     private const string FIRST_VISIT_KEY = "Hub_FirstVisit";
@@ -46,30 +53,135 @@ public class HubLevelManager : MonoBehaviour
 
     void Awake()
     {
+        if (!Application.isPlaying) return;
         Instance = this;
-        // Clear any stale material references from previous scene loads
-        basePlatformMat = null;
-        goldGlowMat = null;
-        blueGlowMat = null;
-        purpleGlowMat = null;
-        goalTileMat = null;
-        darkPlatformMat = null;
-        tileMesh = null;
     }
 
     void Start()
     {
+        if (!Application.isPlaying) return;
+
         LoadRealAssets();
-        BuildLevel();
+
+        // Only build tiles at runtime if they don't already exist in the scene
+        // (they were pre-built in edit mode and saved with the scene).
+        Transform existingTiles = transform.Find("HubTiles");
+        if (existingTiles == null || existingTiles.childCount == 0)
+            BuildVisualLayout();
+
+        // Always attach runtime components (gameplay scripts) to existing tiles
+        existingTiles = transform.Find("HubTiles");
+        if (existingTiles != null)
+            AttachRuntimeComponents(existingTiles);
+
         SetupEnvironment();
         BootstrapPauseMenu();
         EnsureAudioListener();
         EnsureStickCursor();
         EnsurePlayerModel();
+        EnsureTimeScaleMeter();
 
         if (IsFirstVisit())
             StartCoroutine(ShowTutorialDelayed(1.5f));
     }
+
+    /// <summary>
+    /// Attaches runtime-only components (tutorial triggers, goal tile, moving platform,
+    /// floating orb animation, modal trigger) to pre-built tiles that already exist.
+    /// Called every time the scene enters play mode.
+    /// </summary>
+    private void AttachRuntimeComponents(Transform root)
+    {
+        foreach (Transform child in root)
+        {
+            string name = child.name;
+
+            // Parse tile position from name: "Tile_X_Z"
+            if (name.StartsWith("Tile_"))
+            {
+                string[] parts = name.Split('_');
+                if (parts.Length >= 3 && int.TryParse(parts[1], out int x) && int.TryParse(parts[2], out int z))
+                {
+                    // Tutorial triggers — color state section
+                    if (x == 0 && z == 9)  AddTutorialTrigger(child.gameObject, TutorialTilePopup.TileType.Reverse);
+                    if (x == 0 && z == 10) AddTutorialTrigger(child.gameObject, TutorialTilePopup.TileType.Frozen);
+                    if (x == 0 && z == 12) AddTutorialTrigger(child.gameObject, TutorialTilePopup.TileType.Forward);
+
+                    // Goal tile
+                    if (x == 0 && z == 36 && child.GetComponent<GoalTile>() == null)
+                    {
+                        child.gameObject.name = "GoalTile";
+                        child.gameObject.AddComponent<GoalTile>();
+                    }
+                }
+            }
+
+            // Moving platform
+            if (name == "DemoPlatform" && child.GetComponent<MovingTile>() == null)
+            {
+                MovingTile mt = child.gameObject.AddComponent<MovingTile>();
+                mt.moveDirection = Vector3.forward;
+                mt.moveDistance = 2f;
+                mt.tickInterval = 1f;
+                mt.minTime = -2f;
+                mt.maxTime = 2f;
+                mt.smoothMovement = true;
+            }
+
+            // Floating orbs — add animation component at runtime
+            if (name == "CosmicOrb" && child.GetComponent<HubFloatingOrb>() == null)
+                child.gameObject.AddComponent<HubFloatingOrb>();
+        }
+
+        // Time Scale intro modal trigger
+        Transform existingTrigger = root.Find("TimeScaleIntroTrigger");
+        if (existingTrigger == null)
+            CreateTimeScaleModalTrigger(root);
+
+        // Player spawn
+        if (playerTransform == null)
+        {
+            GameObject p = GameObject.FindWithTag("Player");
+            if (p != null) playerTransform = p.transform;
+        }
+        if (playerTransform != null)
+        {
+            playerTransform.position = new Vector3(0f, TILE_TOP + 1.0f, 0f);
+            playerTransform.rotation = Quaternion.identity;
+            PlayerMovement pm = playerTransform.GetComponent<PlayerMovement>();
+            if (pm != null) pm.orientation = PlayerMovement.Orientation.Standing;
+        }
+    }
+
+#if UNITY_EDITOR
+    /// <summary>Builds (or rebuilds) the Hub tile layout in the Editor. Tiles persist in the scene.</summary>
+    [ContextMenu("Build Hub Layout")]
+    private void EditorBuildLayout()
+    {
+        Transform existing = transform.Find("HubTiles");
+        if (existing != null)
+            DestroyImmediate(existing.gameObject);
+
+        LoadRealAssets();
+        BuildVisualLayout();
+
+        UnityEditor.Undo.RegisterCreatedObjectUndo(transform.Find("HubTiles").gameObject, "Build Hub Layout");
+        UnityEditor.EditorUtility.SetDirty(gameObject);
+        Debug.Log("[HubLevelManager] Hub layout built. Save the scene to persist changes.");
+    }
+
+    /// <summary>Removes all generated hub tiles so you can rebuild fresh.</summary>
+    [ContextMenu("Clear Hub Layout")]
+    private void EditorClearLayout()
+    {
+        Transform existing = transform.Find("HubTiles");
+        if (existing != null)
+        {
+            UnityEditor.Undo.DestroyObjectImmediate(existing.gameObject);
+            Debug.Log("[HubLevelManager] Hub layout cleared.");
+        }
+    }
+#endif
 
     /// <summary>Shows the How To Play screen.</summary>
     public void ShowHowToPlay()
@@ -215,13 +327,17 @@ public class HubLevelManager : MonoBehaviour
 
     // ── Level Building ───────────────────────────────────────────────────
 
-    private void BuildLevel()
+    /// <summary>
+    /// Builds the visual layout of the hub: tiles, pillars, orbs.
+    /// Does NOT add runtime gameplay components (those are added by AttachRuntimeComponents).
+    /// Works in both edit mode and play mode.
+    /// </summary>
+    private void BuildVisualLayout()
     {
         Transform root = new GameObject("HubTiles").transform;
         root.SetParent(transform);
 
         // Use a dictionary so each (x, z) position gets exactly ONE tile.
-        // Later entries override earlier ones — no z-fighting from duplicate tiles.
         var tiles = new System.Collections.Generic.Dictionary<(int, int), Material>();
 
         // ── Spawn Platform (5x5) ──
@@ -249,23 +365,14 @@ public class HubLevelManager : MonoBehaviour
             for (int z = 9; z <= 16; z++)
                 tiles[(x, z)] = basePlatformMat;
 
-        // Tutorial tiles — user-specified layout:
-        //   z=9:  Purple (Reverse) — single center tile only
-        //   z=10: Blue (Frozen) — 3 tiles wide
-        //   z=11: Blue (Frozen) — 3 tiles wide (tooltip fires once on z=10 center)
-        //   z=12: Yellow (Forward) — single center tile only
+        // Tutorial tiles
         Material tutGold   = MakeTutorialMat(ACCENT_GOLD);
         Material tutBlue   = MakeTutorialMat(ACCENT_BLUE);
         Material tutPurple = MakeTutorialMat(ACCENT_PURPLE);
 
-        // Purple: single tile at (0, 9)
-        tiles[(0, 9)] = tutPurple;
-
-        // Blue: single-width strip at x=0, z=10 and z=11 (1 wide, 2 long)
+        tiles[(0, 9)]  = tutPurple;
         tiles[(0, 10)] = tutBlue;
         tiles[(0, 11)] = tutBlue;
-
-        // Yellow: single tile at (0, 12)
         tiles[(0, 12)] = tutGold;
 
         // ── Path to Time Scale section (z=17..19) ──
@@ -274,28 +381,20 @@ public class HubLevelManager : MonoBehaviour
                 tiles[(x, z)] = basePlatformMat;
 
         // ── TIME SCALE TUTORIAL SECTION (z=20..32) ──
-        // The modal at z=16 already explains these concepts, so no colored
-        // trigger tiles here — just the gameplay area with the moving platform.
-
-        // Open area before the moving platform
         for (int x = -3; x <= 3; x++)
             for (int z = 20; z <= 23; z++)
                 tiles[(x, z)] = basePlatformMat;
 
-        // Narrow bridge with demo gap — the moving platform fills this gap
         for (int z = 24; z <= 26; z++)
         {
             tiles[(-1, z)] = basePlatformMat;
             tiles[( 1, z)] = basePlatformMat;
         }
-        // z=25 center is intentionally missing — the MovingTile platform bridges it
 
-        // Landing area after the moving platform
         for (int x = -3; x <= 3; x++)
             for (int z = 27; z <= 29; z++)
                 tiles[(x, z)] = basePlatformMat;
 
-        // Corridor to goal
         for (int z = 30; z <= 32; z++)
             for (int x = -1; x <= 1; x++)
                 tiles[(x, z)] = basePlatformMat;
@@ -313,26 +412,11 @@ public class HubLevelManager : MonoBehaviour
         {
             int x = kvp.Key.Item1;
             int z = kvp.Key.Item2;
-            GameObject t = CreateTile(root, x, z, kvp.Value);
-
-            // Tutorial triggers — color state section (teaches basic orientations)
-            if (x == 0 && z == 9)  AddTutorialTrigger(t, TutorialTilePopup.TileType.Reverse);
-            if (x == 0 && z == 10) AddTutorialTrigger(t, TutorialTilePopup.TileType.Frozen);
-            if (x == 0 && z == 12) AddTutorialTrigger(t, TutorialTilePopup.TileType.Forward);
-
-            // Goal tile
-            if (x == 0 && z == 36)
-            {
-                t.name = "GoalTile";
-                t.AddComponent<GoalTile>();
-            }
+            CreateTile(root, x, z, kvp.Value);
         }
 
         // ── Moving demo platform (bridges the gap at z=25, center) ──
-        CreateMovingDemoPlatform(root);
-
-        // ── Time Scale intro modal trigger (z=16, after color-state section) ──
-        CreateTimeScaleModalTrigger(root);
+        CreateMovingDemoPlatformVisual(root);
 
         // ── Decorative pillars ──
         MakePillar(root, new Vector3(-4f, 0f, 0f), 0.4f, 4f);
@@ -342,27 +426,13 @@ public class HubLevelManager : MonoBehaviour
         MakePillar(root, new Vector3(-5f, 0f, 25f), 0.5f, 6f);
         MakePillar(root, new Vector3(5f, 0f, 25f), 0.5f, 6f);
 
-        // ── Floating orbs ──
+        // ── Floating orbs (visual only — HubFloatingOrb added at runtime) ──
         MakeOrb(root, new Vector3(-3f, 5f, 6f), 0.3f, ACCENT_GOLD);
         MakeOrb(root, new Vector3(3f, 7f, 10f), 0.25f, ACCENT_BLUE);
         MakeOrb(root, new Vector3(-4f, 6f, 15f), 0.2f, ACCENT_PURPLE);
         MakeOrb(root, new Vector3(4f, 5f, 22f), 0.25f, ACCENT_GOLD);
         MakeOrb(root, new Vector3(-3f, 7f, 29f), 0.2f, ACCENT_PURPLE);
         MakeOrb(root, new Vector3(0f, 8f, 36f), 0.4f, GOAL_COLOR);
-
-        // ── Player spawn ──
-        if (playerTransform == null)
-        {
-            GameObject p = GameObject.FindWithTag("Player");
-            if (p != null) playerTransform = p.transform;
-        }
-        if (playerTransform != null)
-        {
-            playerTransform.position = new Vector3(0f, TILE_TOP + 1.0f, 0f);
-            playerTransform.rotation = Quaternion.identity;
-            PlayerMovement pm = playerTransform.GetComponent<PlayerMovement>();
-            if (pm != null) pm.orientation = PlayerMovement.Orientation.Standing;
-        }
     }
 
     /// <summary>
@@ -389,7 +459,7 @@ public class HubLevelManager : MonoBehaviour
             if (rend != null && mat != null) rend.material = mat;
             // Cube already has BoxCollider — remove so we add our own consistently
             BoxCollider existing = tile.GetComponent<BoxCollider>();
-            if (existing != null) Destroy(existing);
+            if (existing != null) SafeDestroy(existing);
         }
 
         // Match MainScene tile transform: scale (1,0.2,1), position at integer coords
@@ -416,24 +486,14 @@ public class HubLevelManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Creates a moving platform that demonstrates the local-limit mechanic.
-    /// The platform slides smoothly along Z from z=24 to z=26.
-    /// Starts at z=24 (currentTime = minTime) so the player can step onto it,
-    /// then rides it forward as time progresses.
+    /// Creates the visual demo platform tile at z=24. The MovingTile component
+    /// is added at runtime by AttachRuntimeComponents.
     /// </summary>
-    private void CreateMovingDemoPlatform(Transform root)
+    private void CreateMovingDemoPlatformVisual(Transform root)
     {
         Material demoMat = MakeTutorialMat(ACCENT_GOLD);
         GameObject platform = CreateTile(root, 0, 24, demoMat);
         platform.name = "DemoPlatform";
-
-        MovingTile mt = platform.AddComponent<MovingTile>();
-        mt.moveDirection = Vector3.forward;
-        mt.moveDistance = 2f;
-        mt.tickInterval = 1f;
-        mt.minTime = -2f;
-        mt.maxTime = 2f;
-        mt.smoothMovement = true;
     }
 
     /// <summary>
@@ -460,7 +520,7 @@ public class HubLevelManager : MonoBehaviour
         Renderer r = p.GetComponent<Renderer>();
         if (r != null) r.material = darkPlatformMat != null ? darkPlatformMat : MakeFallbackMat(TILE_EDGE_COL);
         Collider c = p.GetComponent<Collider>();
-        if (c != null) Destroy(c);
+        if (c != null) SafeDestroy(c);
     }
 
     private void MakeOrb(Transform parent, Vector3 pos, float radius, Color color)
@@ -485,9 +545,18 @@ public class HubLevelManager : MonoBehaviour
             }
             r.material = m;
         }
-        o.AddComponent<HubFloatingOrb>();
+        // HubFloatingOrb animation is added at runtime by AttachRuntimeComponents
         Collider c = o.GetComponent<Collider>();
-        if (c != null) Destroy(c);
+        if (c != null) SafeDestroy(c);
+    }
+
+    /// <summary>Destroys an object safely in both edit mode and play mode.</summary>
+    private static void SafeDestroy(Object obj)
+    {
+        if (Application.isPlaying)
+            Destroy(obj);
+        else
+            DestroyImmediate(obj);
     }
 
     // ── Environment ──────────────────────────────────────────────────────
@@ -532,10 +601,54 @@ public class HubLevelManager : MonoBehaviour
     {
         if (FindObjectOfType<UIStickCursor>() != null) return;
 
-        // Add UIStickCursor to the EventSystem, matching MainScene's setup
         UnityEngine.EventSystems.EventSystem es = FindObjectOfType<UnityEngine.EventSystems.EventSystem>();
         if (es != null)
             es.gameObject.AddComponent<UIStickCursor>();
+    }
+
+    /// <summary>
+    /// Creates a TimeScaleMeter in HubScene, matching MainScene's setup.
+    /// Starts HIDDEN — the TimeScaleIntroModal reveals it with a glow
+    /// when the player reaches that part of the tutorial.
+    /// </summary>
+    private void EnsureTimeScaleMeter()
+    {
+        if (FindObjectOfType<TimeScaleMeter>(true) != null) return;
+
+        Canvas canvas = FindObjectOfType<Canvas>();
+        if (canvas == null) return;
+
+        // Create HUD parent if needed
+        Transform hud = canvas.transform.Find("HUD");
+        if (hud == null)
+        {
+            GameObject hudGO = new GameObject("HUD");
+            hudGO.transform.SetParent(canvas.transform, false);
+            RectTransform hudRT = hudGO.AddComponent<RectTransform>();
+            hudRT.anchorMin = Vector2.zero;
+            hudRT.anchorMax = Vector2.one;
+            hudRT.offsetMin = Vector2.zero;
+            hudRT.offsetMax = Vector2.zero;
+            hud = hudGO.transform;
+        }
+
+        GameObject meterGO = new GameObject("TimeScaleMeter");
+        meterGO.transform.SetParent(hud, false);
+        RectTransform rt = meterGO.AddComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0.5f, 1f);
+        rt.anchorMax = new Vector2(0.5f, 1f);
+        rt.pivot = new Vector2(0.5f, 1f);
+        rt.anchoredPosition = new Vector2(0f, -8f);
+        rt.sizeDelta = new Vector2(440f, 52f);
+
+        TimeScaleMeter meter = meterGO.AddComponent<TimeScaleMeter>();
+
+        // Wire into TimeScaleLogic
+        if (TimeScaleLogic.Instance != null)
+            TimeScaleLogic.Instance.meter = meter;
+
+        // Start hidden — TimeScaleIntroModal will reveal it
+        meterGO.SetActive(false);
     }
 
     /// <summary>

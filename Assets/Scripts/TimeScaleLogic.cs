@@ -46,6 +46,9 @@ public class TimeScaleLogic : MonoBehaviour
         if (isDead) return;
         if (TimeState.Instance == null) return;
 
+        // Don't accrue time until the intro modal has been dismissed
+        if (TimeScaleIntroModal.IsTimeLocked) return;
+
         float rate = tickInterval > 0f ? (1f / tickInterval) : 1f;
 
         switch (TimeState.Instance.currentState)

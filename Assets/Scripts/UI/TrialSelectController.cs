@@ -436,6 +436,7 @@ public class TrialSelectController : MonoBehaviour
         label.alignment        = TextAlignmentOptions.Center;
         label.color            = LabelWhite;
         label.raycastTarget    = false;
+        CinzelFontHelper.Apply(label, true);
 
         RectTransform lrt = labelGO.GetComponent<RectTransform>();
         lrt.anchorMin = Vector2.zero; lrt.anchorMax = Vector2.one;
@@ -701,6 +702,7 @@ public class TrialSelectController : MonoBehaviour
         tmp.alignment     = TextAlignmentOptions.Center;
         tmp.color         = Color.white;
         tmp.raycastTarget = false;
+        CinzelFontHelper.Apply(tmp, true);
 
         RectTransform trt = textGO.GetComponent<RectTransform>();
         trt.anchorMin = Vector2.zero; trt.anchorMax = Vector2.one;

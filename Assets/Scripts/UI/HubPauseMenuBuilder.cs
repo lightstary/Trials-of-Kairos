@@ -195,14 +195,6 @@ public static class HubPauseMenuBuilder
 
     private static void AssignFont(TextMeshProUGUI tmp)
     {
-        foreach (TMP_FontAsset f in Resources.FindObjectsOfTypeAll<TMP_FontAsset>())
-        {
-            if (f.name.Contains("Cinzel"))
-            {
-                tmp.font = f;
-                if (f.name.Contains("Bold") || f.name.Contains("SemiBold"))
-                    break;
-            }
-        }
+        CinzelFontHelper.Apply(tmp, tmp.fontStyle == FontStyles.Bold);
     }
 }

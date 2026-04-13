@@ -20,8 +20,8 @@ public class TutorialTilePopup : MonoBehaviour
     [SerializeField] private float fadeOutDuration = 0.5f;
 
     private const float DETECT_RANGE = 2.5f;
-    private const float POPUP_WIDTH  = 440f;
-    private const float POPUP_HEIGHT = 100f;
+    private const float POPUP_WIDTH  = 520f;
+    private const float POPUP_HEIGHT = 140f;
 
     private bool _triggered;
 
@@ -135,10 +135,10 @@ public class TutorialTilePopup : MonoBehaviour
         _sharedPopupGO.transform.SetParent(canvas.transform, false);
 
         RectTransform rt = _sharedPopupGO.AddComponent<RectTransform>();
-        rt.anchorMin = new Vector2(0.5f, 0f);
-        rt.anchorMax = new Vector2(0.5f, 0f);
-        rt.pivot = new Vector2(0.5f, 0f);
-        rt.anchoredPosition = new Vector2(0f, 60f);
+        rt.anchorMin = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = Vector2.zero;
         rt.sizeDelta = new Vector2(POPUP_WIDTH, POPUP_HEIGHT);
 
         Image bg = _sharedPopupGO.AddComponent<Image>();
@@ -157,12 +157,12 @@ public class TutorialTilePopup : MonoBehaviour
 
         // Title
         _sharedTitle = MakeLabel("Title", _sharedPopupGO.transform,
-            new Vector2(0f, 0.55f), new Vector2(1f, 1f), new Vector2(16f, 0f), new Vector2(-12f, -6f), 16f, true);
+            new Vector2(0f, 0.55f), new Vector2(1f, 1f), new Vector2(20f, 0f), new Vector2(-16f, -8f), 20f, true);
         _sharedTitle.characterSpacing = 6f;
 
         // Description
         _sharedDesc = MakeLabel("Desc", _sharedPopupGO.transform,
-            new Vector2(0f, 0f), new Vector2(1f, 0.55f), new Vector2(16f, 8f), new Vector2(-12f, 0f), 12f, false);
+            new Vector2(0f, 0f), new Vector2(1f, 0.55f), new Vector2(20f, 10f), new Vector2(-16f, 0f), 15f, false);
         _sharedDesc.color = TEXT_COL;
 
         _sharedPopupGO.SetActive(false);
@@ -217,13 +217,6 @@ public class TutorialTilePopup : MonoBehaviour
 
     private static void AssignFont(TextMeshProUGUI tmp)
     {
-        foreach (TMP_FontAsset f in Resources.FindObjectsOfTypeAll<TMP_FontAsset>())
-        {
-            if (f.name.Contains("Cinzel"))
-            {
-                tmp.font = f;
-                if (f.name.Contains("Bold") || f.name.Contains("SemiBold")) break;
-            }
-        }
+        CinzelFontHelper.Apply(tmp, tmp.fontStyle == FontStyles.Bold);
     }
 }

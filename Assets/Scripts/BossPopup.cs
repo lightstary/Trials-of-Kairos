@@ -22,6 +22,7 @@ public class BossPopup : MonoBehaviour
         textMesh.alignment = TextAlignmentOptions.Center;
         textMesh.fontSize = 8f;
         textMesh.fontStyle = FontStyles.Bold;
+        CinzelFontHelper.Apply(textMesh, true);
 
         // Hide on start
         Color c = textMesh.color;

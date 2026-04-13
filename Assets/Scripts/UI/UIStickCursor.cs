@@ -77,6 +77,16 @@ public class UIStickCursor : MonoBehaviour
 
     // ── Lifecycle ────────────────────────────────────────────────────────
 
+    void Awake()
+    {
+        // Reset static state on scene load — prevents stale cursor visibility
+        // after Retry/Restart reloads the scene (statics survive scene loads).
+        IsStickMode = false;
+        IsMouseMode = false;
+        IsCursorVisible = false;
+        HoveredSelectable = null;
+    }
+
     void Start()
     {
         Canvas canvas = GetComponentInParent<Canvas>();
@@ -259,6 +269,10 @@ public class UIStickCursor : MonoBehaviour
         // Hub completion popup
         GameObject overlay = GameObject.Find("CompletionOverlay");
         if (overlay != null && overlay.activeInHierarchy) return true;
+
+        // TimeScale intro modal (pauses game, needs cursor for button navigation)
+        GameObject modal = GameObject.Find("TimeScaleIntroModal");
+        if (modal != null && modal.activeInHierarchy) return true;
 
         return false;
     }
