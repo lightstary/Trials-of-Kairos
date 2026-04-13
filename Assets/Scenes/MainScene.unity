@@ -14737,14 +14737,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9790e3f55a3a97f469214de68c64051a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  winSound: {fileID: 0}
-  loseSound: {fileID: 0}
+  winSound: {fileID: 8300000, guid: 5a7af606b09f73242b626757bbeddede, type: 3}
+  loseSound: {fileID: 8300000, guid: d2de193b314e7e2408823c19afcf9a82, type: 3}
   roundClearSound: {fileID: 0}
-  fallSound: {fileID: 0}
+  fallSound: {fileID: 8300000, guid: d2de193b314e7e2408823c19afcf9a82, type: 3}
   respawnSound: {fileID: 0}
-  moveSound: {fileID: 0}
-  gameMusic: {fileID: 0}
-  bossFightMusic: {fileID: 0}
+  moveSound: {fileID: 8300000, guid: eddd0cd9a9cc29c4aafa84e48a6cbf57, type: 3}
+  gameMusic: {fileID: 8300000, guid: 9fd5a49945562e64ba13a2f11f1b62cc, type: 3}
+  bossFightMusic: {fileID: 8300000, guid: dbc9ea8ae9d025145bf30927eb200b1d, type: 3}
 --- !u!4 &851431767
 Transform:
   m_ObjectHideFlags: 0
