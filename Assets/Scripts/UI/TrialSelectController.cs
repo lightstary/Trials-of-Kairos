@@ -49,6 +49,7 @@ public class TrialSelectController : MonoBehaviour
     private string[]    _sceneMap;
 
     private bool        _needsHintBuild;
+    private Vector2     _lastMousePos;
 
     private const float DPAD_REPEAT_DELAY = 0.25f;
 
@@ -124,11 +125,39 @@ public class TrialSelectController : MonoBehaviour
             StartCoroutine(BuildHintsDeferred());
         }
 
-        // ── Cursor hover → sync _selectedIndex ───────────────────────────
-        // When the free cursor is over a card, treat it as selecting that card.
-        // Uses direct RectTransform containment check (bypasses UIStickCursor's
-        // hover detection entirely for reliability).
-        if (UIStickCursor.IsStickMode && UIStickCursor.IsCursorVisible)
+        // ── Mouse hover → sync _selectedIndex ────────────────────────────
+        // Track mouse position over cards for KBM users.
+        Vector2 mousePos = Input.mousePosition;
+        bool mouseMoved = (mousePos - _lastMousePos).sqrMagnitude > 1f;
+        _lastMousePos = mousePos;
+
+        if (mouseMoved)
+        {
+            Camera uiCam = null;
+            Canvas canvas = GetComponentInParent<Canvas>();
+            if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
+                uiCam = canvas.worldCamera;
+
+            for (int i = 0; i < _cards.Length; i++)
+            {
+                if (_cards[i] == null) continue;
+                RectTransform cardRT = _cards[i].GetComponent<RectTransform>();
+                if (cardRT != null && RectTransformUtility.RectangleContainsScreenPoint(cardRT, mousePos, uiCam))
+                {
+                    if (i != _selectedIndex)
+                    {
+                        _confirmed = false;
+                        SetEnterButtonState(false);
+                        SelectCard(i);
+                    }
+                    break;
+                }
+            }
+        }
+
+        // ── Orb cursor hover → sync _selectedIndex ─────────────────────────
+        // When the orb cursor (stick or mouse mode) is over a card, select it.
+        if ((UIStickCursor.IsStickMode || UIStickCursor.IsMouseMode) && UIStickCursor.IsCursorVisible)
         {
             Vector2 cursorScreen = RectTransformUtility.WorldToScreenPoint(null, UIStickCursor.CursorWorldPosition);
             for (int i = 0; i < _cards.Length; i++)
@@ -150,8 +179,10 @@ public class TrialSelectController : MonoBehaviour
 
         // ── Navigation: LB/RB, arrow keys ─────────────────────────────────
         bool navLeft  = Input.GetKeyDown(KeyCode.LeftArrow)
+                     || Input.GetKeyDown(KeyCode.A)
                      || Input.GetKeyDown(KeyCode.JoystickButton4);   // LB
         bool navRight = Input.GetKeyDown(KeyCode.RightArrow)
+                     || Input.GetKeyDown(KeyCode.D)
                      || Input.GetKeyDown(KeyCode.JoystickButton5);   // RB
 
         if (navLeft)  { NavigateCard(-1); FlashHint(_lbHintBg); }
@@ -172,11 +203,14 @@ public class TrialSelectController : MonoBehaviour
             if (Mathf.Abs(dpadH) < 0.2f) _navCooldown = 0f;
         }
 
-        // ── A button / Space = confirm or enter ─────────────────────────────
-        // Single code path for ALL input modes. No card onClick listeners exist.
+        // ── A button / Space / Enter = confirm or enter ─────────────────────
+        // Single code path for ALL input modes. Card onClick listeners also
+        // feed through OnCardClicked() for mouse users.
         // AConsumedThisFrame is set to block UIStickCursor and UIGamepadNavigator
         // from also processing this press.
-        if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.JoystickButton0))
+        if (Input.GetKeyDown(KeyCode.Space)
+            || Input.GetKeyDown(KeyCode.Return)
+            || Input.GetKeyDown(KeyCode.JoystickButton0))
         {
             UIGamepadNavigator.AConsumedThisFrame = true;
 
@@ -218,11 +252,40 @@ public class TrialSelectController : MonoBehaviour
             _cardBgs[i] = child.GetComponent<Image>();
             _cardOrigColors[i] = _cardBgs[i] != null ? _cardBgs[i].color : Color.clear;
 
-            // CRITICAL: Remove ALL onClick listeners (including persistent ones
+            // Remove ALL existing onClick listeners (including persistent ones
             // set in the Inspector, e.g. Card_Trial1 → BeginTrial on MainMenuController).
-            // All A-press handling goes through Update() exclusively.
+            // Then wire up our own click handler for mouse support.
             if (_cards[i] != null)
+            {
                 _cards[i].onClick.RemoveAllListeners();
+                int cardIndex = i; // capture for closure
+                _cards[i].onClick.AddListener(() => OnCardClicked(cardIndex));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Called when a card is clicked with the mouse (via Unity's built-in pointer events).
+    /// Implements the same two-step confirm flow as the gamepad A button.
+    /// </summary>
+    private void OnCardClicked(int index)
+    {
+        if (_confirmBlocked) return;
+
+        if (index != _selectedIndex)
+        {
+            // Clicking a different card selects it (resets confirmation)
+            _confirmed = false;
+            SetEnterButtonState(false);
+            SelectCard(index);
+        }
+        else if (_confirmed)
+        {
+            EnterTrial();
+        }
+        else
+        {
+            ConfirmSelection();
         }
     }
 

@@ -68,6 +68,13 @@ public class UIStickCursor : MonoBehaviour
     private Color           _outerColor;
     private Color           _trailColor;
 
+    // Mouse tracking
+    private Vector2         _lastMouseScreenPos;
+    private float           _lastMouseMoveTime = -100f;
+
+    /// <summary>True when the mouse is the active cursor input.</summary>
+    public static bool IsMouseMode { get; private set; }
+
     // ── Lifecycle ────────────────────────────────────────────────────────
 
     void Start()
@@ -88,6 +95,7 @@ public class UIStickCursor : MonoBehaviour
         if (!inMenu)
         {
             SetCursorVisible(false);
+            IsMouseMode = false;
             return;
         }
 
@@ -107,21 +115,46 @@ public class UIStickCursor : MonoBehaviour
 
         bool stickMoved = stick.sqrMagnitude > 0.01f;
 
-        // ── Mode switching: stick vs D-pad ───────────────────────────────
+        // ── Read mouse ───────────────────────────────────────────────────
+        Vector2 mouseScreen = (Vector2)Input.mousePosition;
+        bool mouseMoved = (mouseScreen - _lastMouseScreenPos).sqrMagnitude > 4f;
+        _lastMouseScreenPos = mouseScreen;
+
+        // ── Mode switching: stick vs mouse vs D-pad ──────────────────────
         if (stickMoved)
         {
             IsStickMode = true;
+            IsMouseMode = false;
             _lastStickTime = Time.unscaledTime;
         }
+        else if (mouseMoved)
+        {
+            IsMouseMode = true;
+            IsStickMode = false;
+            _lastMouseMoveTime = Time.unscaledTime;
+        }
 
-        bool shouldShow = IsStickMode && (Time.unscaledTime - _lastStickTime) < HIDE_DELAY;
+        bool stickActive = IsStickMode && (Time.unscaledTime - _lastStickTime) < HIDE_DELAY;
+        bool mouseActive = IsMouseMode && (Time.unscaledTime - _lastMouseMoveTime) < HIDE_DELAY;
+        bool shouldShow  = stickActive || mouseActive;
+
         SetCursorVisible(shouldShow);
         SetTrailVisible(shouldShow);
 
         if (!shouldShow) return;
 
-        // ── Movement (smooth analog) ─────────────────────────────────────
-        if (stickMoved)
+        // ── Movement ─────────────────────────────────────────────────────
+        if (mouseActive)
+        {
+            // Convert mouse screen position to canvas anchored position
+            Vector2 localPoint;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                _canvasRT, mouseScreen, null, out localPoint);
+            _targetPos = localPoint;
+            // Snap smooth position closer for responsive mouse feel
+            _smoothPos = Vector2.Lerp(_smoothPos, _targetPos, SMOOTHING * 2f * Time.unscaledDeltaTime);
+        }
+        else if (stickActive && stickMoved)
         {
             _targetPos += stick * CURSOR_SPEED * Time.unscaledDeltaTime;
 
@@ -130,8 +163,12 @@ public class UIStickCursor : MonoBehaviour
             _targetPos.y = Mathf.Clamp(_targetPos.y, -half.y + 10f, half.y - 10f);
         }
 
-        // Smooth interpolation for fluid feel
-        _smoothPos = Vector2.Lerp(_smoothPos, _targetPos, SMOOTHING * Time.unscaledDeltaTime);
+        if (!mouseActive)
+        {
+            // Smooth interpolation for fluid feel (stick mode)
+            _smoothPos = Vector2.Lerp(_smoothPos, _targetPos, SMOOTHING * Time.unscaledDeltaTime);
+        }
+
         _root.anchoredPosition = _smoothPos;
         CursorWorldPosition = _root.position;
 
@@ -147,27 +184,30 @@ public class UIStickCursor : MonoBehaviour
         AnimatePulse();
 
         // ── Hover detection ──────────────────────────────────────────────
-        CheckHover(stickMoved);
+        CheckHover(stickMoved || mouseMoved);
 
-        // ── A button confirms hovered element (ONLY if cursor is on something) ──
+        // ── A button / left-click confirms hovered element ───────────────
         // Check AConsumedThisFrame so another handler (e.g., TrialSelectController)
-        // that already processed this A press doesn't cause a double-fire.
-        // Also skip when SuppressInput is active — another controller fully owns A.
+        // that already processed this press doesn't cause a double-fire.
+        // Also skip when SuppressInput is active — another controller fully owns input.
         if (!UIGamepadNavigator.AConsumedThisFrame
             && !UIGamepadNavigator.SuppressInput
-            && Input.GetKeyDown(KeyCode.JoystickButton0) && _hoveredSel != null)
+            && _hoveredSel != null)
         {
-            UIGamepadNavigator.AConsumedThisFrame = true;
+            bool aPressed    = Input.GetKeyDown(KeyCode.JoystickButton0);
+            bool mouseClick  = mouseActive && Input.GetMouseButtonDown(0);
 
-            // Direct onClick.Invoke() for reliability. CheckHover already filters
-            // non-interactable selectables, so no extra IsInteractable() gate needed.
-            // This bypasses EventSystem state issues that silently swallow submits.
-            Button btn = _hoveredSel.GetComponent<Button>();
-            if (btn != null)
-                btn.onClick.Invoke();
-            else
-                ExecuteEvents.Execute(_hoveredSel.gameObject,
-                    new BaseEventData(EventSystem.current), ExecuteEvents.submitHandler);
+            if (aPressed || mouseClick)
+            {
+                UIGamepadNavigator.AConsumedThisFrame = true;
+
+                Button btn = _hoveredSel.GetComponent<Button>();
+                if (btn != null)
+                    btn.onClick.Invoke();
+                else
+                    ExecuteEvents.Execute(_hoveredSel.gameObject,
+                        new BaseEventData(EventSystem.current), ExecuteEvents.submitHandler);
+            }
         }
     }
 

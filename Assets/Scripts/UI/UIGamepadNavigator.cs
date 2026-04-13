@@ -105,15 +105,16 @@ public class UIGamepadNavigator : MonoBehaviour
             }
         }
 
-        // ── When cursor mode is active, do NOT process submit/cancel/auto-select ─
+        // ── When cursor mode is active, do NOT process gamepad submit/cancel ─
         // The cursor handles its own A-click on hovered items exclusively.
-        if (UIStickCursor.IsStickMode)
-            return;
-
-        // ── Submit: A button (D-pad mode only) ───────────────────────────
+        // Keyboard Enter is still allowed so KBM users can always submit.
         if (!AConsumedThisFrame)
         {
-            if (Input.GetKeyDown(KeyCode.JoystickButton0) || Input.GetKeyDown(KeyCode.Return))
+            bool aPressed   = Input.GetKeyDown(KeyCode.JoystickButton0);
+            bool enterPress = Input.GetKeyDown(KeyCode.Return);
+
+            // Gamepad A only works in D-pad mode; Enter always works.
+            if ((!UIStickCursor.IsStickMode && aPressed) || enterPress)
             {
                 GameObject selected = EventSystem.current != null
                     ? EventSystem.current.currentSelectedGameObject : null;
@@ -131,8 +132,8 @@ public class UIGamepadNavigator : MonoBehaviour
             }
         }
 
-        // ── Cancel: B button ─────────────────────────────────────────────
-        if (Input.GetKeyDown(KeyCode.JoystickButton1))
+        // ── Cancel: B button / Escape ────────────────────────────────────
+        if (Input.GetKeyDown(KeyCode.JoystickButton1) || Input.GetKeyDown(KeyCode.Escape))
         {
             GameObject selected = EventSystem.current != null
                 ? EventSystem.current.currentSelectedGameObject : null;
@@ -141,8 +142,11 @@ public class UIGamepadNavigator : MonoBehaviour
                     new BaseEventData(EventSystem.current), ExecuteEvents.cancelHandler);
         }
 
-        // ── Auto-select if nothing selected (D-pad mode only) ────────────
-        if (EventSystem.current != null
+        // ── Auto-select if nothing selected (not in cursor mode) ─────────
+        // Ensures keyboard/D-pad users always have a button focused for Enter/A.
+        // Skipped during stick cursor mode since the cursor handles hover independently.
+        if (!UIStickCursor.IsStickMode
+            && EventSystem.current != null
             && EventSystem.current.currentSelectedGameObject == null)
         {
             Selectable first = FindFirstActiveSelectable();
