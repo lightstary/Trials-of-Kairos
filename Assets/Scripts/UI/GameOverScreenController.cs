@@ -31,7 +31,7 @@ public class GameOverScreenController : MonoBehaviour
     [SerializeField] private Image redVignette;
 
     [Header("Config")]
-    [SerializeField] private string hubSceneName       = "LevelSelect";
+    [SerializeField] private string hubSceneName       = "HubScene";
     [SerializeField] private float  fractureDuration   = 0.8f;
     [SerializeField] private float  titleShakeAmount   = 8f;
     [SerializeField] private float  titleShakeDuration = 0.1f;
@@ -45,7 +45,7 @@ public class GameOverScreenController : MonoBehaviour
         "Every second you wasted\nwas a gift I shall not repeat."
     };
 
-    private const string TITLE    = "TIME  COLLAPSED";
+    private const string TITLE    = "TEMPORAL  FAILURE";
     private const string SUBTITLE = "CHRONOS RECLAIMS YOU";
 
     void Start()
@@ -126,11 +126,22 @@ public class GameOverScreenController : MonoBehaviour
     {
         Color danger = TimeStateUIManager.Instance != null
             ? TimeStateUIManager.Instance.dangerColor : Color.red;
+
+        // Initial fade in
         float elapsed = 0f, dur = 0.5f;
         while (elapsed < dur)
         {
             elapsed += Time.unscaledDeltaTime;
             danger.a = Mathf.Clamp01(elapsed / dur) * 0.35f;
+            if (redVignette != null) redVignette.color = danger;
+            yield return null;
+        }
+
+        // Continuous pulsing vignette
+        while (redVignette != null && redVignette.gameObject.activeInHierarchy)
+        {
+            float pulse = Mathf.Sin(Time.unscaledTime * 3f) * 0.12f + 0.30f;
+            danger.a = pulse;
             redVignette.color = danger;
             yield return null;
         }
@@ -160,10 +171,7 @@ public class GameOverScreenController : MonoBehaviour
     private void ReturnToHub()
     {
         Time.timeScale = 1f;
-        if (ScreenTransitionManager.Instance != null)
-            ScreenTransitionManager.Instance.FadeToScene(hubSceneName);
-        else
-            SceneManager.LoadScene(hubSceneName);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     private static float EaseOutQuart(float t) => 1f - Mathf.Pow(1f - t, 4f);

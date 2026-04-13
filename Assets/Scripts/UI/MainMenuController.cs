@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using TMPro;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -13,8 +14,17 @@ using UnityEngine.InputSystem;
 /// </summary>
 public class MainMenuController : MonoBehaviour
 {
+    /// <summary>Singleton instance for easy access.</summary>
+    public static MainMenuController Instance { get; private set; }
+
+    /// <summary>
+    /// When true, MainMenuController skips the main menu and goes directly to gameplay on load.
+    /// Set by TrialSelectController or GoalTile when loading MainScene for the Citadel.
+    /// </summary>
+    public static bool SkipMenuOnLoad { get; set; }
+
     [Header("Panels")]
-    [SerializeField] private GameObject menuPanel;
+    [SerializeField] public GameObject menuPanel;
     [SerializeField] private GameObject hudPanel;
     [SerializeField] private GameObject trialSelectScreen;
     [SerializeField] private GameObject controlsScreen;
@@ -38,6 +48,10 @@ public class MainMenuController : MonoBehaviour
 
     [Header("Button Canvas Groups (stagger order)")]
     [SerializeField] private CanvasGroup[] buttonGroups;
+
+    [Header("Scene Routing")]
+    [Tooltip("Scene to load when Begin Trial is pressed. Leave empty to start in current scene.")]
+    [SerializeField] private string beginTrialScene = "HubScene";
 
     private const float TITLE_SPACE_START    = 60f;
     private const float TITLE_SPACE_END      = 20f;
@@ -79,6 +93,7 @@ public class MainMenuController : MonoBehaviour
 
     void Awake()
     {
+        Instance = this;
         Time.timeScale = 0f;
         if (hudPanel          != null) hudPanel.SetActive(false);
         if (trialSelectScreen != null) trialSelectScreen.SetActive(false);
@@ -107,6 +122,7 @@ public class MainMenuController : MonoBehaviour
         if (subtitleLabel != null) subtitleLabel.color = new Color(0.92f, 0.82f, 0.55f, 0f);
 
         if (_restartTrialOnLoad) { _restartTrialOnLoad = false; SkipToGameplay(); return; }
+        if (SkipMenuOnLoad) { SkipMenuOnLoad = false; SkipToGameplay(); return; }
         if (_openTrialSelectOnLoad)
         {
             _openTrialSelectOnLoad = false; _entranceDone = true;
@@ -313,33 +329,65 @@ public class MainMenuController : MonoBehaviour
         SelectFirstButton();
     }
 
-    /// <summary>Hides menu and starts gameplay.</summary>
+    /// <summary>Hides menu and starts gameplay. Routes to beginTrialScene if set.</summary>
     public void BeginTrial()
     {
         if (trialSelectScreen != null) trialSelectScreen.SetActive(false);
         if (controlsScreen    != null) controlsScreen.SetActive(false);
-        if (_sharedDustLayer  != null) _sharedDustLayer.SetActive(false);
-        if (_shimmerLayer     != null) _shimmerLayer.SetActive(false);
 
+        // If a specific scene is configured and it's different from the current one, load it
+        if (!string.IsNullOrEmpty(beginTrialScene)
+            && beginTrialScene != SceneManager.GetActiveScene().name)
+        {
+            Time.timeScale = 1f;
+            if (ScreenTransitionManager.Instance != null)
+                ScreenTransitionManager.Instance.FadeToScene(beginTrialScene);
+            else
+                SceneManager.LoadScene(beginTrialScene);
+            return;
+        }
+
+        // Otherwise start gameplay in the current scene
         if (ScreenTransitionManager.Instance != null)
         {
             ScreenTransitionManager.Instance.FadeTransition(() =>
             {
                 ShowMenuContent();
-                if (menuPanel    != null) menuPanel.SetActive(false);
-                if (_menuBgPanel != null) _menuBgPanel.SetActive(false);
-                if (hudPanel     != null) hudPanel.SetActive(true);
+                if (menuPanel         != null) menuPanel.SetActive(false);
+                if (_menuBgPanel      != null) _menuBgPanel.SetActive(false);
+                if (_sharedDustLayer  != null) _sharedDustLayer.SetActive(false);
+                if (_shimmerLayer     != null) _shimmerLayer.SetActive(false);
+                if (hudPanel          != null) hudPanel.SetActive(true);
                 Time.timeScale = 1f;
             });
         }
         else
         {
             ShowMenuContent();
-            if (menuPanel    != null) menuPanel.SetActive(false);
-            if (_menuBgPanel != null) _menuBgPanel.SetActive(false);
-            if (hudPanel     != null) hudPanel.SetActive(true);
+            if (menuPanel         != null) menuPanel.SetActive(false);
+            if (_menuBgPanel      != null) _menuBgPanel.SetActive(false);
+            if (_sharedDustLayer  != null) _sharedDustLayer.SetActive(false);
+            if (_shimmerLayer     != null) _shimmerLayer.SetActive(false);
+            if (hudPanel          != null) hudPanel.SetActive(true);
             Time.timeScale = 1f;
         }
+    }
+
+    /// <summary>Returns to the main menu from gameplay (within the same scene).</summary>
+    public void ReturnToMainMenu()
+    {
+        Time.timeScale = 0f;
+        if (hudPanel          != null) hudPanel.SetActive(false);
+        if (menuPanel         != null) menuPanel.SetActive(true);
+        if (_menuBgPanel      != null) _menuBgPanel.SetActive(true);
+        if (_sharedDustLayer  != null) _sharedDustLayer.SetActive(true);
+        if (_shimmerLayer     != null) _shimmerLayer.SetActive(true);
+        if (_largeSqRT        != null) _largeSqRT.gameObject.SetActive(true);
+        if (_smallSqRT        != null) _smallSqRT.gameObject.SetActive(true);
+        _menuContentHidden = false;
+        ShowMenuContent();
+        _entranceDone = true;
+        SelectFirstButton();
     }
 
     public void OpenTrialSelect() { if (_transitioning) return; StartCoroutine(CrossfadeToScreen(trialSelectScreen, _trialSelectCG)); }

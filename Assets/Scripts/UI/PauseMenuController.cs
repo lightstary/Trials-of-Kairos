@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
@@ -8,7 +9,7 @@ using UnityEngine.InputSystem;
 #endif
 
 /// <summary>
-/// Pause menu with Resume, Restart Trial, Controls, Trial Selection, Return to Hub.
+/// Pause menu with Resume, Restart Trial, How To Play, Controls, Trial Selection, Return to Hub.
 /// </summary>
 public class PauseMenuController : MonoBehaviour
 {
@@ -21,9 +22,11 @@ public class PauseMenuController : MonoBehaviour
     [Header("Buttons")]
     [SerializeField] private Button resumeButton;
     [SerializeField] private Button restartButton;
+    [SerializeField] private Button howToPlayButton;
     [SerializeField] private Button controlsButton;
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button returnToHubButton;
+    [SerializeField] private Button mainMenuButton;
     [SerializeField] private Button quitButton;
 
     [Header("Sub-Panels")]
@@ -63,6 +66,7 @@ public class PauseMenuController : MonoBehaviour
     {
         if (resumeButton      != null) resumeButton.onClick.AddListener(Resume);
         if (restartButton     != null) restartButton.onClick.AddListener(RestartTrial);
+        if (howToPlayButton   != null) howToPlayButton.onClick.AddListener(ShowHowToPlay);
         if (controlsButton    != null) controlsButton.onClick.AddListener(ShowControls);
         if (settingsButton    != null)
         {
@@ -71,7 +75,14 @@ public class PauseMenuController : MonoBehaviour
             TextMeshProUGUI lbl = settingsButton.GetComponentInChildren<TextMeshProUGUI>();
             if (lbl != null) lbl.text = "TRIAL SELECTION";
         }
-        if (returnToHubButton != null) returnToHubButton.onClick.AddListener(ReturnToHub);
+        if (returnToHubButton != null)
+        {
+            returnToHubButton.onClick.AddListener(ReturnToMainMenu);
+            // Update label text to match the action
+            TextMeshProUGUI rthLabel = returnToHubButton.GetComponentInChildren<TextMeshProUGUI>();
+            if (rthLabel != null) rthLabel.text = "RETURN TO MAIN MENU";
+        }
+        if (mainMenuButton    != null) mainMenuButton.onClick.AddListener(GoToMainMenu);
         if (quitButton        != null) quitButton.gameObject.SetActive(false);
         if (trialInfoLabel    != null) trialInfoLabel.text = currentTrialInfo;
     }
@@ -80,6 +91,7 @@ public class PauseMenuController : MonoBehaviour
     {
         if (_inputCooldown > 0f) _inputCooldown -= Time.unscaledDeltaTime;
 
+        // ── Start / Menu button toggles pause ────────────────────────────
         bool startPressed = Input.GetKeyDown(KeyCode.JoystickButton7)
                          || Input.GetKeyDown(KeyCode.JoystickButton9)
                          || Input.GetKeyDown(KeyCode.Escape);
@@ -98,8 +110,28 @@ public class PauseMenuController : MonoBehaviour
             }
             else
             {
-                Pause();
+                bool inMainMenu = MainMenuController.Instance != null
+                    && MainMenuController.Instance.menuPanel != null
+                    && MainMenuController.Instance.menuPanel.activeSelf;
+                if (!inMainMenu)
+                    Pause();
             }
+        }
+
+        // ── B button closes pause menu (direct handler, no EventSystem dependency) ─
+        if (_isPaused && !_subScreenOpen && _inputCooldown <= 0f)
+        {
+            if (Input.GetKeyDown(KeyCode.JoystickButton1))
+                Resume();
+        }
+
+        // ── Enforce selection while paused (D-pad mode only, not cursor mode) ──
+        if (_isPaused && !_subScreenOpen
+            && !UIStickCursor.IsStickMode
+            && EventSystem.current != null
+            && EventSystem.current.currentSelectedGameObject == null)
+        {
+            SelectFirstPauseButton();
         }
     }
 
@@ -107,11 +139,27 @@ public class PauseMenuController : MonoBehaviour
     public void Pause()
     {
         if (_isPaused) return;
+
+        // Self-bootstrap: if pausePanel is null, build the UI now
+        if (pausePanel == null)
+            HubPauseMenuBuilder.Build(this);
+
+        // Ensure the controller's own CanvasGroup (if any) doesn't block child rendering
+        CanvasGroup selfCG = GetComponent<CanvasGroup>();
+        if (selfCG != null)
+        {
+            selfCG.alpha = 1f;
+            selfCG.interactable = true;
+            selfCG.blocksRaycasts = true;
+        }
+
         _isPaused = true;
         Time.timeScale = 0f;
+
         SetVisible(true);
         HideSubPanels();
         StartCoroutine(AnimateIn());
+        StartCoroutine(DelayedSelectFirstButton());
     }
 
     /// <summary>Resumes the game and hides the pause menu.</summary>
@@ -129,10 +177,46 @@ public class PauseMenuController : MonoBehaviour
         _subScreenOpen = false;
         _inputCooldown = INPUT_COOLDOWN;
         HideSubPanels();
+
+        // Restore the pause panel that was hidden when Controls opened
+        if (pausePanel != null) pausePanel.SetActive(true);
+        if (pauseCanvasGroup != null) pauseCanvasGroup.alpha = 1f;
+
+        // Re-select first button so controller works immediately
+        StartCoroutine(DelayedSelectFirstButton());
+    }
+
+    /// <summary>Called by HowToPlayController when it closes.</summary>
+    public void ReturnFromHowToPlay()
+    {
+        _subScreenOpen = false;
+        _inputCooldown = INPUT_COOLDOWN;
     }
 
     /// <summary>Updates the trial info footer text.</summary>
     public void SetTrialInfo(string info) { currentTrialInfo = info; if (trialInfoLabel != null) trialInfoLabel.text = info; }
+
+    /// <summary>Selects the first visible pause button for controller navigation.</summary>
+    private void SelectFirstPauseButton()
+    {
+        Button[] buttons = new[] { resumeButton, restartButton, controlsButton, settingsButton, returnToHubButton };
+        foreach (Button b in buttons)
+        {
+            if (b != null && b.gameObject.activeInHierarchy && b.interactable)
+            {
+                EventSystem.current.SetSelectedGameObject(b.gameObject);
+                return;
+            }
+        }
+    }
+
+    private IEnumerator DelayedSelectFirstButton()
+    {
+        // Wait one frame so the hierarchy is fully active after SetVisible(true)
+        yield return null;
+        if (_isPaused && EventSystem.current != null)
+            SelectFirstPauseButton();
+    }
 
     private void RestartTrial()
     {
@@ -145,14 +229,39 @@ public class PauseMenuController : MonoBehaviour
     {
         _subScreenOpen = true;
         HideSubPanels();
+
+        // Hide the pause panel so Controls doesn't overlap on top of it
+        if (pausePanel != null) pausePanel.SetActive(false);
+
         Canvas canvas = GetComponentInParent<Canvas>();
         if (canvas == null) return;
         Transform cs = canvas.transform.Find("ControlsScreen");
-        if (cs != null)
+
+        // Create ControlsScreen on demand if it doesn't exist (e.g., HubScene)
+        if (cs == null)
         {
-            ControlsScreenController ctrl = cs.GetComponent<ControlsScreenController>();
-            if (ctrl != null) ctrl.Origin = ControlsScreenController.ControlsOrigin.PauseMenu;
-            cs.gameObject.SetActive(true);
+            GameObject csGO = new GameObject("ControlsScreen");
+            csGO.transform.SetParent(canvas.transform, false);
+            RectTransform csRT = csGO.AddComponent<RectTransform>();
+            csRT.anchorMin = Vector2.zero; csRT.anchorMax = Vector2.one;
+            csRT.offsetMin = csRT.offsetMax = Vector2.zero;
+            csGO.AddComponent<ControlsScreenController>();
+            cs = csGO.transform;
+        }
+
+        ControlsScreenController ctrl = cs.GetComponent<ControlsScreenController>();
+        if (ctrl != null) ctrl.Origin = ControlsScreenController.ControlsOrigin.PauseMenu;
+        cs.gameObject.SetActive(true);
+    }
+
+    private void ShowHowToPlay()
+    {
+        _subScreenOpen = true;
+        HowToPlayController htp = FindObjectOfType<HowToPlayController>(true);
+        if (htp != null)
+        {
+            htp.Origin = HowToPlayController.HTPOrigin.PauseMenu;
+            htp.Show();
         }
     }
 
@@ -160,24 +269,67 @@ public class PauseMenuController : MonoBehaviour
     {
         Time.timeScale = 1f; _isPaused = false;
         MainMenuController.RequestTrialSelectOnLoad();
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        // Always load MainScene for trial selection (it has the main menu + trial select UI)
+        SceneManager.LoadScene("MainScene");
     }
 
     private void HideSubPanels()
     {
         if (controlsPanel != null) controlsPanel.SetActive(false);
         if (settingsPanel != null) settingsPanel.SetActive(false);
+
+        // Also hide the ControlsScreen if it was opened from pause
+        Canvas canvas = GetComponentInParent<Canvas>();
+        if (canvas != null)
+        {
+            Transform cs = canvas.transform.Find("ControlsScreen");
+            if (cs != null && cs.gameObject.activeSelf)
+                cs.gameObject.SetActive(false);
+        }
     }
 
-    private void ReturnToHub()
+    /// <summary>Returns to MainScene with main menu visible.</summary>
+    private void ReturnToMainMenu()
     {
-        Time.timeScale = 1f; _isPaused = false;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        Time.timeScale = 1f;
+        _isPaused = false;
+        SetVisible(false);
+
+        // Load MainScene — it auto-shows the main menu on load
+        if (ScreenTransitionManager.Instance != null)
+            ScreenTransitionManager.Instance.FadeToScene("MainScene");
+        else
+            SceneManager.LoadScene("MainScene");
+    }
+
+    /// <summary>Returns to main menu without reloading the scene.</summary>
+    private void GoToMainMenu()
+    {
+        _isPaused = false;
+        SetVisible(false);
+        HideSubPanels();
+
+        MainMenuController mmc = FindObjectOfType<MainMenuController>(true);
+        if (mmc != null)
+        {
+            mmc.ReturnToMainMenu();
+        }
+        else
+        {
+            Time.timeScale = 1f;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
     }
 
     private void SetVisible(bool visible)
     {
         if (pausePanel != null) pausePanel.SetActive(visible);
+        if (pauseCanvasGroup != null)
+        {
+            pauseCanvasGroup.interactable = visible;
+            pauseCanvasGroup.blocksRaycasts = visible;
+            if (!visible) pauseCanvasGroup.alpha = 0f;
+        }
         if (blurOverlay != null)
         {
             Color c = blurOverlay.color; c.a = visible ? OVERLAY_MAX_ALPHA : 0f;

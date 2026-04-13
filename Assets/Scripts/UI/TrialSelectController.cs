@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 
 /// <summary>
@@ -22,6 +23,12 @@ public class TrialSelectController : MonoBehaviour
     [SerializeField] private Transform trialGrid;
     [SerializeField] private Button    backButton;
 
+    [Header("Scene Names (per card, index 0 = first card)")]
+    [Tooltip("Scene names matching each trial card. Card 0 = HUB if created dynamically.")]
+    [SerializeField] private string[] sceneNames;
+
+    private const string HUB_SCENE_NAME = "HubScene";
+
     // ── State ────────────────────────────────────────────────────────────────
     private Button[]    _cards;
     private Image[]     _cardBgs;
@@ -33,11 +40,15 @@ public class TrialSelectController : MonoBehaviour
     private Image       _lbHintBg;
     private Image       _rbHintBg;
     private bool        _hintsBuilt;
+    private bool[]      _isLocked;
 
     // Enter Trial button (created in code)
     private Button      _enterButton;
     private CanvasGroup _enterGroup;
     private GameObject  _enterGO;
+    private string[]    _sceneMap;
+
+    private bool        _needsHintBuild;
 
     private const float DPAD_REPEAT_DELAY = 0.25f;
 
@@ -53,7 +64,14 @@ public class TrialSelectController : MonoBehaviour
 
     void OnEnable()
     {
+        // Take exclusive control of gamepad input while this screen is active.
+        // UIGamepadNavigator must not navigate/submit/auto-select during trial select.
+        UIGamepadNavigator.SuppressInput = true;
+
+        EnsureHubCard();
         GatherCards();
+        BuildSceneNameMap();
+        ApplyLockVisuals();
         EnsureEnterButton();
         UpdateBackButtonLabel();
 
@@ -61,18 +79,76 @@ public class TrialSelectController : MonoBehaviour
         _confirmBlocked = false;
         SetEnterButtonState(false);
 
+        // Set initial card selection WITHOUT coroutines.
+        // StartCoroutine fails if gameObject.activeInHierarchy is false
+        // (can happen during scene init before parent hierarchy is fully active).
         if (_cards != null && _cards.Length > 0)
-            SelectCard(0);
+        {
+            _selectedIndex = 0;
+            for (int i = 0; i < _cards.Length; i++)
+            {
+                if (_cardBgs[i] == null) continue;
+                if (i == 0)
+                {
+                    Color gold = _cardOrigColors[i];
+                    gold = Color.Lerp(gold, SelectedGold, 0.25f);
+                    _cardBgs[i].color = gold;
+                }
+                else
+                {
+                    Color dim = _cardOrigColors[i];
+                    dim.a = 0.5f;
+                    _cardBgs[i].color = dim;
+                }
+            }
+        }
 
-        if (!_hintsBuilt)
-            StartCoroutine(BuildHintsDeferred());
+        // Defer hint building to first Update frame to avoid inactive GO coroutine error
+        _needsHintBuild = !_hintsBuilt;
+    }
+
+    void OnDisable()
+    {
+        // Release input back to UIGamepadNavigator.
+        UIGamepadNavigator.SuppressInput = false;
     }
 
     void Update()
     {
         if (_cards == null || _cards.Length == 0) return;
 
-        // ── Navigation: LB/RB, D-pad, left stick, arrow keys ──────────────
+        // Deferred hint build (avoids StartCoroutine on inactive GO during scene init)
+        if (_needsHintBuild && gameObject.activeInHierarchy)
+        {
+            _needsHintBuild = false;
+            StartCoroutine(BuildHintsDeferred());
+        }
+
+        // ── Cursor hover → sync _selectedIndex ───────────────────────────
+        // When the free cursor is over a card, treat it as selecting that card.
+        // Uses direct RectTransform containment check (bypasses UIStickCursor's
+        // hover detection entirely for reliability).
+        if (UIStickCursor.IsStickMode && UIStickCursor.IsCursorVisible)
+        {
+            Vector2 cursorScreen = RectTransformUtility.WorldToScreenPoint(null, UIStickCursor.CursorWorldPosition);
+            for (int i = 0; i < _cards.Length; i++)
+            {
+                if (_cards[i] == null) continue;
+                RectTransform cardRT = _cards[i].GetComponent<RectTransform>();
+                if (cardRT != null && RectTransformUtility.RectangleContainsScreenPoint(cardRT, cursorScreen, null))
+                {
+                    if (i != _selectedIndex)
+                    {
+                        _confirmed = false;
+                        SetEnterButtonState(false);
+                        SelectCard(i);
+                    }
+                    break;
+                }
+            }
+        }
+
+        // ── Navigation: LB/RB, arrow keys ─────────────────────────────────
         bool navLeft  = Input.GetKeyDown(KeyCode.LeftArrow)
                      || Input.GetKeyDown(KeyCode.JoystickButton4);   // LB
         bool navRight = Input.GetKeyDown(KeyCode.RightArrow)
@@ -81,27 +157,36 @@ public class TrialSelectController : MonoBehaviour
         if (navLeft)  { NavigateCard(-1); FlashHint(_lbHintBg); }
         if (navRight) { NavigateCard( 1); FlashHint(_rbHintBg); }
 
-        // Left stick / D-pad with repeat delay
-        float axisH = Input.GetAxisRaw("Horizontal");
-        float dpadH = Input.GetAxisRaw("DPadHorizontal");
-        float combinedH = Mathf.Abs(axisH) > Mathf.Abs(dpadH) ? axisH : dpadH;
+        // D-pad ONLY with repeat delay (NOT left stick — that drives the free cursor)
+        float dpadH = 0f;
+        try { dpadH = Input.GetAxisRaw("DPadHorizontal"); } catch { }
 
         if (_navCooldown <= 0f)
         {
-            if (combinedH < -0.4f) { NavigateCard(-1); FlashHint(_lbHintBg); _navCooldown = DPAD_REPEAT_DELAY; }
-            if (combinedH >  0.4f) { NavigateCard( 1); FlashHint(_rbHintBg); _navCooldown = DPAD_REPEAT_DELAY; }
+            if (dpadH < -0.4f) { NavigateCard(-1); FlashHint(_lbHintBg); _navCooldown = DPAD_REPEAT_DELAY; }
+            if (dpadH >  0.4f) { NavigateCard( 1); FlashHint(_rbHintBg); _navCooldown = DPAD_REPEAT_DELAY; }
         }
         else
         {
             _navCooldown -= Time.unscaledDeltaTime;
-            if (Mathf.Abs(combinedH) < 0.2f) _navCooldown = 0f;
+            if (Mathf.Abs(dpadH) < 0.2f) _navCooldown = 0f;
         }
 
-        // ── A button / Space = confirm selection ──────────────────────────
-        if (!_confirmBlocked &&
-            (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.JoystickButton0)))
+        // ── A button / Space = confirm or enter ─────────────────────────────
+        // Single code path for ALL input modes. No card onClick listeners exist.
+        // AConsumedThisFrame is set to block UIStickCursor and UIGamepadNavigator
+        // from also processing this press.
+        if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.JoystickButton0))
         {
-            ConfirmSelection();
+            UIGamepadNavigator.AConsumedThisFrame = true;
+
+            if (!_confirmBlocked)
+            {
+                if (_confirmed)
+                    EnterTrial();
+                else
+                    ConfirmSelection();
+            }
         }
 
         // ── B button / Escape = go back ───────────────────────────────────
@@ -133,7 +218,9 @@ public class TrialSelectController : MonoBehaviour
             _cardBgs[i] = child.GetComponent<Image>();
             _cardOrigColors[i] = _cardBgs[i] != null ? _cardBgs[i].color : Color.clear;
 
-            // Remove direct onClick so cards don't bypass two-phase confirm
+            // CRITICAL: Remove ALL onClick listeners (including persistent ones
+            // set in the Inspector, e.g. Card_Trial1 → BeginTrial on MainMenuController).
+            // All A-press handling goes through Update() exclusively.
             if (_cards[i] != null)
                 _cards[i].onClick.RemoveAllListeners();
         }
@@ -156,7 +243,7 @@ public class TrialSelectController : MonoBehaviour
                 _cardBgs[i].color = gold;
 
                 RectTransform rt = _cardBgs[i].GetComponent<RectTransform>();
-                if (rt != null) StartCoroutine(AnimateScale(rt, 1.08f, 0.15f));
+                if (rt != null && gameObject.activeInHierarchy) StartCoroutine(AnimateScale(rt, 1.08f, 0.15f));
             }
             else
             {
@@ -165,7 +252,7 @@ public class TrialSelectController : MonoBehaviour
                 _cardBgs[i].color = dim;
 
                 RectTransform rt = _cardBgs[i].GetComponent<RectTransform>();
-                if (rt != null) StartCoroutine(AnimateScale(rt, 1.0f, 0.15f));
+                if (rt != null && gameObject.activeInHierarchy) StartCoroutine(AnimateScale(rt, 1.0f, 0.15f));
             }
         }
     }
@@ -183,15 +270,21 @@ public class TrialSelectController : MonoBehaviour
     }
 
     /// <summary>
-    /// Confirms the currently browsed card. Activates Enter Trial button.
-    /// Blocks for two frames so the same A press doesn't also fire Enter Trial.
+    /// Confirms the currently browsed card. Activates Enter Trial button after a short delay.
+    /// Blocks for several frames so the same A press doesn't also fire Enter Trial.
     /// </summary>
     private void ConfirmSelection()
     {
         if (_confirmed || _confirmBlocked) return;
+        if (!gameObject.activeInHierarchy) return;
+
+        // Cannot confirm locked levels
+        if (_isLocked != null && _selectedIndex >= 0 && _selectedIndex < _isLocked.Length && _isLocked[_selectedIndex])
+            return;
+
         _confirmed = true;
-        SetEnterButtonState(true);
         StartCoroutine(BlockConfirmFrames());
+        StartCoroutine(DelayedShowEnterButton());
 
         // Visual pulse on selected card
         if (_selectedIndex >= 0 && _selectedIndex < _cards.Length && _cardBgs[_selectedIndex] != null)
@@ -199,6 +292,27 @@ public class TrialSelectController : MonoBehaviour
             RectTransform rt = _cardBgs[_selectedIndex].GetComponent<RectTransform>();
             if (rt != null) StartCoroutine(ConfirmPulse(rt));
         }
+    }
+
+    /// <summary>Shows the Enter button after a short delay to prevent same-frame activation.</summary>
+    private IEnumerator DelayedShowEnterButton()
+    {
+        yield return null;
+        yield return null;
+        yield return null;
+        SetEnterButtonState(true);
+        UpdateEnterButtonLabel();
+    }
+
+    /// <summary>Updates the Enter button label text based on the selected card.</summary>
+    private void UpdateEnterButtonLabel()
+    {
+        if (_enterGO == null) return;
+        TextMeshProUGUI lbl = _enterGO.GetComponentInChildren<TextMeshProUGUI>();
+        if (lbl == null) return;
+
+        string sceneName = GetSelectedSceneName();
+        lbl.text = (sceneName == HUB_SCENE_NAME) ? "ENTER HUB" : "ENTER TRIAL";
     }
 
     private IEnumerator BlockConfirmFrames()
@@ -276,14 +390,157 @@ public class TrialSelectController : MonoBehaviour
         _enterGroup.blocksRaycasts = active;
     }
 
-    /// <summary>Calls MainMenuController.BeginTrial to start gameplay.</summary>
+    /// <summary>Loads the scene for the selected trial.</summary>
     private void EnterTrial()
     {
-        MainMenuController mmc = FindObjectOfType<MainMenuController>();
-        if (mmc != null) mmc.BeginTrial();
+        // Block if locked or no scene
+        if (_isLocked != null && _selectedIndex >= 0 && _selectedIndex < _isLocked.Length && _isLocked[_selectedIndex])
+            return;
+
+        string targetScene = GetSelectedSceneName();
+        if (string.IsNullOrEmpty(targetScene)) return;
+
+        Time.timeScale = 1f;
+
+        // If loading MainScene (Citadel), skip the main menu and go straight to gameplay
+        if (targetScene == "MainScene")
+            MainMenuController.SkipMenuOnLoad = true;
+
+        if (ScreenTransitionManager.Instance != null)
+            ScreenTransitionManager.Instance.FadeToScene(targetScene);
+        else
+            UnityEngine.SceneManagement.SceneManager.LoadScene(targetScene);
     }
 
-    /// <summary>Updates the existing back button label to [ B ] BACK.</summary>
+    /// <summary>Returns the scene name for the currently selected card.</summary>
+    private string GetSelectedSceneName()
+    {
+        if (_sceneMap != null && _selectedIndex >= 0 && _selectedIndex < _sceneMap.Length)
+            return _sceneMap[_selectedIndex];
+        return null;
+    }
+
+    /// <summary>Creates the HUB card as the first child of TrialGrid if it doesn't exist.</summary>
+    private void EnsureHubCard()
+    {
+        if (trialGrid == null)
+            trialGrid = transform.Find("TrialGrid");
+        if (trialGrid == null) return;
+
+        // Check if HUB card already exists
+        Transform existing = trialGrid.Find("Card_Hub");
+        if (existing != null) return;
+
+        // Clone style from the first existing card
+        if (trialGrid.childCount == 0) return;
+        Transform template = trialGrid.GetChild(0);
+
+        GameObject hubCard = Object.Instantiate(template.gameObject, trialGrid);
+        hubCard.name = "Card_Hub";
+        hubCard.transform.SetAsFirstSibling();
+
+        // Update labels
+        TextMeshProUGUI[] labels = hubCard.GetComponentsInChildren<TextMeshProUGUI>(true);
+        foreach (TextMeshProUGUI lbl in labels)
+        {
+            string objName = lbl.gameObject.name.ToLowerInvariant();
+            if (objName.Contains("num"))        lbl.text = "\u2605";   // star icon
+             else if (objName.Contains("title")) lbl.text = "THE\nHUB";
+             else if (objName.Contains("sub"))   lbl.text = "Tutorial";
+        }
+
+        // Give it a slightly different tint
+        Image cardBg = hubCard.GetComponent<Image>();
+        if (cardBg != null)
+        {
+            Color c = cardBg.color;
+            c = Color.Lerp(c, new Color(0.961f, 0.784f, 0.259f, 1f), 0.15f);
+            cardBg.color = c;
+        }
+    }
+
+    /// <summary>Builds the scene name array and lock state for each card.</summary>
+    private void BuildSceneNameMap()
+    {
+        if (_cards == null) return;
+
+        _sceneMap  = new string[_cards.Length];
+        _isLocked  = new bool[_cards.Length];
+
+        int nonHubIndex = 0;
+        for (int i = 0; i < _cards.Length; i++)
+        {
+            if (_cards[i] != null && _cards[i].gameObject.name == "Card_Hub")
+            {
+                _sceneMap[i]  = HUB_SCENE_NAME;
+                _isLocked[i]  = false;
+            }
+            else
+            {
+                switch (nonHubIndex)
+                {
+                    case 0: // Chapter I — Citadel (always unlocked, first real level)
+                        _sceneMap[i]  = "MainScene";
+                        _isLocked[i]  = false;
+                        break;
+                    case 1: // Chapter II — Garden (locked until Citadel complete, not built yet)
+                        _sceneMap[i]  = "";
+                        _isLocked[i]  = true; // No scene exists yet — always locked
+                        break;
+                    default: // Chapter III+ — locked, not built
+                        _sceneMap[i]  = "";
+                        _isLocked[i]  = true;
+                        break;
+                }
+                nonHubIndex++;
+            }
+        }
+    }
+
+    /// <summary>Applies locked visuals to cards that are locked.</summary>
+    private void ApplyLockVisuals()
+    {
+        if (_isLocked == null || _cards == null) return;
+
+        for (int i = 0; i < _cards.Length; i++)
+        {
+            if (!_isLocked[i]) continue;
+
+            // Make card non-interactable
+            if (_cards[i] != null)
+                _cards[i].interactable = false;
+
+            // Dim and desaturate
+            if (_cardBgs[i] != null)
+            {
+                Color c = _cardBgs[i].color;
+                c = Color.Lerp(c, new Color(0.15f, 0.15f, 0.18f, 1f), 0.6f);
+                c.a = 0.35f;
+                _cardBgs[i].color = c;
+                _cardOrigColors[i] = c;
+            }
+
+            // Update subtitle to "LOCKED"
+            if (_cards[i] != null)
+            {
+                TextMeshProUGUI[] labels = _cards[i].GetComponentsInChildren<TextMeshProUGUI>(true);
+                foreach (TextMeshProUGUI lbl in labels)
+                {
+                    string objName = lbl.gameObject.name.ToLowerInvariant();
+                    if (objName.Contains("sub"))
+                        lbl.text = "LOCKED";
+                }
+            }
+        }
+    }
+
+    /// <summary>Checks if a level has been completed via PlayerPrefs.</summary>
+    public static bool IsLevelComplete(string levelKey)
+    {
+        return PlayerPrefs.GetInt("Level_" + levelKey + "_Complete", 0) == 1;
+    }
+
+    /// <summary>Updates the existing back button to a "Press B" indicator (not clickable).</summary>
     private void UpdateBackButtonLabel()
     {
         if (backButton == null)
@@ -293,8 +550,24 @@ public class TrialSelectController : MonoBehaviour
         }
         if (backButton == null) return;
 
+        // Disable button interaction — it's now just an indicator
+        backButton.interactable = false;
+        Navigation nav = backButton.navigation;
+        nav.mode = Navigation.Mode.None;
+        backButton.navigation = nav;
+
+        // Remove background visual
+        Image bg = backButton.GetComponent<Image>();
+        if (bg != null) bg.color = Color.clear;
+
         TextMeshProUGUI lbl = backButton.GetComponentInChildren<TextMeshProUGUI>();
-        if (lbl != null) lbl.text = "[ B ]  BACK";
+        if (lbl != null)
+        {
+            lbl.text = "PRESS  [ B ]  TO GO BACK";
+            lbl.fontSize = 14f;
+            lbl.characterSpacing = 4f;
+            lbl.color = new Color(0.91f, 0.918f, 0.965f, 0.4f);
+        }
     }
 
     // ── LB / RB hint pills ───────────────────────────────────────────────────
@@ -376,7 +649,7 @@ public class TrialSelectController : MonoBehaviour
     /// <summary>Briefly flashes a hint pill gold on LB/RB press.</summary>
     private void FlashHint(Image hint)
     {
-        if (hint == null) return;
+        if (hint == null || !gameObject.activeInHierarchy) return;
         StartCoroutine(HintFlashRoutine(hint));
     }
 

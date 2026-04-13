@@ -45,28 +45,19 @@ public class ControlsScreenController : MonoBehaviour
 
     private static readonly RowData[] MovementRows =
     {
-        new RowData { badge = "LS",   color = Slate,  action = "Move",       desc = "Left stick \u2014 move in all directions"   },
-        new RowData { badge = "RS",   color = Slate,  action = "Look / Aim", desc = "Right stick \u2014 rotate camera"           },
-    };
-
-    private static readonly RowData[] TimeMechanicsRows =
-    {
-        new RowData { badge = "RT",    color = Gold,   action = "Time Forward",  desc = "Hold RT \u2014 sand flows, world advances"     },
-        new RowData { badge = "LT",    color = Blue,   action = "Time Frozen",   desc = "Hold LT \u2014 motion arrested, world holds"   },
-        new RowData { badge = "RT+LT", color = Purple, action = "Time Reversed", desc = "Hold both \u2014 time recedes, world unravels" },
+        new RowData { badge = "LS",   color = Slate,  action = "Move",  desc = "Left stick \u2014 roll in all directions"  },
+        new RowData { badge = "RS",   color = Slate,  action = "Look",  desc = "Right stick \u2014 rotate camera"          },
     };
 
     private static readonly RowData[] ActionRows =
     {
-        new RowData { badge = "A", color = Green, action = "Jump / Confirm",  desc = "Jump in world or confirm UI selection"          },
-        new RowData { badge = "B", color = Red,   action = "Dash / Cancel",   desc = "Quick dash or cancel a selection"               },
-        new RowData { badge = "X", color = XBlue, action = "Interact / Grab", desc = "Interact with objects or grab surfaces"         },
-        new RowData { badge = "Y", color = Gold,  action = "Time Pulse",      desc = "Active ability \u2014 burst of time energy"     },
+        new RowData { badge = "A",  color = Green, action = "Confirm", desc = "Confirm selection in menus"        },
+        new RowData { badge = "B",  color = Red,   action = "Cancel",  desc = "Cancel or go back in menus"       },
     };
 
     private static readonly RowData[] SystemRows =
     {
-        new RowData { badge = "MENU", color = Slate, action = "Pause", desc = "Menu button \u2014 open pause screen" },
+        new RowData { badge = "MENU", color = Slate, action = "Pause", desc = "Menu / Start button \u2014 open pause screen" },
     };
 
     // ── Constants ────────────────────────────────────────────────────────────
@@ -164,6 +155,18 @@ public class ControlsScreenController : MonoBehaviour
         }
         if (existingCard != null) existingCard.SetActive(false);
 
+        // Add a solid dark background so this screen is self-contained
+        // (not transparent over whatever was behind it)
+        GameObject bgGO = new GameObject("ControlsBG");
+        bgGO.transform.SetParent(transform, false);
+        bgGO.transform.SetAsFirstSibling();
+        RectTransform bgRT = bgGO.AddComponent<RectTransform>();
+        bgRT.anchorMin = Vector2.zero; bgRT.anchorMax = Vector2.one;
+        bgRT.offsetMin = Vector2.zero; bgRT.offsetMax = Vector2.zero;
+        Image bgImg = bgGO.AddComponent<Image>();
+        bgImg.color = new Color(0.02f, 0.025f, 0.05f, 0.95f);
+        bgImg.raycastTarget = false;
+
         // Scroll view for controller navigation
         GameObject scrollGO = new GameObject("ControlsScroll");
         scrollGO.transform.SetParent(transform, false);
@@ -223,13 +226,6 @@ public class ControlsScreenController : MonoBehaviour
         // ── MOVEMENT ─────────────────────────────────────────────────────
         CreateSectionTitle(_layoutRoot.transform, "MOVEMENT");
         foreach (RowData row in MovementRows)
-            CreateRow(_layoutRoot.transform, row);
-
-        CreateSpacer(_layoutRoot.transform, SPACER_HEIGHT);
-
-        // ── TIME MECHANICS ───────────────────────────────────────────────
-        CreateSectionTitle(_layoutRoot.transform, "TIME MECHANICS");
-        foreach (RowData row in TimeMechanicsRows)
             CreateRow(_layoutRoot.transform, row);
 
         CreateSpacer(_layoutRoot.transform, SPACER_HEIGHT);

@@ -11,21 +11,92 @@ public class MovingTile : MonoBehaviour
     public float minTime = -4f;
     public float maxTime = 4f;
 
+    [Header("Smooth Movement")]
+    [Tooltip("When true, the tile moves continuously instead of jumping on ticks.")]
+    public bool smoothMovement = false;
+
+    /// <summary>How close (XZ) the player center must be to ride this tile.</summary>
+    private const float RIDE_RADIUS = 0.7f;
+    /// <summary>Max vertical distance above tile top to count as riding.</summary>
+    private const float RIDE_HEIGHT = 2.5f;
+
     private Vector3 startPosition;
     private Vector3 endPosition;
-    private float currentTime = 0f;
+    private float currentTime;
     private float tickTimer = 0f;
+    private Transform _player;
 
     void Start()
     {
         startPosition = transform.position;
         endPosition = startPosition + moveDirection.normalized * moveDistance;
+        currentTime = minTime;
     }
 
     void Update()
     {
         if (TimeState.Instance == null) return;
 
+        // Lazy player lookup — the player may not exist yet when this tile is
+        // created (HubLevelManager builds tiles before the player is spawned).
+        if (_player == null)
+        {
+            GameObject p = GameObject.FindWithTag("Player");
+            if (p != null) _player = p.transform;
+        }
+
+        // Check if the player is on this tile BEFORE we move it.
+        bool riding = _player != null && IsPlayerOnTile();
+
+        Vector3 posBeforeMove = transform.position;
+
+        if (smoothMovement)
+            UpdateSmooth();
+        else
+            UpdateTicked();
+
+        // Carry the player along with the tile.
+        if (riding)
+        {
+            Vector3 delta = transform.position - posBeforeMove;
+            if (delta.sqrMagnitude > 0.0001f)
+            {
+                _player.position += delta;
+            }
+        }
+    }
+
+    private void UpdateSmooth()
+    {
+        float rate = tickInterval > 0f ? (1f / tickInterval) : 1f;
+
+        switch (TimeState.Instance.currentState)
+        {
+            case TimeState.State.Forward:
+                if (currentTime < maxTime)
+                {
+                    currentTime += rate * Time.deltaTime;
+                    currentTime = Mathf.Min(currentTime, maxTime);
+                    ApplyPosition();
+                }
+                break;
+
+            case TimeState.State.Frozen:
+                break;
+
+            case TimeState.State.Reverse:
+                if (currentTime > minTime)
+                {
+                    currentTime -= rate * Time.deltaTime;
+                    currentTime = Mathf.Max(currentTime, minTime);
+                    ApplyPosition();
+                }
+                break;
+        }
+    }
+
+    private void UpdateTicked()
+    {
         switch (TimeState.Instance.currentState)
         {
             case TimeState.State.Forward:
@@ -36,7 +107,7 @@ public class MovingTile : MonoBehaviour
                     tickTimer = 0f;
                     currentTime += 1f;
                     currentTime = Mathf.Clamp(currentTime, minTime, maxTime);
-                    UpdatePosition();
+                    ApplyPosition();
                 }
                 break;
 
@@ -52,13 +123,28 @@ public class MovingTile : MonoBehaviour
                     tickTimer = 0f;
                     currentTime -= 1f;
                     currentTime = Mathf.Clamp(currentTime, minTime, maxTime);
-                    UpdatePosition();
+                    ApplyPosition();
                 }
                 break;
         }
     }
 
-    void UpdatePosition()
+    /// <summary>Checks if the player is standing on this tile using XZ distance and height.</summary>
+    private bool IsPlayerOnTile()
+    {
+        Vector3 tilePos = transform.position;
+        float tileTopY = tilePos.y + transform.lossyScale.y * 0.5f;
+        Vector3 playerPos = _player.position;
+
+        float dx = playerPos.x - tilePos.x;
+        float dz = playerPos.z - tilePos.z;
+        if (dx * dx + dz * dz > RIDE_RADIUS * RIDE_RADIUS) return false;
+
+        float heightAbove = playerPos.y - tileTopY;
+        return heightAbove > -0.1f && heightAbove < RIDE_HEIGHT;
+    }
+
+    private void ApplyPosition()
     {
         float progress = Mathf.InverseLerp(minTime, maxTime, currentTime);
         transform.position = Vector3.Lerp(startPosition, endPosition, progress);

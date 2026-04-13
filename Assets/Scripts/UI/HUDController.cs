@@ -60,8 +60,9 @@ public class HUDController : MonoBehaviour
 
     void Start()
     {
-        if (pauseButton != null && pauseMenu != null)
-            pauseButton.onClick.AddListener(() => TogglePause());
+        // Hide pause button — pause is START only (Xbox)
+        if (pauseButton != null)
+            pauseButton.gameObject.SetActive(false);
 
         if (TimeState.Instance != null)
             HandleTimeStateChanged(TimeState.Instance.currentState);

@@ -32,7 +32,7 @@ public class WinScreenController : MonoBehaviour
     [SerializeField] private Image radianceOverlay;
 
     [Header("Config")]
-    [SerializeField] private string hubSceneName      = "LevelSelect";
+    [SerializeField] private string hubSceneName      = "HubScene";
     [SerializeField] private string nextTrialSceneName = "";
 
     private const string TITLE_TEXT     = "TIME  RESTORED";
@@ -120,19 +120,22 @@ public class WinScreenController : MonoBehaviour
     {
         Color gold = TimeStateUIManager.Instance != null
             ? TimeStateUIManager.Instance.goldColor : new Color(1f, 0.843f, 0f);
+
+        // Initial burst
         float elapsed = 0f, half = RADIANCE_DUR * 0.4f;
         while (elapsed < half)
         {
             elapsed += Time.unscaledDeltaTime;
             gold.a = Mathf.Clamp01(elapsed / half) * 0.5f;
-            radianceOverlay.color = gold;
+            if (radianceOverlay != null) radianceOverlay.color = gold;
             yield return null;
         }
-        elapsed = 0f; float fade = RADIANCE_DUR * 0.6f;
-        while (elapsed < fade)
+
+        // Settle to gentle continuous pulse
+        while (radianceOverlay != null && radianceOverlay.gameObject.activeInHierarchy)
         {
-            elapsed += Time.unscaledDeltaTime;
-            gold.a = Mathf.Lerp(0.5f, 0.05f, Mathf.Clamp01(elapsed / fade));
+            float pulse = Mathf.Sin(Time.unscaledTime * 2.5f) * 0.08f + 0.12f;
+            gold.a = pulse;
             radianceOverlay.color = gold;
             yield return null;
         }
@@ -173,9 +176,7 @@ public class WinScreenController : MonoBehaviour
 
     private void ReturnToHub()
     {
-        if (ScreenTransitionManager.Instance != null)
-            ScreenTransitionManager.Instance.FadeToScene(hubSceneName);
-        else
-            SceneManager.LoadScene(hubSceneName);
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }
