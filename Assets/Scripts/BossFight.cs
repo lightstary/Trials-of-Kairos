@@ -5,6 +5,8 @@ using System.Collections.Generic;
 public class BossFight : MonoBehaviour
 {
     public static BossFight Instance;
+	
+	private Renderer tileRenderer;
 
     [Header("Boss Arena Tiles")]
     public List<GameObject> allTiles = new List<GameObject>();
@@ -46,8 +48,13 @@ public class BossFight : MonoBehaviour
                 arenaCenter += tile.transform.position;
         arenaCenter /= allTiles.Count;
     }
-
-    public void StartBossFight()
+	
+	void Start()
+	{
+		tileRenderer = GetComponent<Renderer>();
+	}
+	
+	public void StartBossFight()
     {
         if (bossActive) return;
         bossActive = true;
@@ -114,12 +121,24 @@ public class BossFight : MonoBehaviour
         }
 
         foreach (GameObject tile in safeTiles)
-            SetTileColor(tile, safeColor);
+		{
+			tileRenderer = tile.GetComponent<Renderer>();
+			if(tileRenderer != null)
+			{
+				tileRenderer.materials[1].SetColor("_EmissionColor", safeColor * 4);
+			}
+		}
 
         yield return new WaitForSeconds(glowDuration);
 
         foreach (GameObject tile in allTiles)
-            SetTileColor(tile, defaultColor);
+		{
+			tileRenderer = tile.GetComponent<Renderer>();
+			if(tileRenderer != null)
+			{
+				tileRenderer.materials[1].SetColor("_EmissionColor", safeColor * 4);
+			}
+		}
 
         yield return StartCoroutine(BlinkTiles(dangerTiles));
 
@@ -196,7 +215,13 @@ public class BossFight : MonoBehaviour
         while (elapsed < blinkDuration)
         {
             foreach (GameObject tile in tiles)
-                SetTileColor(tile, colorToggle ? dangerColor : defaultColor);
+			{
+				tileRenderer = tile.GetComponent<Renderer>();
+				if(tileRenderer != null)
+				{
+					tileRenderer.materials[1].SetColor("_EmissionColor", colorToggle ? dangerColor : defaultColor * 3);
+				}
+			}
 
             colorToggle = !colorToggle;
             elapsed += 0.3f;
@@ -204,7 +229,13 @@ public class BossFight : MonoBehaviour
         }
 
         foreach (GameObject tile in tiles)
-            SetTileColor(tile, dangerColor);
+		{
+			tileRenderer = tile.GetComponent<Renderer>();
+			if(tileRenderer != null)
+			{
+				tileRenderer.materials[1].SetColor("_EmissionColor", dangerColor * 3);
+			}
+		}
     }
 
     IEnumerator FlashSafeTiles()
@@ -212,10 +243,22 @@ public class BossFight : MonoBehaviour
         for (int i = 0; i < 3; i++)
         {
             foreach (GameObject tile in safeTiles)
-                SetTileColor(tile, safeColor);
+			{
+				tileRenderer = tile.GetComponent<Renderer>();
+				if(tileRenderer != null)
+				{
+					tileRenderer.materials[1].SetColor("_EmissionColor", safeColor * 4);
+				}
+			}
             yield return new WaitForSeconds(0.3f);
             foreach (GameObject tile in safeTiles)
-                SetTileColor(tile, defaultColor);
+			{
+				tileRenderer = tile.GetComponent<Renderer>();
+				if(tileRenderer != null)
+				{
+					tileRenderer.materials[1].SetColor("_EmissionColor", defaultColor * 4);
+				}
+			}
             yield return new WaitForSeconds(0.3f);
         }
     }
@@ -262,45 +305,17 @@ public class BossFight : MonoBehaviour
     {
         foreach (GameObject tile in allTiles)
         {
-            if (tile != null)
+            tileRenderer = tile.GetComponent<Renderer>();
+			if(tileRenderer != null)
+			{
+				tileRenderer.materials[1].SetColor("_EmissionColor", defaultColor * 2);
+			}
+			
+			if (tile != null)
             {
                 tile.SetActive(true);
                 tile.transform.position = originalPositions[tile];
-                SetTileColor(tile, defaultColor);
             }
-        }
-    }
-
-    void SetTileColor(GameObject tile, Color color)
-    {
-        if (tile == null) return;
-
-        Transform lightTransform = tile.transform.Find("BossGlow");
-        Light glowLight;
-
-        if (lightTransform == null)
-        {
-            GameObject lightObj = new GameObject("BossGlow");
-            lightObj.transform.SetParent(tile.transform);
-            lightObj.transform.localPosition = new Vector3(0f, 0.1f, 0f);
-            lightObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            glowLight = lightObj.AddComponent<Light>();
-            glowLight.type = LightType.Spot;
-            glowLight.spotAngle = 15f;
-            glowLight.range = 8f;
-            glowLight.intensity = 3f;
-        }
-        else
-        {
-            glowLight = lightTransform.GetComponent<Light>();
-        }
-
-        if (color == defaultColor)
-            glowLight.enabled = false;
-        else
-        {
-            glowLight.enabled = true;
-            glowLight.color = color;
         }
     }
 
