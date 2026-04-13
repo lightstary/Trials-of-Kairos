@@ -45,7 +45,7 @@ public class Checkpoint : MonoBehaviour
                     Debug.Log("FallDetection not found!");
 
                 if (tileRenderer != null)
-                    tileRenderer.material.color = activatedColor;
+                    tileRenderer.materials[1].SetColor("_EmissionColor", activatedColor * 2);
 
                 Debug.Log("Checkpoint activated!");
             }
