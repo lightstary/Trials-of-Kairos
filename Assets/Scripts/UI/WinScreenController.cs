@@ -32,7 +32,6 @@ public class WinScreenController : MonoBehaviour
     [SerializeField] private Image radianceOverlay;
 
     [Header("Config")]
-    [SerializeField] private string hubSceneName      = "HubScene";
     [SerializeField] private string nextTrialSceneName = "";
 
     private const string TITLE_TEXT     = "TIME  RESTORED";
@@ -51,8 +50,6 @@ public class WinScreenController : MonoBehaviour
         if (!_shown && winPanel != null) winPanel.SetActive(false);
     }
 
-    private const string BEST_TIME_KEY = "BestTime_Citadel";
-
     /// <summary>Shows the win screen with stats.</summary>
     public void Show(string trialName, float completionTime, int stars,
                      bool isPersonalBest, bool usedForward, bool usedFrozen, bool usedReverse)
@@ -63,9 +60,11 @@ public class WinScreenController : MonoBehaviour
         if (titleLabel    != null) titleLabel.text    = TITLE_TEXT;
         if (subtitleLabel != null) subtitleLabel.text = $"{trialName} COMPLETE".ToUpper();
 
-        SaveBestTime(completionTime);
-        ApplyCinzelFonts();
+        // Session-only best time
+        string key = BestTimeTracker.KeyForScene(SceneManager.GetActiveScene().name);
+        if (key != null) BestTimeTracker.Record(key, completionTime);
 
+        ApplyCinzelFonts();
         StartCoroutine(Animate(completionTime, stars, isPersonalBest, usedForward, usedFrozen, usedReverse));
     }
 
@@ -78,20 +77,11 @@ public class WinScreenController : MonoBehaviour
         if (titleLabel    != null) titleLabel.text    = TITLE_TEXT;
         if (subtitleLabel != null) subtitleLabel.text = "TRIAL COMPLETE";
 
+        string key = BestTimeTracker.KeyForScene(SceneManager.GetActiveScene().name);
+        if (key != null) BestTimeTracker.MarkComplete(key);
+
         ApplyCinzelFonts();
-
         StartCoroutine(SimpleShowRoutine());
-    }
-
-    /// <summary>Saves the best completion time to PlayerPrefs (lowest wins).</summary>
-    private void SaveBestTime(float completionTime)
-    {
-        float existing = PlayerPrefs.GetFloat(BEST_TIME_KEY, float.MaxValue);
-        if (completionTime < existing)
-        {
-            PlayerPrefs.SetFloat(BEST_TIME_KEY, completionTime);
-            PlayerPrefs.Save();
-        }
     }
 
     /// <summary>Applies Cinzel font to all TMP labels on the win screen.</summary>
@@ -233,11 +223,11 @@ public class WinScreenController : MonoBehaviour
             SceneManager.LoadScene(nextTrialSceneName);
     }
 
-    /// <summary>Returns to the main menu trial selection screen.</summary>
+    /// <summary>Returns to the trial selection screen (always in MainScene).</summary>
     private void ReturnToTrialSelection()
     {
         Time.timeScale = 1f;
         MainMenuController.RequestTrialSelectOnLoad();
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        SceneManager.LoadScene("MainScene");
     }
 }

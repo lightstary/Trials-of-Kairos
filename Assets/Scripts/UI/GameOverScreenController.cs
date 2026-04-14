@@ -172,7 +172,7 @@ public class GameOverScreenController : MonoBehaviour
     {
         Time.timeScale = 1f;
         MainMenuController.RequestTrialSelectOnLoad();
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        SceneManager.LoadScene("MainScene");
     }
 
     private static float EaseOutQuart(float t) => 1f - Mathf.Pow(1f - t, 4f);

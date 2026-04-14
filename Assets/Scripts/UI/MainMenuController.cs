@@ -115,8 +115,9 @@ public class MainMenuController : MonoBehaviour
 
     void Start()
     {
-        if (beginTrialButton  != null) beginTrialButton.onClick.AddListener(BeginTrial);
-        if (continueButton    != null) continueButton.onClick.AddListener(BeginTrial);
+        // BEGIN TRIAL removed — trial select button is primary entry
+        if (beginTrialButton  != null) beginTrialButton.gameObject.SetActive(false);
+        if (continueButton    != null) continueButton.gameObject.SetActive(false);
         if (trialSelectButton != null) trialSelectButton.onClick.AddListener(OpenTrialSelect);
         if (controlsButton    != null) controlsButton.onClick.AddListener(OpenControls);
         if (quitButton        != null) quitButton.onClick.AddListener(QuitGame);
@@ -218,7 +219,8 @@ public class MainMenuController : MonoBehaviour
 
     private void SelectFirstButton()
     {
-        Button first = beginTrialButton != null ? beginTrialButton : trialSelectButton != null ? trialSelectButton : controlsButton;
+        // beginTrialButton is removed, trialSelectButton is the primary entry
+        Button first = trialSelectButton != null ? trialSelectButton : controlsButton;
         if (first != null && EventSystem.current != null) EventSystem.current.SetSelectedGameObject(first.gameObject);
     }
 

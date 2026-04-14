@@ -342,10 +342,6 @@ public class TrialSelectController : MonoBehaviour
         if (_confirmed || _confirmBlocked) return;
         if (!gameObject.activeInHierarchy) return;
 
-        // Cannot confirm locked levels
-        if (_isLocked != null && _selectedIndex >= 0 && _selectedIndex < _isLocked.Length && _isLocked[_selectedIndex])
-            return;
-
         _confirmed = true;
         StartCoroutine(BlockConfirmFrames());
         StartCoroutine(DelayedShowEnterButton());
@@ -458,18 +454,17 @@ public class TrialSelectController : MonoBehaviour
     /// <summary>Loads the scene for the selected trial.</summary>
     private void EnterTrial()
     {
-        // Block if locked or no scene
-        if (_isLocked != null && _selectedIndex >= 0 && _selectedIndex < _isLocked.Length && _isLocked[_selectedIndex])
-            return;
-
         string targetScene = GetSelectedSceneName();
         if (string.IsNullOrEmpty(targetScene)) return;
 
         Time.timeScale = 1f;
 
-        // If loading MainScene (Citadel), skip the main menu and go straight to gameplay
-        if (targetScene == "MainScene")
+        // Skip the main menu for any scene that has a MainMenuController.
+        // Without this, GardenScene/ClockScene show the menu instead of gameplay.
+        if (targetScene != HUB_SCENE_NAME)
             MainMenuController.SkipMenuOnLoad = true;
+
+        Debug.Log($"[TrialSelect] Loading scene: {targetScene} (index {_selectedIndex})");
 
         if (ScreenTransitionManager.Instance != null)
             ScreenTransitionManager.Instance.FadeToScene(targetScene);
@@ -544,17 +539,21 @@ public class TrialSelectController : MonoBehaviour
             {
                 switch (nonHubIndex)
                 {
-                    case 0: // Chapter I — Citadel (always unlocked, first real level)
+                    case 0: // Chapter I — Citadel
                         _sceneMap[i]  = "MainScene";
                         _isLocked[i]  = false;
                         break;
-                    case 1: // Chapter II — Garden (locked until Citadel complete, not built yet)
-                        _sceneMap[i]  = "";
-                        _isLocked[i]  = true; // No scene exists yet — always locked
+                    case 1: // Chapter II — Garden
+                        _sceneMap[i]  = "GardenScene";
+                        _isLocked[i]  = false;
                         break;
-                    default: // Chapter III+ — locked, not built
+                    case 2: // Chapter III — Clock
+                        _sceneMap[i]  = "ClockScene";
+                        _isLocked[i]  = false;
+                        break;
+                    default:
                         _sceneMap[i]  = "";
-                        _isLocked[i]  = true;
+                        _isLocked[i]  = false;
                         break;
                 }
                 nonHubIndex++;
@@ -562,50 +561,56 @@ public class TrialSelectController : MonoBehaviour
         }
     }
 
-    /// <summary>Applies locked visuals to cards that are locked.</summary>
+    /// <summary>
+    /// Ensures all cards are unlocked and visually consistent.
+    /// Resets any stale locked visuals baked into scene data.
+    /// </summary>
     private void ApplyLockVisuals()
     {
-        if (_isLocked == null || _cards == null) return;
+        if (_cards == null) return;
+
+        // Reference color from Card_Trial1 (Citadel) — the known-good card
+        Color referenceBg = new Color(0.059f, 0.09f, 0.165f, 1f);
+        Color referenceTitle = new Color(0.91f, 0.918f, 0.965f, 1f);
+        Color referenceNum = new Color(0.91f, 0.918f, 0.965f, 0.7f);
 
         for (int i = 0; i < _cards.Length; i++)
         {
-            if (!_isLocked[i]) continue;
+            if (_cards[i] == null) continue;
 
-            // Make card non-interactable
-            if (_cards[i] != null)
-                _cards[i].interactable = false;
+            // Ensure interactable
+            _cards[i].interactable = true;
 
-            // Dim and desaturate
+            // Skip hub card — it has its own styling
+            if (_cards[i].gameObject.name == "Card_Hub") continue;
+
+            // Reset background color to match Citadel
             if (_cardBgs[i] != null)
             {
-                Color c = _cardBgs[i].color;
-                c = Color.Lerp(c, new Color(0.15f, 0.15f, 0.18f, 1f), 0.6f);
-                c.a = 0.35f;
-                _cardBgs[i].color = c;
-                _cardOrigColors[i] = c;
+                _cardBgs[i].color = referenceBg;
+                _cardOrigColors[i] = referenceBg;
             }
 
-            // Update subtitle to "LOCKED"
-            if (_cards[i] != null)
+            // Reset title and chapter number colors
+            TextMeshProUGUI[] labels = _cards[i].GetComponentsInChildren<TextMeshProUGUI>(true);
+            foreach (TextMeshProUGUI lbl in labels)
             {
-                TextMeshProUGUI[] labels = _cards[i].GetComponentsInChildren<TextMeshProUGUI>(true);
-                foreach (TextMeshProUGUI lbl in labels)
-                {
-                    string objName = lbl.gameObject.name.ToLowerInvariant();
-                    if (objName.Contains("sub"))
-                        lbl.text = "LOCKED";
-                }
+                string n = lbl.gameObject.name.ToLowerInvariant();
+                if (n.Contains("title"))
+                    lbl.color = referenceTitle;
+                else if (n.Contains("num"))
+                    lbl.color = referenceNum;
             }
         }
     }
 
-    /// <summary>Checks if a level has been completed via PlayerPrefs.</summary>
+    /// <summary>Checks if a level has been completed this session.</summary>
     public static bool IsLevelComplete(string levelKey)
     {
-        return PlayerPrefs.GetInt("Level_" + levelKey + "_Complete", 0) == 1;
+        return BestTimeTracker.Has(levelKey);
     }
 
-    /// <summary>Updates the existing back button to a "Press B" indicator (not clickable).</summary>
+    /// <summary>Updates the back button — clickable for mouse, shows B hint for controller.</summary>
     private void UpdateBackButtonLabel()
     {
         if (backButton == null)
@@ -615,23 +620,27 @@ public class TrialSelectController : MonoBehaviour
         }
         if (backButton == null) return;
 
-        // Disable button interaction — it's now just an indicator
-        backButton.interactable = false;
-        Navigation nav = backButton.navigation;
-        nav.mode = Navigation.Mode.None;
-        backButton.navigation = nav;
+        // Keep button interactable for mouse clicks
+        backButton.interactable = true;
+        backButton.onClick.RemoveAllListeners();
+        backButton.onClick.AddListener(() =>
+        {
+            MainMenuController mmc = FindObjectOfType<MainMenuController>();
+            if (mmc != null) mmc.CloseTrialSelect();
+        });
 
-        // Remove background visual
+        // Minimal background
         Image bg = backButton.GetComponent<Image>();
-        if (bg != null) bg.color = Color.clear;
+        if (bg != null) bg.color = new Color(0.08f, 0.08f, 0.16f, 0.5f);
 
         TextMeshProUGUI lbl = backButton.GetComponentInChildren<TextMeshProUGUI>();
         if (lbl != null)
         {
-            lbl.text = "PRESS  [ B ]  TO GO BACK";
-            lbl.fontSize = 14f;
+            lbl.text = "BACK  [ B ]";
+            lbl.fontSize = 16f;
             lbl.characterSpacing = 4f;
-            lbl.color = new Color(0.91f, 0.918f, 0.965f, 0.4f);
+            lbl.color = new Color(0.91f, 0.918f, 0.965f, 0.6f);
+            CinzelFontHelper.Apply(lbl, true);
         }
     }
 
@@ -760,9 +769,13 @@ public class TrialSelectController : MonoBehaviour
 
     // ── Best time display ────────────────────────────────────────────────────
 
-    private static readonly string[] BEST_TIME_KEYS = { "BestTime_Citadel", "BestTime_Garden", "BestTime_Clock" };
+    private static readonly string[] BEST_TIME_LEVEL_KEYS = {
+        BestTimeTracker.KEY_CITADEL,
+        BestTimeTracker.KEY_GARDEN,
+        BestTimeTracker.KEY_CLOCK
+    };
 
-    /// <summary>Updates the TrialSub label on each card with saved best times.</summary>
+    /// <summary>Updates the TrialSub label on each card with session best times and completion state.</summary>
     private void RefreshBestTimes()
     {
         if (_cards == null) return;
@@ -773,31 +786,38 @@ public class TrialSelectController : MonoBehaviour
             if (_cards[i] == null) continue;
             if (_cards[i].gameObject.name == "Card_Hub") continue;
 
-            // Find the TrialSub label on this card
             Transform subT = _cards[i].transform.Find("TrialSub");
-            if (subT == null) { trialIndex++; continue; }
+            TextMeshProUGUI sub = subT != null ? subT.GetComponent<TextMeshProUGUI>() : null;
 
-            TextMeshProUGUI sub = subT.GetComponent<TextMeshProUGUI>();
-            if (sub == null) { trialIndex++; continue; }
+            string key = trialIndex < BEST_TIME_LEVEL_KEYS.Length ? BEST_TIME_LEVEL_KEYS[trialIndex] : null;
+            bool completed = key != null && BestTimeTracker.Has(key);
 
-            // Skip locked cards — they already show "LOCKED"
-            if (_isLocked != null && i < _isLocked.Length && _isLocked[i])
-            { trialIndex++; continue; }
-
-            string key = trialIndex < BEST_TIME_KEYS.Length ? BEST_TIME_KEYS[trialIndex] : "";
-            if (!string.IsNullOrEmpty(key) && PlayerPrefs.HasKey(key))
+            // Update sub-label text
+            if (sub != null)
             {
-                float best = PlayerPrefs.GetFloat(key);
-                sub.text = $"BEST  —  {FormatTime(best)}";
-                sub.color = new Color(0.96f, 0.84f, 0.26f, 0.7f); // gold for recorded time
-            }
-            else
-            {
-                sub.text = "BEST  —  --:--.--";
-                sub.color = new Color(0.91f, 0.918f, 0.965f, 0.45f);
+                if (completed)
+                {
+                    float best = BestTimeTracker.Get(key);
+                    sub.text = $"\u2713  BEST  —  {BestTimeTracker.Format(best)}";
+                    sub.color = new Color(0.2f, 1f, 0.45f, 0.85f); // green for completed
+                }
+                else
+                {
+                    sub.text = "BEST  —  --:--.--";
+                    sub.color = new Color(0.91f, 0.918f, 0.965f, 0.45f);
+                }
+                CinzelFontHelper.Apply(sub);
             }
 
-            CinzelFontHelper.Apply(sub);
+            // Visual state for completed levels — gold border tint on card background
+            if (completed && _cardBgs[i] != null)
+            {
+                Color c = _cardOrigColors[i];
+                c = Color.Lerp(c, new Color(0.2f, 0.9f, 0.35f, 1f), 0.12f); // subtle green tint
+                _cardOrigColors[i] = c;
+                if (i != _selectedIndex) _cardBgs[i].color = c;
+            }
+
             trialIndex++;
         }
     }
@@ -805,8 +825,6 @@ public class TrialSelectController : MonoBehaviour
     /// <summary>Formats a time value in seconds as M:SS.mm.</summary>
     private static string FormatTime(float seconds)
     {
-        int mins = Mathf.FloorToInt(seconds / 60f);
-        float secs = seconds - mins * 60f;
-        return $"{mins}:{secs:00.00}";
+        return BestTimeTracker.Format(seconds);
     }
 }
