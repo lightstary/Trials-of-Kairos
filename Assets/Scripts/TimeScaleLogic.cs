@@ -23,6 +23,10 @@ public class TimeScaleLogic : MonoBehaviour
     public float warningZone = 5f;
     public float dangerZone = 8f;
 
+    [Header("Boss Fight")]
+    [Tooltip("Rate multiplier during boss fights (< 1 = slower, e.g. 0.4 = 40% speed).")]
+    public float bossRateMultiplier = 0.4f;
+
     private float currentValue = 0f;
     private bool isDead = false;
     private ThreatState currentThreat = ThreatState.Safe;
@@ -46,10 +50,17 @@ public class TimeScaleLogic : MonoBehaviour
         if (isDead) return;
         if (TimeState.Instance == null) return;
 
-        // Don't accrue time until the intro modal has been dismissed
-        if (TimeScaleIntroModal.IsTimeLocked) return;
+        // Boss fights bypass the hub tutorial lock
+        bool bossActive = BossFight.Instance != null && BossFight.Instance.bossActive;
+
+        // Don't accrue time until the intro modal has been dismissed (hub only)
+        if (!bossActive && TimeScaleIntroModal.IsTimeLocked) return;
 
         float rate = tickInterval > 0f ? (1f / tickInterval) : 1f;
+
+        // Slow the meter during boss fights so the player has more breathing room
+        if (bossActive)
+            rate *= bossRateMultiplier;
 
         switch (TimeState.Instance.currentState)
         {

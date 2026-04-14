@@ -73,6 +73,7 @@ public class TrialSelectController : MonoBehaviour
         GatherCards();
         BuildSceneNameMap();
         ApplyLockVisuals();
+        RefreshBestTimes();
         EnsureEnterButton();
         UpdateBackButtonLabel();
 
@@ -756,4 +757,56 @@ public class TrialSelectController : MonoBehaviour
     }
 
     private static float EaseOut(float t) => 1f - Mathf.Pow(1f - t, 3f);
+
+    // ── Best time display ────────────────────────────────────────────────────
+
+    private static readonly string[] BEST_TIME_KEYS = { "BestTime_Citadel", "BestTime_Garden", "BestTime_Clock" };
+
+    /// <summary>Updates the TrialSub label on each card with saved best times.</summary>
+    private void RefreshBestTimes()
+    {
+        if (_cards == null) return;
+
+        int trialIndex = 0;
+        for (int i = 0; i < _cards.Length; i++)
+        {
+            if (_cards[i] == null) continue;
+            if (_cards[i].gameObject.name == "Card_Hub") continue;
+
+            // Find the TrialSub label on this card
+            Transform subT = _cards[i].transform.Find("TrialSub");
+            if (subT == null) { trialIndex++; continue; }
+
+            TextMeshProUGUI sub = subT.GetComponent<TextMeshProUGUI>();
+            if (sub == null) { trialIndex++; continue; }
+
+            // Skip locked cards — they already show "LOCKED"
+            if (_isLocked != null && i < _isLocked.Length && _isLocked[i])
+            { trialIndex++; continue; }
+
+            string key = trialIndex < BEST_TIME_KEYS.Length ? BEST_TIME_KEYS[trialIndex] : "";
+            if (!string.IsNullOrEmpty(key) && PlayerPrefs.HasKey(key))
+            {
+                float best = PlayerPrefs.GetFloat(key);
+                sub.text = $"BEST  —  {FormatTime(best)}";
+                sub.color = new Color(0.96f, 0.84f, 0.26f, 0.7f); // gold for recorded time
+            }
+            else
+            {
+                sub.text = "BEST  —  --:--.--";
+                sub.color = new Color(0.91f, 0.918f, 0.965f, 0.45f);
+            }
+
+            CinzelFontHelper.Apply(sub);
+            trialIndex++;
+        }
+    }
+
+    /// <summary>Formats a time value in seconds as M:SS.mm.</summary>
+    private static string FormatTime(float seconds)
+    {
+        int mins = Mathf.FloorToInt(seconds / 60f);
+        float secs = seconds - mins * 60f;
+        return $"{mins}:{secs:00.00}";
+    }
 }

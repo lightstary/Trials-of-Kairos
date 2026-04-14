@@ -9,6 +9,9 @@ using TMPro;
 /// </summary>
 public class HUDController : MonoBehaviour
 {
+    /// <summary>Singleton for easy access from BossFight and other systems.</summary>
+    public static HUDController Instance { get; private set; }
+
     [Header("Time State Indicator")]
     [SerializeField] private Image           hourglassIcon;
     [SerializeField] private Image           hourglassOrbitRing;
@@ -32,13 +35,18 @@ public class HUDController : MonoBehaviour
     [SerializeField] private Button             pauseButton;
     [SerializeField] private PauseMenuController pauseMenu;
 
-    private const float ORBIT_SPEED            = 15f;   // deg/s
+    private const float ORBIT_SPEED            = 15f;
     private const float HOURGLASS_ROTATE_SPEED = 10f;
     private const float OBJECTIVE_FADE         = 0.5f;
 
     private float targetHourglassAngle;
     private float currentHourglassAngle;
     private bool  objectiveCompleted;
+
+    void Awake()
+    {
+        Instance = this;
+    }
 
     void OnEnable()
     {
@@ -64,6 +72,16 @@ public class HUDController : MonoBehaviour
         if (pauseButton != null)
             pauseButton.gameObject.SetActive(false);
 
+        // Hide the top-left state label — the TimeScale meter already shows direction
+        if (stateLabel            != null) stateLabel.gameObject.SetActive(false);
+        if (orientationArrowLabel != null) orientationArrowLabel.gameObject.SetActive(false);
+
+        // Hide the yellow objective diamond
+        if (objectiveDiamond != null) objectiveDiamond.gameObject.SetActive(false);
+
+        // Default objective
+        SetObjective("REACH THE BOSS", 1, 1);
+
         if (TimeState.Instance != null)
             HandleTimeStateChanged(TimeState.Instance.currentState);
 
@@ -85,15 +103,6 @@ public class HUDController : MonoBehaviour
         // Orbit ring slow rotation
         if (hourglassOrbitRing != null)
             hourglassOrbitRing.rectTransform.Rotate(0f, 0f, -ORBIT_SPEED * Time.deltaTime);
-
-        // Gold pulse on completed objective diamond
-        if (objectiveCompleted && objectiveDiamond != null)
-        {
-            Color gold = TimeStateUIManager.Instance != null
-                ? TimeStateUIManager.Instance.goldColor : Color.yellow;
-            gold.a = Mathf.Sin(Time.time * 6f) * 0.3f + 0.7f;
-            objectiveDiamond.color = gold;
-        }
     }
 
     /// <summary>Toggles the pause menu with sub-screen and cooldown checks.</summary>
@@ -120,6 +129,14 @@ public class HUDController : MonoBehaviour
         if (objectiveCanvasGroup != null) StartCoroutine(FadeObjectiveIn());
     }
 
+    /// <summary>Updates the boss fight objective with wave progress.</summary>
+    public void SetBossObjective(int wavesCompleted, int totalWaves)
+    {
+        objectiveCompleted = false;
+        if (objectiveText     != null) objectiveText.text     = "DEFEAT THE BOSS";
+        if (trialProgressText != null) trialProgressText.text = $"Stand on the green tiles  {wavesCompleted}/{totalWaves}";
+    }
+
     /// <summary>Marks the current objective as complete.</summary>
     public void CompleteObjective() => objectiveCompleted = true;
 
@@ -136,27 +153,19 @@ public class HUDController : MonoBehaviour
         {
             case TimeState.State.Forward:
                 targetHourglassAngle = 0f;
-                if (stateLabel             != null) stateLabel.text             = "FORWARD";
-                if (orientationArrowLabel  != null) orientationArrowLabel.text  = "\u2191";
                 break;
             case TimeState.State.Frozen:
                 targetHourglassAngle = 90f;
-                if (stateLabel             != null) stateLabel.text             = "FROZEN";
-                if (orientationArrowLabel  != null) orientationArrowLabel.text  = "\u2194";
                 break;
             case TimeState.State.Reverse:
                 targetHourglassAngle = 180f;
-                if (stateLabel             != null) stateLabel.text             = "REVERSED";
-                if (orientationArrowLabel  != null) orientationArrowLabel.text  = "\u2193";
                 break;
         }
     }
 
     private void HandleColorChanged(Color color)
     {
-        if (hourglassOrbitRing  != null) hourglassOrbitRing.color = color;
-        if (stateLabel          != null) stateLabel.color          = color;
-        if (orientationArrowLabel != null) orientationArrowLabel.color = color;
+        if (hourglassOrbitRing != null) hourglassOrbitRing.color = color;
     }
 
     private IEnumerator FadeObjectiveIn()

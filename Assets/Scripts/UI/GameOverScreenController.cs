@@ -171,6 +171,7 @@ public class GameOverScreenController : MonoBehaviour
     private void ReturnToHub()
     {
         Time.timeScale = 1f;
+        MainMenuController.RequestTrialSelectOnLoad();
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 

@@ -85,6 +85,9 @@ public class MainMenuController : MonoBehaviour
     private static bool _openTrialSelectOnLoad;
     private static bool _restartTrialOnLoad;
 
+    /// <summary>Realtime timestamp when gameplay started (set by BeginTrial/SkipToGameplay).</summary>
+    public static float GameplayStartRealtime { get; private set; }
+
     /// <summary>Call before scene reload to auto-open trial select.</summary>
     public static void RequestTrialSelectOnLoad() => _openTrialSelectOnLoad = true;
 
@@ -143,6 +146,7 @@ public class MainMenuController : MonoBehaviour
         if (_shimmerLayer     != null) _shimmerLayer.SetActive(false);
         if (_menuBgPanel      != null) _menuBgPanel.SetActive(false);
         if (hudPanel          != null) hudPanel.SetActive(true);
+        GameplayStartRealtime = Time.realtimeSinceStartup;
         Time.timeScale = 1f;
     }
 
@@ -334,6 +338,9 @@ public class MainMenuController : MonoBehaviour
     {
         if (trialSelectScreen != null) trialSelectScreen.SetActive(false);
         if (controlsScreen    != null) controlsScreen.SetActive(false);
+
+        // Mark gameplay start for completion timer
+        GameplayStartRealtime = Time.realtimeSinceStartup;
 
         // If a specific scene is configured and it's different from the current one, load it
         if (!string.IsNullOrEmpty(beginTrialScene)

@@ -34,6 +34,9 @@ public class BossFight : MonoBehaviour
     private Dictionary<GameObject, Vector3> originalPositions = new Dictionary<GameObject, Vector3>();
     private Vector3 arenaCenter;
 
+    /// <summary>Total trial completion time tracked using realtime (unaffected by timeScale).</summary>
+    private float TrialElapsedTime => Time.realtimeSinceStartup - MainMenuController.GameplayStartRealtime;
+
     void Awake()
     {
         Instance = this;
@@ -58,6 +61,11 @@ public class BossFight : MonoBehaviour
     {
         if (bossActive) return;
         bossActive = true;
+
+        // Update HUD objective
+        if (HUDController.Instance != null)
+            HUDController.Instance.SetBossObjective(0, totalRounds);
+
         StartCoroutine(RunBossFight());
     }
 
@@ -94,14 +102,37 @@ public class BossFight : MonoBehaviour
 
             yield return StartCoroutine(FlashSafeTiles());
             SoundManager.Instance?.PlayRoundClear();
+
+            // Update wave counter on HUD
+            if (HUDController.Instance != null)
+                HUDController.Instance.SetBossObjective(currentRound + 1, totalRounds);
+
             yield return new WaitForSeconds(roundResetDelay);
             ResetArena();
             yield return new WaitForSeconds(1f);
         }
 
-        if (BossPopup.Instance != null)
-            BossPopup.Instance.ShowWin();
+        // Boss defeated — stop the fight, reset meter, show win screen
+        bossActive = false;
+        if (TimeScaleLogic.Instance != null)
+            TimeScaleLogic.Instance.ResetMeter();
+
+        float completionTime = TrialElapsedTime;
         SoundManager.Instance?.PlayWin();
+
+        // Freeze game so the win screen is interactable
+        Time.timeScale = 0f;
+
+        WinScreenController winScreen = FindObjectOfType<WinScreenController>(true);
+        if (winScreen != null)
+        {
+            winScreen.gameObject.SetActive(true);
+            winScreen.Show("THE CITADEL", completionTime, 3, false, true, true, true);
+        }
+        else
+        {
+            Debug.LogWarning("[BossFight] WinScreenController not found in scene.");
+        }
     }
 
     IEnumerator RunRound(System.Action<bool> callback)

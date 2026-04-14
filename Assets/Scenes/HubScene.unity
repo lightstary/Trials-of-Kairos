@@ -3687,6 +3687,7 @@ MonoBehaviour:
   maxValue: 10
   warningZone: 5
   dangerZone: 8
+  bossRateMultiplier: 0.4
 --- !u!21 &327952397
 Material:
   serializedVersion: 8
