@@ -16445,7 +16445,7 @@ MonoBehaviour:
   - {fileID: 474888244}
   - {fileID: 1953112420}
   floatHeight: 0.5
-  floatSpeed: 0.3
+  floatSpeed: 0.5
 --- !u!54 &942742778
 Rigidbody:
   m_ObjectHideFlags: 0
