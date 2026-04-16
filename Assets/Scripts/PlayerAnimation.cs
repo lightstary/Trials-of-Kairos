@@ -13,9 +13,24 @@ public class PlayerAnimation : MonoBehaviour
 	
 	void Update()
 	{
-		if(Input.GetKeyUp(KeyCode.UpArrow))
+		if(Input.GetKeyDown(KeyCode.UpArrow))
 		{
-			anim.SetTrigger("FrontPush");
+			anim.SetTrigger("PushForward");
+		}
+		
+		if(Input.GetKeyDown(KeyCode.DownArrow))
+		{
+			anim.SetTrigger("PushBack");
+		}
+		
+		if(Input.GetKeyDown(KeyCode.LeftArrow))
+		{
+			anim.SetTrigger("PushLeft");
+		}
+		
+		if(Input.GetKeyDown(KeyCode.RightArrow))
+		{
+			anim.SetTrigger("PushRight");
 		}
 	}
 }
