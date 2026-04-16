@@ -267,10 +267,15 @@ public class PauseMenuController : MonoBehaviour
 
     private void OpenTrialSelection()
     {
-        Time.timeScale = 1f; _isPaused = false;
+        _isPaused = false;
+        SetVisible(false);
+        Time.timeScale = 1f;
         MainMenuController.RequestTrialSelectOnLoad();
-        // Always load MainScene for trial selection (it has the main menu + trial select UI)
-        SceneManager.LoadScene("MainScene");
+        // Always go to MainScene for trial selection (it has the menu + trial select UI)
+        if (ScreenTransitionManager.Instance != null)
+            ScreenTransitionManager.Instance.FadeToScene("MainScene");
+        else
+            SceneManager.LoadScene("MainScene");
     }
 
     private void HideSubPanels()

@@ -106,9 +106,9 @@ public class GoalTile : MonoBehaviour
         MakeText(panelGO.transform, "You have completed the Hub tutorial.\nThe path to the Citadel is now open.", 13f, TEXT_COL, false,
             new Vector2(0.08f, 0.45f), new Vector2(0.92f, 0.72f), 0f);
 
-        // ── CONTINUE TO CITADEL button ──
-        Button continueBtn = MakePopupButton(panelGO.transform, "CONTINUE TO CITADEL", new Vector2(0f, 95f));
-        continueBtn.onClick.AddListener(LoadCitadel);
+        // ── TRIAL SELECTION button ──
+        Button continueBtn = MakePopupButton(panelGO.transform, "TRIAL SELECTION", new Vector2(0f, 95f));
+        continueBtn.onClick.AddListener(GoToTrialSelection);
 
         // ── RETRY HUB button ──
         Button retryBtn = MakePopupButton(panelGO.transform, "RETRY HUB", new Vector2(0f, 38f));
@@ -187,10 +187,10 @@ public class GoalTile : MonoBehaviour
         cg.alpha = 1f;
     }
 
-    private void LoadCitadel()
+    private void GoToTrialSelection()
     {
         Time.timeScale = 1f;
-        MainMenuController.SkipMenuOnLoad = true;
+        MainMenuController.RequestTrialSelectOnLoad();
         if (ScreenTransitionManager.Instance != null)
             ScreenTransitionManager.Instance.FadeToScene("MainScene");
         else

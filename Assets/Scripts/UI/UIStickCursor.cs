@@ -274,6 +274,14 @@ public class UIStickCursor : MonoBehaviour
         GameObject modal = GameObject.Find("TimeScaleIntroModal");
         if (modal != null && modal.activeInHierarchy) return true;
 
+        // Win screen
+        WinScreenController wsc = FindObjectOfType<WinScreenController>();
+        if (wsc != null && wsc.gameObject.activeInHierarchy) return true;
+
+        // Game over screen
+        GameOverScreenController gosc = FindObjectOfType<GameOverScreenController>();
+        if (gosc != null && gosc.gameObject.activeInHierarchy) return true;
+
         return false;
     }
 

@@ -3687,6 +3687,7 @@ MonoBehaviour:
   maxValue: 10
   warningZone: 5
   dangerZone: 8
+  bossRateMultiplier: 0.4
 --- !u!21 &327952397
 Material:
   serializedVersion: 8
@@ -19618,6 +19619,7 @@ GameObject:
   - component: {fileID: 1772101261}
   - component: {fileID: 1772101260}
   - component: {fileID: 1772101259}
+  - component: {fileID: 1772101262}
   m_Layer: 0
   m_Name: DemoPlatform
   m_TagString: Tile
@@ -19711,6 +19713,24 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1772101257}
   m_Mesh: {fileID: -2269245349382216059, guid: 085e56dd87e185242a1861e04adf6826, type: 3}
+--- !u!114 &1772101262
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1772101257}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71bae2bd8c4ea314797a6899ed838052, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveDirection: {x: 0, y: 0, z: 1}
+  moveDistance: 2
+  tickInterval: 1
+  minTime: -4
+  maxTime: 4
+  smoothMovement: 0
 --- !u!1 &1781129455
 GameObject:
   m_ObjectHideFlags: 0

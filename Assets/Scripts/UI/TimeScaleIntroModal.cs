@@ -89,8 +89,11 @@ public class TimeScaleIntroModal : MonoBehaviour
     private TextMeshProUGUI _bodyTMP;
     private TextMeshProUGUI _pageIndicator;
     private TextMeshProUGUI _btnLabelTMP;
+    private Button _continueBtn;
+    private Button _backBtn;
     private int _currentPage;
     private bool _isOpen;
+    private float _lastPageChangeTime;
 
     // Soft glow behind the TimeScaleMeter
     private GameObject _meterGlowGO;
@@ -426,15 +429,15 @@ public class TimeScaleIntroModal : MonoBehaviour
         btnRT.anchoredPosition = new Vector2(-20f, 18f);
         Image btnImg = btnGO.AddComponent<Image>();
         btnImg.color = BTN_BG;
-        Button btn = btnGO.AddComponent<Button>();
-        btn.targetGraphic = btnImg;
-        ColorBlock cb = btn.colors;
+        _continueBtn = btnGO.AddComponent<Button>();
+        _continueBtn.targetGraphic = btnImg;
+        ColorBlock cb = _continueBtn.colors;
         cb.normalColor = Color.white;
         cb.highlightedColor = ACCENT_GOLD;
         cb.selectedColor = ACCENT_GOLD;
         cb.pressedColor = new Color(0.7f, 0.5f, 0.1f, 1f);
         cb.fadeDuration = 0.05f;
-        btn.colors = cb;
+        _continueBtn.colors = cb;
 
         GameObject btnLabelGO = MakeRect("Label", btnGO.transform, Vector2.zero, Vector2.one);
         _btnLabelTMP = btnLabelGO.AddComponent<TextMeshProUGUI>();
@@ -444,26 +447,88 @@ public class TimeScaleIntroModal : MonoBehaviour
         _btnLabelTMP.raycastTarget = false;
         CinzelFontHelper.Apply(_btnLabelTMP, true);
 
-        btn.onClick.AddListener(NextPage);
+        _continueBtn.onClick.AddListener(OnContinueClicked);
+
+        // Back button (left side)
+        GameObject backGO = MakeRect("BackBtn", panel.transform, new Vector2(0f, 0f), new Vector2(0f, 0f));
+        RectTransform backRT = backGO.GetComponent<RectTransform>();
+        backRT.pivot = new Vector2(0f, 0f);
+        backRT.sizeDelta = new Vector2(120f, 44f);
+        backRT.anchoredPosition = new Vector2(20f, 18f);
+        Image backImg = backGO.AddComponent<Image>();
+        backImg.color = BTN_BG;
+        _backBtn = backGO.AddComponent<Button>();
+        _backBtn.targetGraphic = backImg;
+        _backBtn.colors = cb; // same color block as continue
+        _backBtn.onClick.AddListener(OnBackClicked);
+
+        GameObject backLabelGO = MakeRect("Label", backGO.transform, Vector2.zero, Vector2.one);
+        TextMeshProUGUI backLabelTMP = backLabelGO.AddComponent<TextMeshProUGUI>();
+        backLabelTMP.fontSize = 16f;
+        backLabelTMP.color = TEXT_WHITE;
+        backLabelTMP.alignment = TextAlignmentOptions.Center;
+        backLabelTMP.text = "\u25C0  BACK";
+        backLabelTMP.raycastTarget = false;
+        CinzelFontHelper.Apply(backLabelTMP, true);
+
+        // Wire navigation between Continue and Back
+        Navigation contNav = new Navigation { mode = Navigation.Mode.Explicit, selectOnLeft = _backBtn };
+        _continueBtn.navigation = contNav;
+        Navigation bNav = new Navigation { mode = Navigation.Mode.Explicit, selectOnRight = _continueBtn };
+        _backBtn.navigation = bNav;
 
         StartCoroutine(InputListenRoutine());
     }
 
+    private const float PAGE_COOLDOWN = 0.25f;
+
+    /// <summary>Returns true if enough time has passed since the last page change.</summary>
+    private bool CanChangePage()
+    {
+        return Time.unscaledTime - _lastPageChangeTime >= PAGE_COOLDOWN;
+    }
+
+    /// <summary>Click handler for the Continue button.</summary>
+    private void OnContinueClicked()
+    {
+        if (!CanChangePage()) return;
+        NextPage();
+    }
+
+    /// <summary>Click handler for the Back button.</summary>
+    private void OnBackClicked()
+    {
+        if (!CanChangePage()) return;
+        PrevPage();
+    }
+
     /// <summary>
-    /// Listens for A button / Space / Enter while the modal is open.
+    /// Listens for controller/keyboard input while the modal is open.
     /// yield return null works even at Time.timeScale = 0.
     /// </summary>
     private IEnumerator InputListenRoutine()
     {
-        yield return null; // skip one frame to avoid immediate advance
+        // Block for a short window so the input that opened the modal doesn't immediately advance
+        _lastPageChangeTime = Time.unscaledTime;
 
         while (_isOpen)
         {
-            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.JoystickButton0)
-                || Input.GetKeyDown(KeyCode.Return))
+            if (CanChangePage())
             {
-                NextPage();
+                bool nextPressed = Input.GetKeyDown(KeyCode.Space)
+                                || Input.GetKeyDown(KeyCode.JoystickButton0)
+                                || Input.GetKeyDown(KeyCode.Return);
+
+                bool backPressed = Input.GetKeyDown(KeyCode.JoystickButton1)
+                                || Input.GetKeyDown(KeyCode.Escape)
+                                || Input.GetKeyDown(KeyCode.Backspace);
+
+                if (nextPressed)
+                    NextPage();
+                else if (backPressed)
+                    PrevPage();
             }
+
             yield return null;
         }
     }
@@ -480,6 +545,10 @@ public class TimeScaleIntroModal : MonoBehaviour
         if (_btnLabelTMP != null)
             _btnLabelTMP.text = _currentPage < PAGES.Length - 1 ? "CONTINUE  \u25B6" : "GOT IT  \u2714";
 
+        // Show/hide Back button on first page
+        if (_backBtn != null)
+            _backBtn.gameObject.SetActive(_currentPage > 0);
+
         // Show/hide zone highlights based on current page
         if (_currentPage == PAGE_DANGER_ZONES)
             ShowZoneHighlights();
@@ -489,6 +558,9 @@ public class TimeScaleIntroModal : MonoBehaviour
 
     private void NextPage()
     {
+        if (!CanChangePage()) return;
+        _lastPageChangeTime = Time.unscaledTime;
+
         _currentPage++;
         if (_currentPage >= PAGES.Length)
         {
@@ -496,6 +568,18 @@ public class TimeScaleIntroModal : MonoBehaviour
             return;
         }
         UpdatePage();
+    }
+
+    private void PrevPage()
+    {
+        if (!CanChangePage()) return;
+        _lastPageChangeTime = Time.unscaledTime;
+
+        if (_currentPage > 0)
+        {
+            _currentPage--;
+            UpdatePage();
+        }
     }
 
     /// <summary>

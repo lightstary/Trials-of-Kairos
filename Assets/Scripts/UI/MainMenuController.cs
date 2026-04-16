@@ -85,6 +85,9 @@ public class MainMenuController : MonoBehaviour
     private static bool _openTrialSelectOnLoad;
     private static bool _restartTrialOnLoad;
 
+    /// <summary>Realtime timestamp when gameplay started (set by BeginTrial/SkipToGameplay).</summary>
+    public static float GameplayStartRealtime { get; private set; }
+
     /// <summary>Call before scene reload to auto-open trial select.</summary>
     public static void RequestTrialSelectOnLoad() => _openTrialSelectOnLoad = true;
 
@@ -112,8 +115,9 @@ public class MainMenuController : MonoBehaviour
 
     void Start()
     {
-        if (beginTrialButton  != null) beginTrialButton.onClick.AddListener(BeginTrial);
-        if (continueButton    != null) continueButton.onClick.AddListener(BeginTrial);
+        // BEGIN TRIAL removed — trial select button is primary entry
+        if (beginTrialButton  != null) beginTrialButton.gameObject.SetActive(false);
+        if (continueButton    != null) continueButton.gameObject.SetActive(false);
         if (trialSelectButton != null) trialSelectButton.onClick.AddListener(OpenTrialSelect);
         if (controlsButton    != null) controlsButton.onClick.AddListener(OpenControls);
         if (quitButton        != null) quitButton.onClick.AddListener(QuitGame);
@@ -143,6 +147,7 @@ public class MainMenuController : MonoBehaviour
         if (_shimmerLayer     != null) _shimmerLayer.SetActive(false);
         if (_menuBgPanel      != null) _menuBgPanel.SetActive(false);
         if (hudPanel          != null) hudPanel.SetActive(true);
+        GameplayStartRealtime = Time.realtimeSinceStartup;
         Time.timeScale = 1f;
     }
 
@@ -214,7 +219,8 @@ public class MainMenuController : MonoBehaviour
 
     private void SelectFirstButton()
     {
-        Button first = beginTrialButton != null ? beginTrialButton : trialSelectButton != null ? trialSelectButton : controlsButton;
+        // beginTrialButton is removed, trialSelectButton is the primary entry
+        Button first = trialSelectButton != null ? trialSelectButton : controlsButton;
         if (first != null && EventSystem.current != null) EventSystem.current.SetSelectedGameObject(first.gameObject);
     }
 
@@ -334,6 +340,9 @@ public class MainMenuController : MonoBehaviour
     {
         if (trialSelectScreen != null) trialSelectScreen.SetActive(false);
         if (controlsScreen    != null) controlsScreen.SetActive(false);
+
+        // Mark gameplay start for completion timer
+        GameplayStartRealtime = Time.realtimeSinceStartup;
 
         // If a specific scene is configured and it's different from the current one, load it
         if (!string.IsNullOrEmpty(beginTrialScene)

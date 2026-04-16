@@ -171,7 +171,8 @@ public class GameOverScreenController : MonoBehaviour
     private void ReturnToHub()
     {
         Time.timeScale = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        MainMenuController.RequestTrialSelectOnLoad();
+        SceneManager.LoadScene("MainScene");
     }
 
     private static float EaseOutQuart(float t) => 1f - Mathf.Pow(1f - t, 4f);

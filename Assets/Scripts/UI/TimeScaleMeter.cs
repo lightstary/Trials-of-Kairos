@@ -131,6 +131,22 @@ public class TimeScaleMeter : MonoBehaviour
         bool bossActive = BossFight.Instance != null && BossFight.Instance.bossActive;
         bool showZones = bossActive || AlwaysShowZones;
 
+        // ── Override fill color when past thresholds (boss fights only) ──
+        if (bossActive)
+        {
+            float absDisplay = Mathf.Abs(_display);
+            if (absDisplay >= dng)
+            {
+                if (_posFill != null && _display >= 0f) _posFill.color = DANGER_COL;
+                if (_negFill != null && _display <  0f) _negFill.color = DANGER_COL;
+            }
+            else if (absDisplay >= wrn)
+            {
+                if (_posFill != null && _display >= 0f) _posFill.color = WARN_COL;
+                if (_negFill != null && _display <  0f) _negFill.color = WARN_COL;
+            }
+        }
+
         // Warning zone: subtle orange at warning threshold
         bool inWarning = bossActive && threat >= TimeScaleLogic.ThreatState.Warning;
         float wp = inWarning ? Mathf.Sin(Time.time * 3f) * 0.15f + 0.25f : 0.08f;

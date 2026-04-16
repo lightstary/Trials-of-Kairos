@@ -32,7 +32,6 @@ public class WinScreenController : MonoBehaviour
     [SerializeField] private Image radianceOverlay;
 
     [Header("Config")]
-    [SerializeField] private string hubSceneName      = "HubScene";
     [SerializeField] private string nextTrialSceneName = "";
 
     private const string TITLE_TEXT     = "TIME  RESTORED";
@@ -40,30 +39,78 @@ public class WinScreenController : MonoBehaviour
     private const float  STAT_DELAY     = 0.3f;
     private const float  RADIANCE_DUR   = 1.2f;
 
+    private bool _shown = false;
+    private bool _listenersWired = false;
+
     void Start()
     {
-        if (nextTrialButton   != null) nextTrialButton.onClick.AddListener(GoToNextTrial);
-        if (returnToHubButton != null) returnToHubButton.onClick.AddListener(ReturnToHub);
-        if (winPanel          != null) winPanel.SetActive(false);
+        EnsureListenersWired();
+
+        // Only hide the panel if ShowSimple/Show hasn't already been called
+        if (!_shown && winPanel != null) winPanel.SetActive(false);
     }
 
     /// <summary>Shows the win screen with stats.</summary>
     public void Show(string trialName, float completionTime, int stars,
                      bool isPersonalBest, bool usedForward, bool usedFrozen, bool usedReverse)
     {
+        _shown = true;
+        EnsureListenersWired();
         if (winPanel != null) winPanel.SetActive(true);
         if (titleLabel    != null) titleLabel.text    = TITLE_TEXT;
         if (subtitleLabel != null) subtitleLabel.text = $"{trialName} COMPLETE".ToUpper();
+
+        // Session-only best time
+        string key = BestTimeTracker.KeyForScene(SceneManager.GetActiveScene().name);
+        if (key != null) BestTimeTracker.Record(key, completionTime);
+
+        ApplyCinzelFonts();
         StartCoroutine(Animate(completionTime, stars, isPersonalBest, usedForward, usedFrozen, usedReverse));
     }
 
     /// <summary>Shows a simple win screen without detailed stats.</summary>
     public void ShowSimple()
     {
+        _shown = true;
+        EnsureListenersWired();
         if (winPanel != null) winPanel.SetActive(true);
         if (titleLabel    != null) titleLabel.text    = TITLE_TEXT;
         if (subtitleLabel != null) subtitleLabel.text = "TRIAL COMPLETE";
-        StartCoroutine(FadeIn(0.5f));
+
+        string key = BestTimeTracker.KeyForScene(SceneManager.GetActiveScene().name);
+        if (key != null) BestTimeTracker.MarkComplete(key);
+
+        ApplyCinzelFonts();
+        StartCoroutine(SimpleShowRoutine());
+    }
+
+    /// <summary>Applies Cinzel font to all TMP labels on the win screen.</summary>
+    private void ApplyCinzelFonts()
+    {
+        CinzelFontHelper.ApplyToAll(transform, bold: true);
+    }
+
+    private IEnumerator SimpleShowRoutine()
+    {
+        yield return FadeIn(0.5f);
+        SelectDefaultButton();
+    }
+
+    /// <summary>Wire onClick listeners if Start() hasn't run yet.</summary>
+    private void EnsureListenersWired()
+    {
+        if (_listenersWired) return;
+        _listenersWired = true;
+        if (nextTrialButton   != null) nextTrialButton.onClick.AddListener(GoToNextTrial);
+        if (returnToHubButton != null) returnToHubButton.onClick.AddListener(ReturnToTrialSelection);
+    }
+
+    /// <summary>Selects a button so the Xbox controller can navigate the win screen.</summary>
+    private void SelectDefaultButton()
+    {
+        Button target = returnToHubButton != null ? returnToHubButton : nextTrialButton;
+        if (target != null && UnityEngine.EventSystems.EventSystem.current != null)
+            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(target.gameObject);
     }
 
     private IEnumerator Animate(float time, int stars, bool pb,
@@ -101,6 +148,8 @@ public class WinScreenController : MonoBehaviour
             if (reverse) s += (s.Length > 0 ? " \u00B7 " : "") + "REVERSED";
             stancesUsedLabel.text = s;
         }
+
+        SelectDefaultButton();
     }
 
     private IEnumerator FadeIn(float dur)
@@ -167,16 +216,18 @@ public class WinScreenController : MonoBehaviour
 
     private void GoToNextTrial()
     {
-        if (string.IsNullOrEmpty(nextTrialSceneName)) { ReturnToHub(); return; }
+        if (string.IsNullOrEmpty(nextTrialSceneName)) { ReturnToTrialSelection(); return; }
         if (ScreenTransitionManager.Instance != null)
             ScreenTransitionManager.Instance.FadeToScene(nextTrialSceneName);
         else
             SceneManager.LoadScene(nextTrialSceneName);
     }
 
-    private void ReturnToHub()
+    /// <summary>Returns to the trial selection screen (always in MainScene).</summary>
+    private void ReturnToTrialSelection()
     {
         Time.timeScale = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        MainMenuController.RequestTrialSelectOnLoad();
+        SceneManager.LoadScene("MainScene");
     }
 }
