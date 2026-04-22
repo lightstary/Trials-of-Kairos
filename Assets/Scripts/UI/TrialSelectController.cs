@@ -51,6 +51,12 @@ public class TrialSelectController : MonoBehaviour
     private bool        _needsHintBuild;
     private Vector2     _lastMousePos;
 
+    private float[]     _cardTargetScales;
+    private const float SCALE_LERP_SPEED    = 10f;
+    private const float SELECTED_SCALE      = 1.08f;
+    private const float CONFIRMED_SCALE     = 1.08f;
+    private const float UNSELECTED_SCALE    = 1.0f;
+
     private const float DPAD_REPEAT_DELAY = 0.25f;
 
     // ── Colors ────────────────────────────────────────────────────────────────
@@ -95,24 +101,34 @@ public class TrialSelectController : MonoBehaviour
                     Color gold = _cardOrigColors[i];
                     gold = Color.Lerp(gold, SelectedGold, 0.25f);
                     _cardBgs[i].color = gold;
+                    _cardTargetScales[i] = SELECTED_SCALE;
                 }
                 else
                 {
                     Color dim = _cardOrigColors[i];
                     dim.a = 0.5f;
                     _cardBgs[i].color = dim;
+                    _cardTargetScales[i] = UNSELECTED_SCALE;
                 }
             }
         }
 
         // Defer hint building to first Update frame to avoid inactive GO coroutine error
         _needsHintBuild = !_hintsBuilt;
+
+        InputPromptManager.OnInputModeChanged += OnInputModeChanged;
     }
 
     void OnDisable()
     {
         // Release input back to UIGamepadNavigator.
         UIGamepadNavigator.SuppressInput = false;
+        InputPromptManager.OnInputModeChanged -= OnInputModeChanged;
+    }
+
+    private void OnInputModeChanged(InputPromptManager.InputMode newMode)
+    {
+        UpdateBackButtonLabel();
     }
 
     void Update()
@@ -230,6 +246,22 @@ public class TrialSelectController : MonoBehaviour
             MainMenuController mmc = FindObjectOfType<MainMenuController>();
             if (mmc != null) mmc.CloseTrialSelect();
         }
+
+        // ── Smooth card scale lerp (replaces coroutine-based animation) ──
+        if (_cards != null && _cardTargetScales != null)
+        {
+            float lerpT = 1f - Mathf.Exp(-SCALE_LERP_SPEED * Time.unscaledDeltaTime);
+            for (int i = 0; i < _cards.Length; i++)
+            {
+                if (_cards[i] == null) continue;
+                RectTransform rt = _cards[i].GetComponent<RectTransform>();
+                if (rt == null) continue;
+                float current = rt.localScale.x;
+                float target = _cardTargetScales[i];
+                float next = Mathf.Lerp(current, target, lerpT);
+                rt.localScale = new Vector3(next, next, 1f);
+            }
+        }
     }
 
     // ── Card navigation ───────────────────────────────────────────────────────
@@ -245,6 +277,7 @@ public class TrialSelectController : MonoBehaviour
         _cards          = new Button[count];
         _cardBgs        = new Image[count];
         _cardOrigColors = new Color[count];
+        _cardTargetScales = new float[count];
 
         for (int i = 0; i < count; i++)
         {
@@ -252,6 +285,7 @@ public class TrialSelectController : MonoBehaviour
             _cards[i]   = child.GetComponent<Button>();
             _cardBgs[i] = child.GetComponent<Image>();
             _cardOrigColors[i] = _cardBgs[i] != null ? _cardBgs[i].color : Color.clear;
+            _cardTargetScales[i] = UNSELECTED_SCALE;
 
             // Remove ALL existing onClick listeners (including persistent ones
             // set in the Inspector, e.g. Card_Trial1 → BeginTrial on MainMenuController).
@@ -305,18 +339,14 @@ public class TrialSelectController : MonoBehaviour
                 Color gold = _cardOrigColors[i];
                 gold = Color.Lerp(gold, SelectedGold, 0.25f);
                 _cardBgs[i].color = gold;
-
-                RectTransform rt = _cardBgs[i].GetComponent<RectTransform>();
-                if (rt != null && gameObject.activeInHierarchy) StartCoroutine(AnimateScale(rt, 1.08f, 0.15f));
+                _cardTargetScales[i] = SELECTED_SCALE;
             }
             else
             {
                 Color dim = _cardOrigColors[i];
                 dim.a = 0.5f;
                 _cardBgs[i].color = dim;
-
-                RectTransform rt = _cardBgs[i].GetComponent<RectTransform>();
-                if (rt != null && gameObject.activeInHierarchy) StartCoroutine(AnimateScale(rt, 1.0f, 0.15f));
+                _cardTargetScales[i] = UNSELECTED_SCALE;
             }
         }
     }
@@ -385,8 +415,11 @@ public class TrialSelectController : MonoBehaviour
 
     private IEnumerator ConfirmPulse(RectTransform rt)
     {
-        yield return AnimateScale(rt, 1.25f, 0.10f);
-        yield return AnimateScale(rt, 1.08f, 0.15f);
+        // Quick pop-out then settle back
+        int idx = _selectedIndex;
+        _cardTargetScales[idx] = 1.2f;
+        yield return new WaitForSecondsRealtime(0.1f);
+        _cardTargetScales[idx] = CONFIRMED_SCALE;
     }
 
     // ── Enter Trial button ────────────────────────────────────────────────────
@@ -610,7 +643,7 @@ public class TrialSelectController : MonoBehaviour
         return BestTimeTracker.Has(levelKey);
     }
 
-    /// <summary>Updates the back button — clickable for mouse, shows B hint for controller.</summary>
+    /// <summary>Updates the back button — shows correct icon for current input mode.</summary>
     private void UpdateBackButtonLabel()
     {
         if (backButton == null)
@@ -633,14 +666,34 @@ public class TrialSelectController : MonoBehaviour
         Image bg = backButton.GetComponent<Image>();
         if (bg != null) bg.color = new Color(0.08f, 0.08f, 0.16f, 0.5f);
 
+        // Update label to just "BACK"
         TextMeshProUGUI lbl = backButton.GetComponentInChildren<TextMeshProUGUI>();
         if (lbl != null)
         {
-            lbl.text = "BACK  [ B ]";
+            lbl.text = "BACK";
             lbl.fontSize = 16f;
             lbl.characterSpacing = 4f;
             lbl.color = new Color(0.91f, 0.918f, 0.965f, 0.6f);
             CinzelFontHelper.Apply(lbl, true);
+        }
+
+        // Add or update icon
+        Sprite backSprite = InputPromptManager.IsKeyboardMouse ? ControllerIcons.KeyEsc : ControllerIcons.CtrlB;
+        Transform existingIcon = backButton.transform.Find("BackIcon");
+        if (existingIcon != null)
+        {
+            Image existingImg = existingIcon.GetComponent<Image>();
+            if (existingImg != null && backSprite != null)
+                existingImg.sprite = backSprite;
+        }
+        else if (backSprite != null)
+        {
+            Image iconImg = ControllerIcons.CreateIcon(backButton.transform, backSprite, 28f);
+            if (iconImg != null)
+            {
+                iconImg.gameObject.name = "BackIcon";
+                iconImg.transform.SetAsFirstSibling();
+            }
         }
     }
 
@@ -743,21 +796,6 @@ public class TrialSelectController : MonoBehaviour
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
-
-    private IEnumerator AnimateScale(RectTransform rt, float target, float duration)
-    {
-        Vector3 start = rt.localScale;
-        Vector3 end   = Vector3.one * target;
-        float elapsed = 0f;
-        while (elapsed < duration)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            float t = Mathf.Clamp01(elapsed / duration);
-            rt.localScale = Vector3.Lerp(start, end, EaseOut(t));
-            yield return null;
-        }
-        rt.localScale = end;
-    }
 
     private void DestroyChild(string name)
     {

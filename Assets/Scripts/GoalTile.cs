@@ -103,7 +103,7 @@ public class GoalTile : MonoBehaviour
             new Vector2(0.05f, 0.72f), new Vector2(0.95f, 0.93f), 8f);
 
         // Subtitle
-        MakeText(panelGO.transform, "You have completed the Hub tutorial.\nThe path to the Citadel is now open.", 13f, TEXT_COL, false,
+        MakeText(panelGO.transform, "You have proven yourself worthy.\nThree trials now await — each more unforgiving than the last.", 13f, TEXT_COL, false,
             new Vector2(0.08f, 0.45f), new Vector2(0.92f, 0.72f), 0f);
 
         // ── TRIAL SELECTION button ──

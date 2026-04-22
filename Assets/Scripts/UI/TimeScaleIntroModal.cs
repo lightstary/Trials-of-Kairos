@@ -19,7 +19,7 @@ public class TimeScaleIntroModal : MonoBehaviour
     /// When true, TimeScaleLogic should not accumulate any time value.
     /// Set true on Awake, cleared when the modal is dismissed.
     /// </summary>
-    public static bool IsTimeLocked { get; private set; } = true;
+    public static bool IsTimeLocked { get; private set; } = false;
 
     private const float DETECT_RANGE = 2.0f;
     private const int GLOW_TEX_SIZE = 64;
@@ -36,16 +36,14 @@ public class TimeScaleIntroModal : MonoBehaviour
 
     private static readonly string[] PAGES = new string[]
     {
-        // Page 0 — Introduce the time scale concept (colored orientation words)
-        "<color=#F5C842><size=24>TIME SCALE</size></color>\n\n" +
+        "<color=#F5C842><size=32>TIME SCALE</size></color>\n\n" +
         "You control a <b>global time value</b>.\n\n" +
         "It starts at <b>zero</b> when each level begins.\n\n" +
         "<color=#F5C842><b>Stand upright</b></color> to push time forward.\n" +
         "<color=#9B5DE5><b>Flip upside down</b></color> to pull it back.\n" +
         "<color=#5AB4F0><b>Lay flat</b></color> to freeze it exactly where it is.",
 
-        // Page 1 — Explain the meter UI
-        "<color=#F5C842><size=24>THE METER</size></color>\n\n" +
+        "<color=#F5C842><size=32>THE METER</size></color>\n\n" +
         "Look at the bar at the top of the screen.\n\n" +
         "The <b>marker</b> shows your current time value.\n" +
         "The <b>center line</b> is zero \u2014 where you started.\n" +
@@ -54,8 +52,7 @@ public class TimeScaleIntroModal : MonoBehaviour
         "The numbers on each end show the level's\n" +
         "<b>full time range</b>.",
 
-        // Page 2 — Thresholds and danger (zone highlights shown here)
-        "<color=#F5C842><size=24>DANGER ZONES</size></color>\n\n" +
+        "<color=#F5C842><size=32>DANGER ZONES</size></color>\n\n" +
         "During <b>boss fights</b>, thresholds appear\n" +
         "near the edges of the meter.\n\n" +
         "Push time too far and you enter the\n" +
@@ -65,8 +62,7 @@ public class TimeScaleIntroModal : MonoBehaviour
         "The bar pulses <color=#E53219>red</color>. If time reaches the\n" +
         "edge of the bar, you <b>lose</b>.",
 
-        // Page 3 — Boss fights (consolidated)
-        "<color=#F5C842><size=24>THE BOSS</size></color>\n\n" +
+        "<color=#F5C842><size=32>THE BOSS</size></color>\n\n" +
         "At the end of each level, a <b>boss</b> appears.\n\n" +
         "During the fight, time keeps moving \u2014 the\n" +
         "meter doesn't stop. The thresholds become\n" +
@@ -74,8 +70,7 @@ public class TimeScaleIntroModal : MonoBehaviour
         "Manage your position on the bar carefully.\n" +
         "Run out of room and it's over.",
 
-        // Page 4 — Object limits and final tips
-        "<color=#F5C842><size=24>OBJECT LIMITS</size></color>\n\n" +
+        "<color=#F5C842><size=32>OBJECT LIMITS</size></color>\n\n" +
         "Each object has its own <b>time range</b>.\n\n" +
         "A platform might only move between <b>-2</b> and\n" +
         "<b>+2</b>, even if global time goes well past that.\n\n" +
@@ -94,6 +89,10 @@ public class TimeScaleIntroModal : MonoBehaviour
     private int _currentPage;
     private bool _isOpen;
     private float _lastPageChangeTime;
+
+    // Tracked icons for input-mode updates
+    private Image _backBtnIcon;
+    private Image _continueBtnIcon;
 
     // Soft glow behind the TimeScaleMeter
     private GameObject _meterGlowGO;
@@ -133,6 +132,8 @@ public class TimeScaleIntroModal : MonoBehaviour
         _isOpen = true;
         _currentPage = 0;
         Time.timeScale = 0f;
+
+        InputPromptManager.OnInputModeChanged += OnInputModeChanged;
 
         // Hide any tutorial tile tooltips that might be showing behind the modal
         DismissTutorialPopups();
@@ -390,86 +391,150 @@ public class TimeScaleIntroModal : MonoBehaviour
         // Center panel — positioned slightly below center to leave room for the meter
         GameObject panel = MakeRect("Panel", _modalGO.transform, new Vector2(0.5f, 0.45f), new Vector2(0.5f, 0.45f));
         RectTransform panelRT = panel.GetComponent<RectTransform>();
-        panelRT.sizeDelta = new Vector2(580f, 420f);
+        panelRT.sizeDelta = new Vector2(700f, 600f);
         Image panelImg = panel.AddComponent<Image>();
         panelImg.color = PANEL_BG;
 
-        // Body text
+        // Body text — anchored to top, sized to stop well above buttons
+        // Panel=560, top padding=35, body=360, leaving 165px for buttons+indicator
         GameObject bodyGO = MakeRect("Body", panel.transform, new Vector2(0f, 1f), new Vector2(1f, 1f));
         RectTransform bodyRT = bodyGO.GetComponent<RectTransform>();
         bodyRT.pivot = new Vector2(0.5f, 1f);
-        bodyRT.sizeDelta = new Vector2(-50f, 320f);
-        bodyRT.anchoredPosition = new Vector2(0f, -25f);
+        bodyRT.sizeDelta = new Vector2(-80f, 400f);
+        bodyRT.anchoredPosition = new Vector2(0f, -35f);
         _bodyTMP = bodyGO.AddComponent<TextMeshProUGUI>();
-        _bodyTMP.fontSize = 17f;
+        _bodyTMP.fontSize = 26f;
         _bodyTMP.color = TEXT_WHITE;
         _bodyTMP.alignment = TextAlignmentOptions.TopLeft;
         _bodyTMP.richText = true;
+        _bodyTMP.enableWordWrapping = true;
+        _bodyTMP.overflowMode = TextOverflowModes.Ellipsis;
         _bodyTMP.raycastTarget = false;
         CinzelFontHelper.Apply(_bodyTMP);
 
-        // Page indicator
+        // ── Button row container — pinned to bottom with clear spacing ─────
+        GameObject btnRow = MakeRect("ButtonRow", panel.transform, new Vector2(0f, 0f), new Vector2(1f, 0f));
+        RectTransform btnRowRT = btnRow.GetComponent<RectTransform>();
+        btnRowRT.pivot = new Vector2(0.5f, 0f);
+        btnRowRT.sizeDelta = new Vector2(-60f, 64f);
+        btnRowRT.anchoredPosition = new Vector2(0f, 20f);
+
+        HorizontalLayoutGroup btnHLG = btnRow.AddComponent<HorizontalLayoutGroup>();
+        btnHLG.spacing = 20f;
+        btnHLG.childAlignment = TextAnchor.MiddleCenter;
+        btnHLG.childControlWidth = true;
+        btnHLG.childControlHeight = true;
+        btnHLG.childForceExpandWidth = true;
+        btnHLG.childForceExpandHeight = true;
+        btnHLG.padding = new RectOffset(10, 10, 0, 0);
+
+        // Page indicator (left side, above buttons)
         GameObject indicatorGO = MakeRect("PageIndicator", panel.transform, new Vector2(0f, 0f), new Vector2(0.5f, 0f));
         RectTransform indRT = indicatorGO.GetComponent<RectTransform>();
         indRT.pivot = new Vector2(0f, 0f);
-        indRT.sizeDelta = new Vector2(0f, 36f);
-        indRT.anchoredPosition = new Vector2(25f, 18f);
+        indRT.sizeDelta = new Vector2(0f, 28f);
+        indRT.anchoredPosition = new Vector2(40f, 90f);
         _pageIndicator = indicatorGO.AddComponent<TextMeshProUGUI>();
-        _pageIndicator.fontSize = 14f;
+        _pageIndicator.fontSize = 16f;
         _pageIndicator.color = new Color(TEXT_WHITE.r, TEXT_WHITE.g, TEXT_WHITE.b, 0.4f);
         _pageIndicator.alignment = TextAlignmentOptions.BottomLeft;
         _pageIndicator.raycastTarget = false;
         CinzelFontHelper.Apply(_pageIndicator);
 
-        // Continue / Got It button
-        GameObject btnGO = MakeRect("ContinueBtn", panel.transform, new Vector2(1f, 0f), new Vector2(1f, 0f));
-        RectTransform btnRT = btnGO.GetComponent<RectTransform>();
-        btnRT.pivot = new Vector2(1f, 0f);
-        btnRT.sizeDelta = new Vector2(160f, 44f);
-        btnRT.anchoredPosition = new Vector2(-20f, 18f);
-        Image btnImg = btnGO.AddComponent<Image>();
-        btnImg.color = BTN_BG;
-        _continueBtn = btnGO.AddComponent<Button>();
-        _continueBtn.targetGraphic = btnImg;
-        ColorBlock cb = _continueBtn.colors;
+        // ── Back button (left) ─────────────────────────────────────────
+        GameObject backGO = new GameObject("BackBtn");
+        backGO.transform.SetParent(btnRow.transform, false);
+        Image backImg = backGO.AddComponent<Image>();
+        backImg.color = BTN_BG;
+        _backBtn = backGO.AddComponent<Button>();
+        _backBtn.targetGraphic = backImg;
+        ColorBlock cb = ColorBlock.defaultColorBlock;
         cb.normalColor = Color.white;
         cb.highlightedColor = ACCENT_GOLD;
         cb.selectedColor = ACCENT_GOLD;
         cb.pressedColor = new Color(0.7f, 0.5f, 0.1f, 1f);
         cb.fadeDuration = 0.05f;
-        _continueBtn.colors = cb;
-
-        GameObject btnLabelGO = MakeRect("Label", btnGO.transform, Vector2.zero, Vector2.one);
-        _btnLabelTMP = btnLabelGO.AddComponent<TextMeshProUGUI>();
-        _btnLabelTMP.fontSize = 16f;
-        _btnLabelTMP.color = TEXT_WHITE;
-        _btnLabelTMP.alignment = TextAlignmentOptions.Center;
-        _btnLabelTMP.raycastTarget = false;
-        CinzelFontHelper.Apply(_btnLabelTMP, true);
-
-        _continueBtn.onClick.AddListener(OnContinueClicked);
-
-        // Back button (left side)
-        GameObject backGO = MakeRect("BackBtn", panel.transform, new Vector2(0f, 0f), new Vector2(0f, 0f));
-        RectTransform backRT = backGO.GetComponent<RectTransform>();
-        backRT.pivot = new Vector2(0f, 0f);
-        backRT.sizeDelta = new Vector2(120f, 44f);
-        backRT.anchoredPosition = new Vector2(20f, 18f);
-        Image backImg = backGO.AddComponent<Image>();
-        backImg.color = BTN_BG;
-        _backBtn = backGO.AddComponent<Button>();
-        _backBtn.targetGraphic = backImg;
-        _backBtn.colors = cb; // same color block as continue
+        _backBtn.colors = cb;
         _backBtn.onClick.AddListener(OnBackClicked);
 
-        GameObject backLabelGO = MakeRect("Label", backGO.transform, Vector2.zero, Vector2.one);
+        // Back button: icon + label in HorizontalLayoutGroup
+        HorizontalLayoutGroup backHLG = backGO.AddComponent<HorizontalLayoutGroup>();
+        backHLG.spacing = 8f;
+        backHLG.childAlignment = TextAnchor.MiddleCenter;
+        backHLG.childControlWidth = false;
+        backHLG.childControlHeight = false;
+        backHLG.childForceExpandWidth = false;
+        backHLG.childForceExpandHeight = false;
+        backHLG.padding = new RectOffset(12, 12, 4, 4);
+
+        Sprite backSprite = ControllerIcons.BackIcon;
+        if (backSprite != null)
+        {
+            _backBtnIcon = ControllerIcons.CreateIcon(backGO.transform, backSprite, 32f);
+            if (_backBtnIcon != null)
+            {
+                LayoutElement bLE = _backBtnIcon.gameObject.AddComponent<LayoutElement>();
+                bLE.preferredWidth = 32f;
+                bLE.preferredHeight = 32f;
+            }
+        }
+
+        GameObject backLabelGO = new GameObject("Label");
+        backLabelGO.transform.SetParent(backGO.transform, false);
         TextMeshProUGUI backLabelTMP = backLabelGO.AddComponent<TextMeshProUGUI>();
-        backLabelTMP.fontSize = 16f;
+        backLabelTMP.fontSize = 20f;
         backLabelTMP.color = TEXT_WHITE;
-        backLabelTMP.alignment = TextAlignmentOptions.Center;
-        backLabelTMP.text = "\u25C0  BACK";
+        backLabelTMP.alignment = TextAlignmentOptions.MidlineLeft;
+        backLabelTMP.text = "BACK";
         backLabelTMP.raycastTarget = false;
         CinzelFontHelper.Apply(backLabelTMP, true);
+        LayoutElement backLblLE = backLabelGO.AddComponent<LayoutElement>();
+        backLblLE.preferredWidth = 80f;
+        backLblLE.preferredHeight = 32f;
+
+        // ── Continue button (right) ────────────────────────────────────
+        GameObject btnGO = new GameObject("ContinueBtn");
+        btnGO.transform.SetParent(btnRow.transform, false);
+        Image btnImg = btnGO.AddComponent<Image>();
+        btnImg.color = BTN_BG;
+        _continueBtn = btnGO.AddComponent<Button>();
+        _continueBtn.targetGraphic = btnImg;
+        _continueBtn.colors = cb;
+        _continueBtn.onClick.AddListener(OnContinueClicked);
+
+        // Continue button: label + icon in HorizontalLayoutGroup
+        HorizontalLayoutGroup contHLG = btnGO.AddComponent<HorizontalLayoutGroup>();
+        contHLG.spacing = 8f;
+        contHLG.childAlignment = TextAnchor.MiddleCenter;
+        contHLG.childControlWidth = false;
+        contHLG.childControlHeight = false;
+        contHLG.childForceExpandWidth = false;
+        contHLG.childForceExpandHeight = false;
+        contHLG.padding = new RectOffset(12, 12, 4, 4);
+
+        GameObject btnLabelGO = new GameObject("Label");
+        btnLabelGO.transform.SetParent(btnGO.transform, false);
+        _btnLabelTMP = btnLabelGO.AddComponent<TextMeshProUGUI>();
+        _btnLabelTMP.fontSize = 20f;
+        _btnLabelTMP.color = TEXT_WHITE;
+        _btnLabelTMP.alignment = TextAlignmentOptions.MidlineRight;
+        _btnLabelTMP.raycastTarget = false;
+        CinzelFontHelper.Apply(_btnLabelTMP, true);
+        LayoutElement contLblLE = btnLabelGO.AddComponent<LayoutElement>();
+        contLblLE.preferredWidth = 120f;
+        contLblLE.preferredHeight = 32f;
+
+        Sprite confirmSprite = ControllerIcons.ConfirmIcon;
+        if (confirmSprite != null)
+        {
+            _continueBtnIcon = ControllerIcons.CreateIcon(btnGO.transform, confirmSprite, 32f);
+            if (_continueBtnIcon != null)
+            {
+                LayoutElement cLE = _continueBtnIcon.gameObject.AddComponent<LayoutElement>();
+                cLE.preferredWidth = 32f;
+                cLE.preferredHeight = 32f;
+            }
+        }
 
         // Wire navigation between Continue and Back
         Navigation contNav = new Navigation { mode = Navigation.Mode.Explicit, selectOnLeft = _backBtn };
@@ -543,7 +608,7 @@ public class TimeScaleIntroModal : MonoBehaviour
         _pageIndicator.text = $"{_currentPage + 1} / {PAGES.Length}";
 
         if (_btnLabelTMP != null)
-            _btnLabelTMP.text = _currentPage < PAGES.Length - 1 ? "CONTINUE  \u25B6" : "GOT IT  \u2714";
+            _btnLabelTMP.text = _currentPage < PAGES.Length - 1 ? "CONTINUE" : "GOT IT";
 
         // Show/hide Back button on first page
         if (_backBtn != null)
@@ -592,6 +657,8 @@ public class TimeScaleIntroModal : MonoBehaviour
         Time.timeScale = 1f;
         IsTimeLocked = false;
 
+        InputPromptManager.OnInputModeChanged -= OnInputModeChanged;
+
         ClearZoneHighlights();
         RemoveMeterGlow();
 
@@ -612,6 +679,18 @@ public class TimeScaleIntroModal : MonoBehaviour
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────
+
+    /// <summary>Updates button icons when input mode changes.</summary>
+    private void OnInputModeChanged(InputPromptManager.InputMode newMode)
+    {
+        if (!_isOpen) return;
+
+        if (_backBtnIcon != null)
+            _backBtnIcon.sprite = ControllerIcons.BackIcon;
+
+        if (_continueBtnIcon != null)
+            _continueBtnIcon.sprite = ControllerIcons.ConfirmIcon;
+    }
 
     private static GameObject MakeRect(string name, Transform parent, Vector2 anchorMin, Vector2 anchorMax)
     {

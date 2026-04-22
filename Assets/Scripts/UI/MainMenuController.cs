@@ -121,9 +121,20 @@ public class MainMenuController : MonoBehaviour
         if (trialSelectButton != null) trialSelectButton.onClick.AddListener(OpenTrialSelect);
         if (controlsButton    != null) controlsButton.onClick.AddListener(OpenControls);
         if (quitButton        != null) quitButton.onClick.AddListener(QuitGame);
-        if (versionLabel      != null) versionLabel.text = $"v{Application.version}";
-        if (titleLabel    != null) titleLabel.color    = new Color(0.95f, 0.97f, 1.0f, 0f);
-        if (subtitleLabel != null) subtitleLabel.color = new Color(0.92f, 0.82f, 0.55f, 0f);
+        if (versionLabel      != null) versionLabel.text = "v1.0";
+        // Force title to always be two lines and apply Cinzel font
+        if (titleLabel != null)
+        {
+            titleLabel.text = "TRIALS OF\nKAIROS";
+            titleLabel.fontSize = 72f;
+            titleLabel.color = new Color(0.95f, 0.97f, 1.0f, 0f);
+            CinzelFontHelper.Apply(titleLabel, true);
+        }
+        if (subtitleLabel != null)
+        {
+            subtitleLabel.color = new Color(0.92f, 0.82f, 0.55f, 0f);
+            CinzelFontHelper.Apply(subtitleLabel);
+        }
 
         if (_restartTrialOnLoad) { _restartTrialOnLoad = false; SkipToGameplay(); return; }
         if (SkipMenuOnLoad) { SkipMenuOnLoad = false; SkipToGameplay(); return; }
@@ -149,6 +160,27 @@ public class MainMenuController : MonoBehaviour
         if (hudPanel          != null) hudPanel.SetActive(true);
         GameplayStartRealtime = Time.realtimeSinceStartup;
         Time.timeScale = 1f;
+
+        // Show the trial intro flash — use scene name to determine the correct title
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        string trialTitle = GetTrialTitleForScene(sceneName);
+        TrialIntroFlash.TriggerFlash(trialTitle);
+
+        // Spawn the time state label now that HUD is active
+        TimeStateLabel.EnsureExists();
+    }
+
+    /// <summary>Maps scene names to trial display names.</summary>
+    private static string GetTrialTitleForScene(string sceneName)
+    {
+        switch (sceneName)
+        {
+            case "MainScene":   return "THE CITADEL";
+            case "GardenScene": return "THE GARDEN";
+            case "ClockScene":  return "THE CLOCK";
+            case "HubScene":    return "THE HUB";
+            default:            return sceneName.ToUpper();
+        }
     }
 
     void Update()

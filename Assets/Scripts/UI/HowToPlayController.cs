@@ -22,6 +22,9 @@ public class HowToPlayController : MonoBehaviour
     /// <summary>True when the screen is currently visible.</summary>
     public bool IsOpen => _root != null && _root.activeSelf;
 
+    /// <summary>Static check for any HowToPlayController instance being open.</summary>
+    public static bool IsAnyOpen { get; private set; }
+
     // ── Colors ───────────────────────────────────────────────────────────
     private static readonly Color BG_COLOR      = new Color(0.02f, 0.025f, 0.05f, 0.96f);
     private static readonly Color TITLE_GOLD    = new Color(1f, 0.843f, 0f, 1f);
@@ -53,7 +56,14 @@ public class HowToPlayController : MonoBehaviour
     private Image            _forwardGlow, _frozenGlow, _reverseGlow;
     private Image            _cubeStandingImg, _cubeFlatImg, _cubeFlippedImg;
     private TextMeshProUGUI  _pageCounter;
-    private TextMeshProUGUI  _navHint;
+
+    // Bottom bar icon hint containers (one per mode, toggled on swap)
+    private GameObject       _kbmNavHints;
+    private GameObject       _ctrlNavHints;
+    private TextMeshProUGUI  _kbmConfirmLabel;
+    private TextMeshProUGUI  _kbmBackLabel;
+    private TextMeshProUGUI  _ctrlConfirmLabel;
+    private TextMeshProUGUI  _ctrlBackLabel;
 
     // ── Public API ───────────────────────────────────────────────────────
 
@@ -66,6 +76,7 @@ public class HowToPlayController : MonoBehaviour
             _pages[i].SetActive(i == 0);
         UpdatePageCounter();
         _root.SetActive(true);
+        IsAnyOpen = true;
         Time.timeScale = 0f;
         StartCoroutine(FadeIn());
     }
@@ -77,6 +88,21 @@ public class HowToPlayController : MonoBehaviour
     }
 
     // ── MonoBehaviour ────────────────────────────────────────────────────
+
+    void OnEnable()
+    {
+        InputPromptManager.OnInputModeChanged += OnInputModeChanged;
+    }
+
+    void OnDisable()
+    {
+        InputPromptManager.OnInputModeChanged -= OnInputModeChanged;
+    }
+
+    private void OnInputModeChanged(InputPromptManager.InputMode newMode)
+    {
+        RefreshNavHints();
+    }
 
     void Update()
     {
@@ -171,7 +197,7 @@ public class HowToPlayController : MonoBehaviour
         CreateLabel(leftCol.transform, "JOYSTICK_ICON", "\u25CE", 80f,
             HEADER_WHITE, TextAlignmentOptions.Center, new Vector2(0, 0.65f), new Vector2(1, 0.95f));
 
-        CreateLabel(leftCol.transform, "StickLabel", "LEFT STICK", 14f,
+        CreateLabel(leftCol.transform, "StickLabel", "LEFT STICK", 18f,
             HINT_DIM, TextAlignmentOptions.Center, new Vector2(0, 0.56f), new Vector2(1, 0.64f));
 
         // Direction arrows diagram
@@ -189,21 +215,21 @@ public class HowToPlayController : MonoBehaviour
             FORWARD_COLOR, "StandingCube");
 
         // ── Right: Explanation text ──
-        CreateLabel(rightCol.transform, "Title", "MOVEMENT", 32f,
+        CreateLabel(rightCol.transform, "Title", "MOVEMENT", 40f,
             TITLE_GOLD, TextAlignmentOptions.Left, new Vector2(0, 0.82f), new Vector2(1, 0.95f), true);
 
         CreateDivider(rightCol.transform, 0.78f, 0.80f);
 
-        CreateLabel(rightCol.transform, "Body1", "Your character is a cube that rolls\nacross a grid of tiles.", 17f,
+        CreateLabel(rightCol.transform, "Body1", "Your character is a cube that rolls\nacross a grid of tiles.", 22f,
             HEADER_WHITE, TextAlignmentOptions.Left, new Vector2(0, 0.62f), new Vector2(1, 0.78f));
 
         CreateLabel(rightCol.transform, "Body2",
             "Use the left stick or D-pad to roll\nin four directions.\n\n" +
-            "Each roll moves exactly one tile.\nThe cube physically rotates as it rolls,\nchanging which face points upward.", 15f,
+            "Each roll moves exactly one tile.\nThe cube physically rotates as it rolls,\nchanging which face points upward.", 19f,
             BODY_DIM, TextAlignmentOptions.Left, new Vector2(0, 0.28f), new Vector2(1, 0.62f));
 
         CreateLabel(rightCol.transform, "Hint",
-            "The orientation of your cube determines\nthe flow of time.", 14f,
+            "The orientation of your cube determines\nthe flow of time.", 18f,
             FORWARD_COLOR, TextAlignmentOptions.Left, new Vector2(0, 0.12f), new Vector2(1, 0.28f));
 
         return page;
@@ -248,34 +274,34 @@ public class HowToPlayController : MonoBehaviour
             new Vector2(0.6f, y3Bot + 0.02f), new Vector2(0.9f, y3Top - 0.02f), REVERSE_COLOR);
 
         // ── Right: Explanation text ──
-        CreateLabel(rightCol.transform, "Title", "TIME STATES", 32f,
+        CreateLabel(rightCol.transform, "Title", "TIME STATES", 40f,
             TITLE_GOLD, TextAlignmentOptions.Left, new Vector2(0, 0.82f), new Vector2(1, 0.95f), true);
 
         CreateDivider(rightCol.transform, 0.78f, 0.80f);
 
         CreateLabel(rightCol.transform, "Intro",
-            "Your cube's orientation controls the\nflow of time in the world.", 17f,
+            "Your cube's orientation controls the\nflow of time in the world.", 22f,
             HEADER_WHITE, TextAlignmentOptions.Left, new Vector2(0, 0.66f), new Vector2(1, 0.78f));
 
         // Forward section
-        CreateLabel(rightCol.transform, "FwdLabel", "FORWARD", 18f,
+        CreateLabel(rightCol.transform, "FwdLabel", "FORWARD", 24f,
             FORWARD_COLOR, TextAlignmentOptions.Left, new Vector2(0, 0.56f), new Vector2(1, 0.64f), true);
         CreateLabel(rightCol.transform, "FwdDesc",
-            "Cube upright \u2014 time moves forward.\nPlatforms shift, hazards activate.", 14f,
+            "Cube upright \u2014 time moves forward.\nPlatforms shift, hazards activate.", 18f,
             BODY_DIM, TextAlignmentOptions.Left, new Vector2(0, 0.46f), new Vector2(1, 0.56f));
 
         // Frozen section
-        CreateLabel(rightCol.transform, "FrzLabel", "FROZEN", 18f,
+        CreateLabel(rightCol.transform, "FrzLabel", "FROZEN", 24f,
             FROZEN_COLOR, TextAlignmentOptions.Left, new Vector2(0, 0.38f), new Vector2(1, 0.46f), true);
         CreateLabel(rightCol.transform, "FrzDesc",
-            "Cube on its side \u2014 time stops.\nEverything freezes in place.", 14f,
+            "Cube on its side \u2014 time stops.\nEverything freezes in place.", 18f,
             BODY_DIM, TextAlignmentOptions.Left, new Vector2(0, 0.28f), new Vector2(1, 0.38f));
 
         // Reverse section
-        CreateLabel(rightCol.transform, "RevLabel", "REVERSE", 18f,
+        CreateLabel(rightCol.transform, "RevLabel", "REVERSE", 24f,
             REVERSE_COLOR, TextAlignmentOptions.Left, new Vector2(0, 0.20f), new Vector2(1, 0.28f), true);
         CreateLabel(rightCol.transform, "RevDesc",
-            "Cube upside down \u2014 time reverses.\nPlatforms return, effects rewind.", 14f,
+            "Cube upside down \u2014 time reverses.\nPlatforms return, effects rewind.", 18f,
             BODY_DIM, TextAlignmentOptions.Left, new Vector2(0, 0.10f), new Vector2(1, 0.20f));
 
         return page;
@@ -305,42 +331,42 @@ public class HowToPlayController : MonoBehaviour
             FROZEN_COLOR, TextAlignmentOptions.Center,
             new Vector2(0.55f, 0.22f), new Vector2(0.9f, 0.42f));
 
-        CreateLabel(leftCol.transform, "HazardLbl", "HAZARDS", 11f,
+        CreateLabel(leftCol.transform, "HazardLbl", "HAZARDS", 14f,
             new Color(0.898f, 0.196f, 0.106f, 0.7f), TextAlignmentOptions.Center,
             new Vector2(0.1f, 0.16f), new Vector2(0.45f, 0.24f));
 
-        CreateLabel(leftCol.transform, "PuzzleLbl", "PUZZLES", 11f,
+        CreateLabel(leftCol.transform, "PuzzleLbl", "PUZZLES", 14f,
             new Color(FROZEN_COLOR.r, FROZEN_COLOR.g, FROZEN_COLOR.b, 0.7f), TextAlignmentOptions.Center,
             new Vector2(0.55f, 0.16f), new Vector2(0.9f, 0.24f));
 
         // ── Right: Explanation ──
-        CreateLabel(rightCol.transform, "Title", "YOUR GOAL", 32f,
+        CreateLabel(rightCol.transform, "Title", "YOUR GOAL", 40f,
             TITLE_GOLD, TextAlignmentOptions.Left, new Vector2(0, 0.82f), new Vector2(1, 0.95f), true);
 
         CreateDivider(rightCol.transform, 0.78f, 0.80f);
 
         CreateLabel(rightCol.transform, "Body1",
-            "Reach the golden goal tile to\ncomplete each trial.", 17f,
+            "Reach the golden goal tile to\ncomplete each trial.", 22f,
             HEADER_WHITE, TextAlignmentOptions.Left, new Vector2(0, 0.64f), new Vector2(1, 0.78f));
 
         CreateLabel(rightCol.transform, "Body2",
-            "Along the way you will face:", 15f,
+            "Along the way you will face:", 19f,
             BODY_DIM, TextAlignmentOptions.Left, new Vector2(0, 0.56f), new Vector2(1, 0.64f));
 
         CreateLabel(rightCol.transform, "Bullet1",
-            "\u25B8  Moving platforms that shift with time", 15f,
+            "\u25B8  Moving platforms that shift with time", 19f,
             BODY_DIM, TextAlignmentOptions.Left, new Vector2(0, 0.48f), new Vector2(1, 0.56f));
 
         CreateLabel(rightCol.transform, "Bullet2",
-            "\u25B8  Hazards that activate in certain states", 15f,
+            "\u25B8  Hazards that activate in certain states", 19f,
             BODY_DIM, TextAlignmentOptions.Left, new Vector2(0, 0.40f), new Vector2(1, 0.48f));
 
         CreateLabel(rightCol.transform, "Bullet3",
-            "\u25B8  Puzzles that require switching time", 15f,
+            "\u25B8  Puzzles that require switching time", 19f,
             BODY_DIM, TextAlignmentOptions.Left, new Vector2(0, 0.32f), new Vector2(1, 0.40f));
 
         CreateLabel(rightCol.transform, "Tip",
-            "Master the relationship between your\ncube's orientation and time to survive\neach trial.", 15f,
+            "Master the relationship between your\ncube's orientation and time to survive\neach trial.", 19f,
             FORWARD_COLOR, TextAlignmentOptions.Left, new Vector2(0, 0.12f), new Vector2(1, 0.30f));
 
         return page;
@@ -357,18 +383,84 @@ public class HowToPlayController : MonoBehaviour
         barRT.offsetMin = new Vector2(40, 10); barRT.offsetMax = new Vector2(-40, 55);
 
         // Page counter: "1 / 3"
-        _pageCounter = CreateTextElement(bar.transform, "PageCounter", "1 / 3", 16f,
+        _pageCounter = CreateTextElement(bar.transform, "PageCounter", "1 / 3", 24f,
             HINT_DIM, TextAlignmentOptions.Center, new Vector2(0.4f, 0), new Vector2(0.6f, 1));
 
-        // Nav hint
-        _navHint = CreateTextElement(bar.transform, "NavHint",
-            "[A] CONTINUE     [B] BACK", 13f,
-            HINT_DIM, TextAlignmentOptions.Right, new Vector2(0.6f, 0), new Vector2(1, 1));
-
-        // Title hint
-        CreateTextElement(bar.transform, "TitleHint", "HOW TO PLAY", 13f,
+        // Title hint (left side)
+        CreateTextElement(bar.transform, "TitleHint", "HOW TO PLAY", 18f,
             new Color(TITLE_GOLD.r, TITLE_GOLD.g, TITLE_GOLD.b, 0.4f),
             TextAlignmentOptions.Left, new Vector2(0, 0), new Vector2(0.4f, 1));
+
+        // ── Nav hint area (right side) with icon+label pairs ─────────────
+        GameObject navArea = new GameObject("NavHintArea");
+        navArea.transform.SetParent(bar.transform, false);
+        RectTransform naRT = navArea.AddComponent<RectTransform>();
+        naRT.anchorMin = new Vector2(0.55f, 0); naRT.anchorMax = new Vector2(1, 1);
+        naRT.offsetMin = Vector2.zero; naRT.offsetMax = Vector2.zero;
+
+        // KB/M hints: [MouseLeft] NEXT   [ESC] BACK
+        _kbmNavHints = BuildNavHintRow(navArea.transform, "KBMHints",
+            ControllerIcons.MouseLeft, "NEXT",
+            ControllerIcons.KeyEsc, "BACK",
+            out _kbmConfirmLabel, out _kbmBackLabel);
+
+        // Controller hints: [A] NEXT   [B] BACK
+        _ctrlNavHints = BuildNavHintRow(navArea.transform, "CtrlHints",
+            ControllerIcons.CtrlA, "NEXT",
+            ControllerIcons.CtrlB, "BACK",
+            out _ctrlConfirmLabel, out _ctrlBackLabel);
+
+        UpdateNavHintsVisibility();
+    }
+
+    /// <summary>Builds a horizontal row with two icon+label pairs.</summary>
+    private GameObject BuildNavHintRow(Transform parent, string name,
+        Sprite confirmIcon, string confirmText,
+        Sprite backIcon, string backText,
+        out TextMeshProUGUI confirmLabel, out TextMeshProUGUI backLabel)
+    {
+        GameObject row = new GameObject(name);
+        row.transform.SetParent(parent, false);
+        RectTransform rowRT = row.AddComponent<RectTransform>();
+        rowRT.anchorMin = Vector2.zero; rowRT.anchorMax = Vector2.one;
+        rowRT.offsetMin = Vector2.zero; rowRT.offsetMax = Vector2.zero;
+
+        HorizontalLayoutGroup hlg = row.AddComponent<HorizontalLayoutGroup>();
+        hlg.spacing = 24f;
+        hlg.childAlignment = TextAnchor.MiddleRight;
+        hlg.childControlWidth = false;
+        hlg.childControlHeight = false;
+        hlg.childForceExpandWidth = false;
+        hlg.childForceExpandHeight = false;
+        hlg.padding = new RectOffset(0, 8, 0, 0);
+
+        // Confirm icon+label
+        GameObject confirmGO = ControllerIcons.CreateIconLabel(row.transform,
+            confirmIcon, confirmText,
+            iconSize: 40f, fontSize: 20f, labelColor: HINT_DIM, spacing: 8f);
+        confirmLabel = confirmGO.GetComponentInChildren<TextMeshProUGUI>();
+
+        // Back icon+label
+        GameObject backGO = ControllerIcons.CreateIconLabel(row.transform,
+            backIcon, backText,
+            iconSize: 40f, fontSize: 20f, labelColor: HINT_DIM, spacing: 8f);
+        backLabel = backGO.GetComponentInChildren<TextMeshProUGUI>();
+
+        return row;
+    }
+
+    /// <summary>Shows the correct nav hint row for the current input mode.</summary>
+    private void UpdateNavHintsVisibility()
+    {
+        bool kb = InputPromptManager.IsKeyboardMouse;
+        if (_kbmNavHints != null) _kbmNavHints.SetActive(kb);
+        if (_ctrlNavHints != null) _ctrlNavHints.SetActive(!kb);
+    }
+
+    /// <summary>Refreshes nav hint visibility when input mode changes.</summary>
+    private void RefreshNavHints()
+    {
+        UpdateNavHintsVisibility();
     }
 
     // ── UI Helpers ───────────────────────────────────────────────────────
@@ -619,6 +711,7 @@ public class HowToPlayController : MonoBehaviour
         _root.SetActive(false);
         _rootCG.alpha = 0f;
         _transitioning = false;
+        IsAnyOpen = false;
 
         // Restore time if not coming from pause menu (pause menu manages its own timeScale)
         if (Origin == HTPOrigin.HubFirstVisit)
@@ -637,15 +730,29 @@ public class HowToPlayController : MonoBehaviour
         if (_pageCounter != null)
             _pageCounter.text = $"{_currentPage + 1} / {_pages.Count}";
 
-        if (_navHint != null)
+        // Determine confirm/back labels based on page position
+        string confirmText, backText;
+        if (_currentPage == _pages.Count - 1)
         {
-            if (_currentPage == _pages.Count - 1)
-                _navHint.text = "[A] CLOSE     [B] BACK";
-            else if (_currentPage == 0)
-                _navHint.text = "[A] NEXT     [B] CLOSE";
-            else
-                _navHint.text = "[A] NEXT     [B] BACK";
+            confirmText = "CLOSE";
+            backText = "BACK";
         }
+        else if (_currentPage == 0)
+        {
+            confirmText = "NEXT";
+            backText = "CLOSE";
+        }
+        else
+        {
+            confirmText = "NEXT";
+            backText = "BACK";
+        }
+
+        // Update both KB/M and controller label text
+        if (_kbmConfirmLabel != null) _kbmConfirmLabel.text = confirmText;
+        if (_kbmBackLabel != null) _kbmBackLabel.text = backText;
+        if (_ctrlConfirmLabel != null) _ctrlConfirmLabel.text = confirmText;
+        if (_ctrlBackLabel != null) _ctrlBackLabel.text = backText;
     }
 
     private CanvasGroup EnsureCanvasGroup(GameObject go)

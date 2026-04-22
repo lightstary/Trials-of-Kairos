@@ -22,11 +22,15 @@ public class BossFailUI : MonoBehaviour
     private GameObject _overlayGO;
     private bool _shown;
 
+    /// <summary>True when the boss fail screen is currently displayed.</summary>
+    public static bool IsOpen { get; private set; }
+
     /// <summary>Shows the boss fail screen.</summary>
     public void ShowFail()
     {
         if (_shown) return;
         _shown = true;
+        IsOpen = true;
         Time.timeScale = 0f;
         BuildUI();
     }
@@ -101,6 +105,7 @@ public class BossFailUI : MonoBehaviour
     {
         Time.timeScale = 1f;
         _shown = false;
+        IsOpen = false;
 
         // Destroy the overlay UI
         if (_overlayGO != null)
@@ -122,6 +127,7 @@ public class BossFailUI : MonoBehaviour
     {
         Time.timeScale = 1f;
         _shown = false;
+        IsOpen = false;
         SceneManager.LoadScene("MainScene");
     }
 

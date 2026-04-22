@@ -200,14 +200,16 @@ public class UIStickCursor : MonoBehaviour
         // Check AConsumedThisFrame so another handler (e.g., TrialSelectController)
         // that already processed this press doesn't cause a double-fire.
         // Also skip when SuppressInput is active — another controller fully owns input.
+        // NOTE: Mouse clicks are handled natively by Unity's EventSystem via
+        // GraphicRaycaster — do NOT manually invoke onClick for mouse, only for
+        // controller A button which bypasses EventSystem pointer input.
         if (!UIGamepadNavigator.AConsumedThisFrame
             && !UIGamepadNavigator.SuppressInput
             && _hoveredSel != null)
         {
-            bool aPressed    = Input.GetKeyDown(KeyCode.JoystickButton0);
-            bool mouseClick  = mouseActive && Input.GetMouseButtonDown(0);
+            bool aPressed = Input.GetKeyDown(KeyCode.JoystickButton0);
 
-            if (aPressed || mouseClick)
+            if (aPressed)
             {
                 UIGamepadNavigator.AConsumedThisFrame = true;
 

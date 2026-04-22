@@ -69,15 +69,27 @@ public class BossFight : MonoBehaviour
         StartCoroutine(RunBossFight());
     }
 
+    /// <summary>Fully stops and resets the boss fight to its initial state.</summary>
     public void StopBossFight()
     {
         StopAllCoroutines();
         bossActive = false;
         currentRound = 0;
+
+        // Reset all tiles to original positions and default colors
         ResetArena();
 
+        // Clear internal tile lists
+        safeTiles.Clear();
+        dangerTiles.Clear();
+
+        // Reset time-scale meter
         if (TimeScaleLogic.Instance != null)
             TimeScaleLogic.Instance.ResetMeter();
+
+        // Clear HUD boss objective back to default
+        if (HUDController.Instance != null)
+            HUDController.Instance.ClearBossObjective();
 
         // Swap back to game music
         SoundManager.Instance?.PlayGameMusic();

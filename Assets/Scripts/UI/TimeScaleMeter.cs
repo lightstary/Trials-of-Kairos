@@ -20,8 +20,8 @@ public class TimeScaleMeter : MonoBehaviour
     /// </summary>
     public bool AlwaysShowZones { get; set; }
 
-    private const float BAR_W = 400f;
-    private const float TOTAL_H = 52f;
+    private const float BAR_W = 480f;
+    private const float TOTAL_H = 60f;
     private const float GLOW_SPEED = 2.5f;
 
     private static readonly Color BG_COL     = new Color(0.020f, 0.025f, 0.050f, 0.80f);
@@ -112,17 +112,11 @@ public class TimeScaleMeter : MonoBehaviour
 
         // ── Direction + color ────────────────────────────────────────────
         Color stateCol = FWD_COL;
-        if (_dirLabel != null)
+        switch (state)
         {
-            switch (state)
-            {
-                case TimeState.State.Forward:
-                    _dirLabel.text = "\u25B6 FORWARD"; _dirLabel.color = FWD_COL; stateCol = FWD_COL; break;
-                case TimeState.State.Frozen:
-                    _dirLabel.text = "\u25A0 FROZEN";  _dirLabel.color = FRZ_COL; stateCol = FRZ_COL; break;
-                case TimeState.State.Reverse:
-                    _dirLabel.text = "\u25C0 REVERSE"; _dirLabel.color = REV_COL; stateCol = REV_COL; break;
-            }
+            case TimeState.State.Forward: stateCol = FWD_COL; break;
+            case TimeState.State.Frozen:  stateCol = FRZ_COL; break;
+            case TimeState.State.Reverse: stateCol = REV_COL; break;
         }
         if (_posFill != null) _posFill.color = stateCol;
         if (_negFill != null) _negFill.color = stateCol;
@@ -213,11 +207,9 @@ public class TimeScaleMeter : MonoBehaviour
         if (bg == null) bg = gameObject.AddComponent<Image>();
         bg.color = BG_COL; bg.raycastTarget = false;
 
-        // ── Top row: direction + value ───────────────────────────────────
-        _dirLabel = MkT("Dir", transform, V(0.04f, 0.60f), V(0.50f, 0.95f),
-            "\u25B6 FORWARD", 11f, FWD_COL, TextAlignmentOptions.Left, true);
-        _valueTMP = MkT("Val", transform, V(0.50f, 0.60f), V(0.96f, 0.95f),
-            "+0.0", 13f, VALUE_COL, TextAlignmentOptions.Right, true);
+        // ── Top row: value display ──────────────────────────────────────
+        _valueTMP = MkT("Val", transform, V(0.04f, 0.60f), V(0.96f, 0.95f),
+            "+0.0", 17f, VALUE_COL, TextAlignmentOptions.Center, true);
 
         // ── Bar background ───────────────────────────────────────────────
         GameObject barGO = MkR("Bar", transform, V(0.04f, 0.22f), V(0.96f, 0.55f));
@@ -263,9 +255,9 @@ public class TimeScaleMeter : MonoBehaviour
         // ── Bottom labels: min, 0, max ───────────────────────────────────
         string minS = Mathf.RoundToInt(minV).ToString();
         string maxS = (maxV > 0 ? "+" : "") + Mathf.RoundToInt(maxV).ToString();
-        MkT("Mn", transform, V(0.04f, 0), V(0.20f, 0.22f), minS, 9f, LABEL_COL, TextAlignmentOptions.Left);
-        MkT("Zr", transform, V(zA - 0.04f, 0), V(zA + 0.04f, 0.22f), "0", 9f, ZERO_COL, TextAlignmentOptions.Center);
-        MkT("Mx", transform, V(0.80f, 0), V(0.96f, 0.22f), maxS, 9f, LABEL_COL, TextAlignmentOptions.Right);
+        MkT("Mn", transform, V(0.04f, 0), V(0.20f, 0.22f), minS, 13f, LABEL_COL, TextAlignmentOptions.Left);
+        MkT("Zr", transform, V(zA - 0.04f, 0), V(zA + 0.04f, 0.22f), "0", 13f, ZERO_COL, TextAlignmentOptions.Center);
+        MkT("Mx", transform, V(0.80f, 0), V(0.96f, 0.22f), maxS, 13f, LABEL_COL, TextAlignmentOptions.Right);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────

@@ -35,7 +35,7 @@ public static class HubPauseMenuBuilder
         // ── Pause Panel (centered card) ──
         GameObject panelGO = MakeRect("PausePanel", root, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f));
         RectTransform panelRT = panelGO.GetComponent<RectTransform>();
-        panelRT.sizeDelta = new Vector2(340f, 480f);
+        panelRT.sizeDelta = new Vector2(440f, 600f);
         Image panelBg = panelGO.AddComponent<Image>();
         panelBg.color = BG_COLOR;
         panelBg.raycastTarget = true;
@@ -53,7 +53,7 @@ public static class HubPauseMenuBuilder
         titleRT.anchoredPosition = new Vector2(0f, -30f);
         TextMeshProUGUI titleTMP = titleGO.AddComponent<TextMeshProUGUI>();
         titleTMP.text = "PAUSED";
-        titleTMP.fontSize = 32f;
+        titleTMP.fontSize = 44f;
         titleTMP.alignment = TextAlignmentOptions.Center;
         titleTMP.color = LABEL_WHITE;
         titleTMP.characterSpacing = 6f;
@@ -68,7 +68,7 @@ public static class HubPauseMenuBuilder
         infoRT.anchoredPosition = new Vector2(0f, 16f);
         TextMeshProUGUI infoTMP = infoGO.AddComponent<TextMeshProUGUI>();
         infoTMP.text = "HUB";
-        infoTMP.fontSize = 12f;
+        infoTMP.fontSize = 18f;
         infoTMP.alignment = TextAlignmentOptions.Center;
         infoTMP.color = new Color(LABEL_WHITE.r, LABEL_WHITE.g, LABEL_WHITE.b, 0.4f);
         infoTMP.raycastTarget = false;
@@ -76,13 +76,13 @@ public static class HubPauseMenuBuilder
         SetField(pmc, "trialInfoLabel", infoTMP, bf);
 
         // ── Buttons (center-anchored, matching MainScene layout) ──
-        float btnStep = 55f;
+        float btnStep = 64f;
 
-        Button resume       = MakeButton("ResumeButton",     panelGO.transform, "RESUME",              110f);
-        Button restart      = MakeButton("RestartButton",    panelGO.transform, "RESTART TRIAL",        110f - btnStep);
-        Button controls     = MakeButton("ControlsButton",  panelGO.transform, "CONTROLS",             110f - btnStep * 2f);
-        Button trialSelect  = MakeButton("SettingsButton",   panelGO.transform, "TRIAL SELECTION",      110f - btnStep * 3f);
-        Button returnMainMenu = MakeButton("ReturnToHubButton", panelGO.transform, "RETURN TO MAIN MENU", 110f - btnStep * 4f);
+        Button resume       = MakeButton("ResumeButton",     panelGO.transform, "RESUME",              130f);
+        Button restart      = MakeButton("RestartButton",    panelGO.transform, "RESTART TRIAL",        130f - btnStep);
+        Button controls     = MakeButton("ControlsButton",  panelGO.transform, "CONTROLS",             130f - btnStep * 2f);
+        Button trialSelect  = MakeButton("SettingsButton",   panelGO.transform, "TRIAL SELECTION",      130f - btnStep * 3f);
+        Button returnMainMenu = MakeButton("ReturnToHubButton", panelGO.transform, "RETURN TO MAIN MENU", 130f - btnStep * 4f);
 
         SetField(pmc, "resumeButton", resume, bf);
         SetField(pmc, "restartButton", restart, bf);
@@ -150,7 +150,7 @@ public static class HubPauseMenuBuilder
         // Stretch horizontally like MainScene (anchor 0-1 at vertical center)
         GameObject btnGO = MakeRect(name, parent, new Vector2(0f, 0.5f), new Vector2(1f, 0.5f));
         RectTransform rt = btnGO.GetComponent<RectTransform>();
-        rt.sizeDelta = new Vector2(-40f, 44f);
+        rt.sizeDelta = new Vector2(-40f, 56f);
         rt.anchoredPosition = new Vector2(0f, yOffset);
 
         Image btnImg = btnGO.AddComponent<Image>();
@@ -171,7 +171,7 @@ public static class HubPauseMenuBuilder
         GameObject lblGO = MakeRect("Label", btnGO.transform, Vector2.zero, Vector2.one);
         TextMeshProUGUI tmp = lblGO.AddComponent<TextMeshProUGUI>();
         tmp.text = label;
-        tmp.fontSize = 15f;
+        tmp.fontSize = 20f;
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.color = LABEL_WHITE;
         tmp.characterSpacing = 0f;
