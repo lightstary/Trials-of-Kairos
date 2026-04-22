@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64e8de60e227bab4199e9138ca5683e5, type: 3}
+  m_Name: GameAssets
+  m_EditorClassIdentifier: 
+  cinzelRegular: {fileID: 11400000, guid: 8c16e3b4f5e019f49be94c47bc943b92, type: 2}
+  cinzelBold: {fileID: 11400000, guid: 1940c242215fe4343ae7258f2f85b124, type: 2}
+  cinzelBlack: {fileID: 11400000, guid: 2318cf90f5ca1204ebc91d7d73b2dd3c, type: 2}
+  iconCtrlA: {fileID: 21300000, guid: 6326d682bc966a34fb965194cebb04de, type: 3}
+  iconCtrlB: {fileID: 21300000, guid: aeb717445c23f8345b5a1c7f1c5b8f59, type: 3}
+  iconCtrlL: {fileID: 21300000, guid: af54ee90e7a6bbf4196a004e0dfaf6ef, type: 3}
+  iconCtrlR: {fileID: 21300000, guid: 1cadacb4fd3d11c4eac34a29631f7a84, type: 3}
+  iconCtrlPause: {fileID: 21300000, guid: a165ecdcab889524b842cba20dda8428, type: 3}
+  iconKeyW: {fileID: 21300000, guid: c82b0f75763d7f44cae4ab4fd51a8722, type: 3}
+  iconKeyA: {fileID: 21300000, guid: bc7fc43dc4dacf441b9572aba94d1bef, type: 3}
+  iconKeyS: {fileID: 21300000, guid: 3aa96947c7b1a9f4c9201ab56c788d71, type: 3}
+  iconKeyD: {fileID: 21300000, guid: f4bb51658eb0bce43be9f3205788e3c7, type: 3}
+  iconKeyEsc: {fileID: 21300000, guid: c6662c1d84a6e1749a834e2e7c214ece, type: 3}
+  iconMouse: {fileID: 21300000, guid: 217aae88c4ec85544a04c539421af26d, type: 3}
+  iconMouseLeft: {fileID: 21300000, guid: aa83ccb4d1a1be54383104be557b0c90, type: 3}

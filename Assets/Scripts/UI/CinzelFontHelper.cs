@@ -2,9 +2,8 @@ using UnityEngine;
 using TMPro;
 
 /// <summary>
-/// Centralized Cinzel font lookup. Caches the SDF font assets so every
-/// runtime-built UI element uses the same font without repeated searches.
-/// Uses AssetDatabase.FindAssets for resilience to file renames.
+/// Centralized Cinzel font lookup. Loads fonts from the GameAssets
+/// ScriptableObject in Resources/ to ensure they work in builds.
 /// </summary>
 public static class CinzelFontHelper
 {
@@ -71,35 +70,19 @@ public static class CinzelFontHelper
     {
         _searched = true;
 
-#if UNITY_EDITOR
-        string[] guids = UnityEditor.AssetDatabase.FindAssets("Cinzel t:TMP_FontAsset");
-        foreach (string guid in guids)
+        GameAssets assets = GameAssets.Instance;
+        if (assets != null)
         {
-            string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
-            TMP_FontAsset font = UnityEditor.AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(path);
-            if (font == null) continue;
-
-            string lower = path.ToLowerInvariant();
-            if      (lower.Contains("black")   && _black   == null) _black   = font;
-            else if (lower.Contains("regular") && _regular == null) _regular = font;
-            else if (lower.Contains("bold")    && _bold    == null) _bold    = font;
-        }
-#endif
-
-        // Fallback: scan all loaded TMP_FontAssets
-        if (_regular == null || _bold == null)
-        {
-            foreach (TMP_FontAsset f in Resources.FindObjectsOfTypeAll<TMP_FontAsset>())
-            {
-                if (!f.name.Contains("Cinzel")) continue;
-                if (_regular == null && f.name.Contains("Regular")) _regular = f;
-                if (_bold    == null && f.name.Contains("Bold"))    _bold    = f;
-                if (_black   == null && f.name.Contains("Black"))   _black   = f;
-                if (_regular == null) _regular = f;
-            }
+            _regular = assets.cinzelRegular;
+            _bold    = assets.cinzelBold;
+            _black   = assets.cinzelBlack;
         }
 
+        // Ensure fallbacks
         if (_bold == null) _bold = _regular;
         if (_black == null) _black = _bold;
+
+        if (_regular == null)
+            Debug.LogWarning("[CinzelFontHelper] No Cinzel fonts found. Check GameAssets in Resources/.");
     }
 }

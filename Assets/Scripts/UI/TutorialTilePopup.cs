@@ -34,6 +34,9 @@ public class TutorialTilePopup : MonoBehaviour
     private static Coroutine       _sharedRoutine;
     private static MonoBehaviour   _sharedOwner;
 
+    /// <summary>True when any tutorial tile popup is currently visible on screen.</summary>
+    public static bool IsAnyVisible { get; private set; }
+
     private static readonly Color GOLD_COL   = new Color(0.961f, 0.784f, 0.259f, 1f);
     private static readonly Color BLUE_COL   = new Color(0.353f, 0.706f, 0.941f, 1f);
     private static readonly Color PURPLE_COL = new Color(0.608f, 0.365f, 0.898f, 1f);
@@ -48,8 +51,6 @@ public class TutorialTilePopup : MonoBehaviour
 
     void OnDestroy()
     {
-        // Clear static references when the scene unloads to prevent stale pointers
-        // on scene reload (e.g. Retry Hub). The next TutorialTilePopup will recreate them.
         if (_sharedOwner == this)
         {
             _sharedPopupGO = null;
@@ -59,6 +60,7 @@ public class TutorialTilePopup : MonoBehaviour
             _sharedAccent  = null;
             _sharedRoutine = null;
             _sharedOwner   = null;
+            IsAnyVisible   = false;
         }
     }
 
@@ -99,6 +101,10 @@ public class TutorialTilePopup : MonoBehaviour
     private IEnumerator ShowRoutine()
     {
         _sharedPopupGO.SetActive(true);
+        IsAnyVisible = true;
+
+        // Fade out the area title strip if it's showing
+        FadeOutAreaTitle();
 
         float elapsed = 0f;
         float startAlpha = _sharedPopupCG != null ? _sharedPopupCG.alpha : 0f;
@@ -122,6 +128,17 @@ public class TutorialTilePopup : MonoBehaviour
 
         _sharedPopupGO.SetActive(false);
         _sharedRoutine = null;
+        IsAnyVisible = false;
+    }
+
+    /// <summary>Finds and immediately fades out the AreaTitleIntro strip.</summary>
+    private static void FadeOutAreaTitle()
+    {
+        AreaTitleIntro areaTitleIntro = Object.FindObjectOfType<AreaTitleIntro>();
+        if (areaTitleIntro != null)
+        {
+            areaTitleIntro.FadeOutNow();
+        }
     }
 
     private static void EnsureSharedPopup()

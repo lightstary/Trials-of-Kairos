@@ -77,6 +77,31 @@ public class AreaTitleIntro : MonoBehaviour
         SetHidden();
     }
 
+    /// <summary>Immediately fades out the title strip if it's currently visible.</summary>
+    public void FadeOutNow()
+    {
+        StopAllCoroutines();
+        StartCoroutine(QuickFadeOut());
+    }
+
+    private IEnumerator QuickFadeOut()
+    {
+        float startAlpha = canvasGroup != null ? canvasGroup.alpha : 0f;
+        if (startAlpha <= 0f) yield break;
+
+        float elapsed = 0f;
+        Vector2 startPos = stripPanel != null ? stripPanel.anchoredPosition : visiblePosition;
+        while (elapsed < slideOutDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = EaseIn(Mathf.Clamp01(elapsed / slideOutDuration));
+            if (stripPanel  != null) stripPanel.anchoredPosition = Vector2.Lerp(startPos, hiddenPosition, t);
+            if (canvasGroup != null) canvasGroup.alpha = Mathf.Lerp(startAlpha, 0f, t);
+            yield return null;
+        }
+        SetHidden();
+    }
+
     private void SetHidden()
     {
         if (stripPanel  != null) stripPanel.anchoredPosition = hiddenPosition;

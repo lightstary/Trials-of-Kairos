@@ -114,9 +114,11 @@ public class PauseMenuController : MonoBehaviour
                     && MainMenuController.Instance.menuPanel != null
                     && MainMenuController.Instance.menuPanel.activeSelf;
 
-                // Block pause only during boss intro/fail screens (not tutorials)
+                // Block pause during boss intro/fail, tutorial popups, and hub completion
                 bool modalOpen = BossFailUI.IsOpen
-                              || BossIntroModal.IsOpen;
+                              || BossIntroModal.IsOpen
+                              || TutorialTilePopup.IsAnyVisible
+                              || GoalTile.IsOpen;
 
                 if (!inMainMenu && !modalOpen)
                     Pause();

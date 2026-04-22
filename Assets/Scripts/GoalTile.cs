@@ -16,6 +16,9 @@ public class GoalTile : MonoBehaviour
     private bool _completed;
     private Renderer _renderer;
 
+    /// <summary>True when the hub completion popup is showing.</summary>
+    public static bool IsOpen { get; private set; }
+
     private static readonly Color BG_COL       = new Color(0.020f, 0.025f, 0.050f, 0.92f);
     private static readonly Color OVERLAY_COL  = new Color(0f, 0f, 0f, 0.55f);
     private static readonly Color GOLD_COL     = new Color(0.961f, 0.784f, 0.259f, 1f);
@@ -73,6 +76,7 @@ public class GoalTile : MonoBehaviour
     /// <summary>Builds and shows a themed completion popup for the Hub tutorial.</summary>
     private void ShowHubCompletionPopup()
     {
+        IsOpen = true;
         Canvas canvas = FindObjectOfType<Canvas>();
         if (canvas == null) return;
 
@@ -189,6 +193,7 @@ public class GoalTile : MonoBehaviour
 
     private void GoToTrialSelection()
     {
+        IsOpen = false;
         Time.timeScale = 1f;
         MainMenuController.RequestTrialSelectOnLoad();
         if (ScreenTransitionManager.Instance != null)
@@ -199,6 +204,7 @@ public class GoalTile : MonoBehaviour
 
     private void RetryHub()
     {
+        IsOpen = false;
         Time.timeScale = 1f;
         SceneManager.LoadScene("HubScene");
     }

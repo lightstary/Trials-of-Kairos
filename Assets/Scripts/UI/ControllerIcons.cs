@@ -85,19 +85,26 @@ public static class ControllerIcons
         if (_loaded) return;
         _loaded = true;
 
-        _ctrlA     = FindSprite("A Xbox");
-        _ctrlB     = FindSprite("B Xbox");
-        _ctrlL     = FindSprite("L Xbox");
-        _ctrlR     = FindSprite("R Xbox");
-        _ctrlPause = FindSprite("Pause Xbox");
+        GameAssets assets = GameAssets.Instance;
+        if (assets == null)
+        {
+            Debug.LogError("[ControllerIcons] GameAssets not found in Resources/. Icons will be missing.");
+            return;
+        }
 
-        _kbW          = FindSprite("W Keyboard");
-        _kbA          = FindSprite("A Keyboard");
-        _kbS          = FindSprite("S Keyboard");
-        _kbD          = FindSprite("D Keyboard");
-        _kbEsc        = FindSprite("ESC Keyboard");
-        _kbMouse      = FindSprite("Mouse");
-        _kbMouseLeft  = FindSprite("Mouse Left");
+        _ctrlA     = assets.iconCtrlA;
+        _ctrlB     = assets.iconCtrlB;
+        _ctrlL     = assets.iconCtrlL;
+        _ctrlR     = assets.iconCtrlR;
+        _ctrlPause = assets.iconCtrlPause;
+
+        _kbW          = assets.iconKeyW;
+        _kbA          = assets.iconKeyA;
+        _kbS          = assets.iconKeyS;
+        _kbD          = assets.iconKeyD;
+        _kbEsc        = assets.iconKeyEsc;
+        _kbMouse      = assets.iconMouse;
+        _kbMouseLeft  = assets.iconMouseLeft;
 
         LogMissing("A Xbox", _ctrlA);
         LogMissing("B Xbox", _ctrlB);
@@ -105,34 +112,10 @@ public static class ControllerIcons
         LogMissing("ESC Keyboard", _kbEsc);
     }
 
-    private static Sprite FindSprite(string fileName)
-    {
-#if UNITY_EDITOR
-        string filter = fileName + " t:Sprite";
-        string[] guids = UnityEditor.AssetDatabase.FindAssets(filter, new[] { "Assets/Daniel's Assets/UI Images" });
-        foreach (string guid in guids)
-        {
-            string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
-            string assetName = System.IO.Path.GetFileNameWithoutExtension(path);
-            if (assetName == fileName)
-            {
-                Sprite spr = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
-                if (spr != null) return spr;
-            }
-        }
-#endif
-        // Runtime fallback: search loaded sprites
-        foreach (Sprite spr in Resources.FindObjectsOfTypeAll<Sprite>())
-        {
-            if (spr.name == fileName) return spr;
-        }
-        return null;
-    }
-
     private static void LogMissing(string name, Sprite spr)
     {
         if (spr == null)
-            Debug.LogWarning($"[ControllerIcons] Missing sprite: {name}.png");
+            Debug.LogWarning($"[ControllerIcons] Missing sprite: {name} — assign it in GameAssets.");
     }
 
     // ── UI helper: create icon Image ─────────────────────────────────────
