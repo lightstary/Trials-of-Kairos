@@ -230,6 +230,10 @@ public class UIStickCursor : MonoBehaviour
         IsCursorVisible = visible;
         if (_root != null && _root.gameObject.activeSelf != visible)
             _root.gameObject.SetActive(visible);
+
+        // Always hide the hardware cursor — the orb replaces it entirely.
+        // During menus the orb is visible; during gameplay both are hidden.
+        Cursor.visible = false;
     }
 
     private void SetTrailVisible(bool visible)

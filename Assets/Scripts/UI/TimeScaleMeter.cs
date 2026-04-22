@@ -42,7 +42,6 @@ public class TimeScaleMeter : MonoBehaviour
     private Image           _posFill, _negFill, _posMarker, _dangerL, _dangerR, _warnL, _warnR;
     private RectTransform   _posFillRT, _negFillRT, _posMarkerRT;
     private TextMeshProUGUI _valueTMP, _dirLabel;
-    private TMP_FontAsset   _font;
 
     void Update()
     {
@@ -185,7 +184,6 @@ public class TimeScaleMeter : MonoBehaviour
     private void Build()
     {
         _built = true;
-        FindFont();
 
         // Destroy old children
         for (int i = transform.childCount - 1; i >= 0; i--)
@@ -284,16 +282,7 @@ public class TimeScaleMeter : MonoBehaviour
         t.text = txt; t.fontSize = sz; t.color = c; t.alignment = a;
         t.fontStyle = b ? FontStyles.Bold : FontStyles.Normal;
         t.overflowMode = TextOverflowModes.Overflow; t.raycastTarget = false;
-        if (_font != null) t.font = _font;
+        CinzelFontHelper.Apply(t, b);
         return t;
-    }
-
-    private void FindFont()
-    {
-        foreach (TMP_FontAsset f in Resources.FindObjectsOfTypeAll<TMP_FontAsset>())
-        {
-            string n = f.name.ToLowerInvariant();
-            if (n.Contains("cinzel")) { _font = f; if (n.Contains("bold")) break; }
-        }
     }
 }

@@ -28,7 +28,7 @@ public class CameraFollow : MonoBehaviour
         {
             isZoomed = !isZoomed;
             Cursor.lockState = isZoomed ? CursorLockMode.Locked : CursorLockMode.None;
-            Cursor.visible = !isZoomed;
+            Cursor.visible = false; // Orb cursor replaces hardware cursor
         }
     }
 

@@ -208,9 +208,6 @@ public class BossFailUI : MonoBehaviour
         tmp.fontStyle = bold ? FontStyles.Bold : FontStyles.Normal;
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.characterSpacing = charSpacing; tmp.raycastTarget = false;
-        foreach (TMP_FontAsset f in Resources.FindObjectsOfTypeAll<TMP_FontAsset>())
-        {
-            if (f.name.Contains("Cinzel")) { tmp.font = f; if (f.name.Contains("Bold")) break; }
-        }
+        CinzelFontHelper.Apply(tmp, bold);
     }
 }

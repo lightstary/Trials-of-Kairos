@@ -49,8 +49,6 @@ public class HowToPlayController : MonoBehaviour
     private int              _currentPage;
     private bool             _transitioning;
     private bool             _built;
-    private TMP_FontAsset    _cinzelFont;
-    private TMP_FontAsset    _cinzelBold;
 
     // Animated elements
     private Image            _forwardGlow, _frozenGlow, _reverseGlow;
@@ -147,7 +145,6 @@ public class HowToPlayController : MonoBehaviour
     private void Build()
     {
         _built = true;
-        FindFonts();
 
         // Root overlay
         _root = new GameObject("HowToPlayRoot");
@@ -507,7 +504,7 @@ public class HowToPlayController : MonoBehaviour
         tmp.color = color;
         tmp.alignment = align;
         tmp.fontStyle = bold ? FontStyles.Bold : FontStyles.Normal;
-        tmp.font = bold ? (_cinzelBold != null ? _cinzelBold : _cinzelFont) : _cinzelFont;
+        tmp.font = bold ? CinzelFontHelper.Bold : CinzelFontHelper.Regular;
         tmp.overflowMode = TextOverflowModes.Overflow;
         tmp.raycastTarget = false;
 
@@ -597,34 +594,6 @@ public class HowToPlayController : MonoBehaviour
         CreateTextElement(go.transform, "Icon", "\u25A3", 36f,
             new Color(color.r, color.g, color.b, 0.6f), TextAlignmentOptions.Center,
             Vector2.zero, Vector2.one);
-    }
-
-    // ── Fonts ────────────────────────────────────────────────────────────
-
-    private void FindFonts()
-    {
-        TMP_FontAsset[] allFonts = Resources.FindObjectsOfTypeAll<TMP_FontAsset>();
-        foreach (TMP_FontAsset f in allFonts)
-        {
-            string lower = f.name.ToLowerInvariant();
-            if (!lower.Contains("cinzel")) continue;
-
-            if (lower.Contains("bold") || lower.Contains("black"))
-            {
-                if (_cinzelBold == null) _cinzelBold = f;
-            }
-            else if (_cinzelFont == null || lower.Contains("regular") || lower.Contains("medium"))
-            {
-                _cinzelFont = f;
-            }
-        }
-
-        if (_cinzelFont == null) _cinzelFont = _cinzelBold;
-        if (_cinzelBold == null) _cinzelBold = _cinzelFont;
-
-        // Fallback to default TMP font
-        if (_cinzelFont == null)
-            _cinzelFont = TMP_Settings.defaultFontAsset;
     }
 
     // ── Animation ────────────────────────────────────────────────────────

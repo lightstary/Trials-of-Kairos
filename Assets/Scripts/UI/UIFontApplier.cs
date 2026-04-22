@@ -1,74 +1,78 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using TMPro;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 /// <summary>
-/// Applies Cinzel font variants to every TextMeshProUGUI in the canvas.
-/// In the Editor, fonts are discovered automatically via asset search — resilient to file renames.
+/// Global Cinzel font enforcer. Auto-spawns on application start and applies
+/// Cinzel to every TextMeshProUGUI and TextMeshPro in the scene — both
+/// serialized (Inspector-assigned) and dynamically created components.
+/// Runs on every scene load to catch late additions.
 /// </summary>
 public class UIFontApplier : MonoBehaviour
 {
-    [Header("Cinzel Font Variants (auto-discovered in Editor)")]
-    [SerializeField] private TMP_FontAsset cinzelBlack;
-    [SerializeField] private TMP_FontAsset cinzelBold;
-    [SerializeField] private TMP_FontAsset cinzelRegular;
+    private static UIFontApplier _instance;
 
-    void Awake()
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void AutoSpawn()
     {
-        LoadFonts();
-        ApplyFonts();
+        if (_instance != null) return;
+
+        GameObject go = new GameObject("[UIFontApplier]");
+        DontDestroyOnLoad(go);
+        _instance = go.AddComponent<UIFontApplier>();
+
+        SceneManager.sceneLoaded += OnSceneLoaded;
+
+        // Apply to the initial scene immediately
+        ApplyToEntireScene();
     }
 
-    // Second pass: TMP components initialised after Awake on some Unity versions
-    void Start() => ApplyFonts();
-
-    private void LoadFonts()
+    private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-#if UNITY_EDITOR
-        string[] guids = AssetDatabase.FindAssets("Cinzel t:TMP_FontAsset");
-        foreach (string guid in guids)
+        ApplyToEntireScene();
+    }
+
+    /// <summary>
+    /// Applies Cinzel font to every TMP component currently in the scene.
+    /// Uses CinzelFontHelper for consistent font lookup and caching.
+    /// </summary>
+    public static void ApplyToEntireScene()
+    {
+        TMP_FontAsset bold = CinzelFontHelper.Bold;
+        TMP_FontAsset regular = CinzelFontHelper.Regular;
+
+        if (bold == null && regular == null) return;
+
+        // Apply to all UGUI TMP components (Canvas-based)
+        foreach (TextMeshProUGUI tmp in Resources.FindObjectsOfTypeAll<TextMeshProUGUI>())
         {
-            string path       = AssetDatabase.GUIDToAssetPath(guid);
-            TMP_FontAsset font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(path);
-            if (font == null) continue;
+            if (tmp == null) continue;
+            // Skip if already using a Cinzel variant
+            if (tmp.font != null && tmp.font.name.Contains("Cinzel")) continue;
 
-            string lower = path.ToLowerInvariant();
-            // Check black before bold, regular before bold to avoid substring collisions
-            if      (lower.Contains("black")   && cinzelBlack   == null) cinzelBlack   = font;
-            else if (lower.Contains("regular") && cinzelRegular == null) cinzelRegular = font;
-            else if (lower.Contains("bold")    && cinzelBold    == null) cinzelBold    = font;
+            // Use bold for bold-styled text, regular for everything else
+            bool isBold = (tmp.fontStyle & FontStyles.Bold) != 0;
+            TMP_FontAsset target = isBold ? bold : regular;
+            if (target == null) target = bold;
+            if (target != null) tmp.font = target;
         }
-#endif
+
+        // Apply to all 3D TMP components (world-space)
+        foreach (TextMeshPro tmp in Resources.FindObjectsOfTypeAll<TextMeshPro>())
+        {
+            if (tmp == null) continue;
+            if (tmp.font != null && tmp.font.name.Contains("Cinzel")) continue;
+
+            bool isBold = (tmp.fontStyle & FontStyles.Bold) != 0;
+            TMP_FontAsset target = isBold ? bold : regular;
+            if (target == null) target = bold;
+            if (target != null) tmp.font = target;
+        }
     }
 
-    /// <summary>Applies Cinzel fonts to all TMP labels under this GameObject.</summary>
-    public void ApplyFonts()
+    private void OnDestroy()
     {
-        TMP_FontAsset fallback = cinzelBold != null ? cinzelBold : cinzelBlack;
-        if (fallback == null) return;
-
-        foreach (TextMeshProUGUI label in GetComponentsInChildren<TextMeshProUGUI>(includeInactive: true))
-            label.font = SelectFont(label.gameObject.name, fallback);
-    }
-
-    private TMP_FontAsset SelectFont(string goName, TMP_FontAsset fallback)
-    {
-        string n = goName.ToLowerInvariant();
-
-        // Large display titles → Black
-        if (cinzelBlack != null && n == "title")
-            return cinzelBlack;
-
-        // Section headings → Bold
-        if (cinzelBold != null && (n.Contains("controlstitle") || n == "trialselecttitle"))
-            return cinzelBold;
-
-        // Small captions, version, chapter numbers → Regular
-        if (cinzelRegular != null && (n == "versionlabel" || n == "chapterlabel" || n == "trialnum"))
-            return cinzelRegular;
-
-        return fallback;
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        if (_instance == this) _instance = null;
     }
 }

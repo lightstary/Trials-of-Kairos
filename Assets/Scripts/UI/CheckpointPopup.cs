@@ -75,8 +75,7 @@ public class CheckpointPopup : MonoBehaviour
         mrt.offsetMin = Vector2.zero; mrt.offsetMax = Vector2.zero;
 
         // Assign Cinzel font if available
-        TMP_FontAsset cinzel = FindCinzelFont();
-        if (cinzel != null) _mainText.font = cinzel;
+        CinzelFontHelper.Apply(_mainText, true);
 
         // Subtle sub-line
         GameObject subGO = new GameObject("SubText");
@@ -87,7 +86,7 @@ public class CheckpointPopup : MonoBehaviour
         _subText.alignment = TextAlignmentOptions.Center;
         _subText.color = SUB_COLOR;
         _subText.raycastTarget = false;
-        if (cinzel != null) _subText.font = cinzel;
+        CinzelFontHelper.Apply(_subText);
         RectTransform srt = subGO.GetComponent<RectTransform>();
         srt.anchorMin = Vector2.zero; srt.anchorMax = new Vector2(1, 0.35f);
         srt.offsetMin = Vector2.zero; srt.offsetMax = Vector2.zero;
@@ -137,15 +136,5 @@ public class CheckpointPopup : MonoBehaviour
         _group.alpha = 0f;
         _container.anchoredPosition = new Vector2(0f, 80f);
         _activeRoutine = null;
-    }
-
-    private TMP_FontAsset FindCinzelFont()
-    {
-        foreach (TMP_FontAsset f in Resources.FindObjectsOfTypeAll<TMP_FontAsset>())
-        {
-            if (f.name.ToLowerInvariant().Contains("cinzel"))
-                return f;
-        }
-        return null;
     }
 }

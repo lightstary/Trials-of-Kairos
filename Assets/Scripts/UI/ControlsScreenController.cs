@@ -286,32 +286,13 @@ public class ControlsScreenController : MonoBehaviour
 
     // ── Font discovery ───────────────────────────────────────────────────────
 
-    /// <summary>Finds the Cinzel SDF font from loaded assets.</summary>
-    private TMP_FontAsset FindCinzelFont()
-    {
-        TMP_FontAsset[] allFonts = Resources.FindObjectsOfTypeAll<TMP_FontAsset>();
-        TMP_FontAsset best = null;
-        foreach (var font in allFonts)
-        {
-            if (font.name.Contains("Cinzel"))
-            {
-                // Prefer SemiBold or Bold for UI readability
-                if (font.name.Contains("SemiBold") || font.name.Contains("Bold"))
-                    return font;
-                if (best == null)
-                    best = font;
-            }
-        }
-        return best != null ? best : TMP_Settings.defaultFontAsset;
-    }
-
     // ── Layout builder ───────────────────────────────────────────────────────
 
     private void BuildLayout()
     {
         _built = true;
         _builtForMode = InputPromptManager.CurrentMode;
-        _cinzelFont = FindCinzelFont();
+        _cinzelFont = CinzelFontHelper.Bold;
         _trackedRows.Clear();
         _modeLabelTMP = null;
         _backBtnLabel = null;
