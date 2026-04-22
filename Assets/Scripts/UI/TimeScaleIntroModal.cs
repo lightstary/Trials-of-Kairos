@@ -60,7 +60,8 @@ public class TimeScaleIntroModal : MonoBehaviour
         "<color=#F59819>orange</color> as a heads-up.\n\n" +
         "Keep going and you hit the <color=#E53219>danger zone</color>.\n" +
         "The bar pulses <color=#E53219>red</color>. If time reaches the\n" +
-        "edge of the bar, you <b>lose</b>.",
+        "edge of the bar, you <b>lose</b> the trial.\n" +
+        "Watch the meter closely.",
 
         "<color=#F5C842><size=32>THE BOSS</size></color>\n\n" +
         "At the end of each level, a <b>boss</b> appears.\n\n" +
@@ -76,8 +77,7 @@ public class TimeScaleIntroModal : MonoBehaviour
         "<b>+2</b>, even if global time goes well past that.\n\n" +
         "When an object hits its limit, it <b>stops</b> \u2014\n" +
         "but everything else keeps going.\n" +
-        "Use this to solve every puzzle.\n\n" +
-        "<b>Good luck.</b>"
+        "Use this to solve every puzzle. <b>Good luck.</b>"
     };
 
     private GameObject _modalGO;
@@ -391,16 +391,16 @@ public class TimeScaleIntroModal : MonoBehaviour
         // Center panel — positioned slightly below center to leave room for the meter
         GameObject panel = MakeRect("Panel", _modalGO.transform, new Vector2(0.5f, 0.45f), new Vector2(0.5f, 0.45f));
         RectTransform panelRT = panel.GetComponent<RectTransform>();
-        panelRT.sizeDelta = new Vector2(700f, 600f);
+        panelRT.sizeDelta = new Vector2(700f, 700f);
         Image panelImg = panel.AddComponent<Image>();
         panelImg.color = PANEL_BG;
 
         // Body text — anchored to top, sized to stop well above buttons
-        // Panel=560, top padding=35, body=360, leaving 165px for buttons+indicator
+        // Panel=700, top padding=35, body=490, leaving 175px for buttons+indicator
         GameObject bodyGO = MakeRect("Body", panel.transform, new Vector2(0f, 1f), new Vector2(1f, 1f));
         RectTransform bodyRT = bodyGO.GetComponent<RectTransform>();
         bodyRT.pivot = new Vector2(0.5f, 1f);
-        bodyRT.sizeDelta = new Vector2(-80f, 400f);
+        bodyRT.sizeDelta = new Vector2(-80f, 490f);
         bodyRT.anchoredPosition = new Vector2(0f, -35f);
         _bodyTMP = bodyGO.AddComponent<TextMeshProUGUI>();
         _bodyTMP.fontSize = 26f;
@@ -408,7 +408,7 @@ public class TimeScaleIntroModal : MonoBehaviour
         _bodyTMP.alignment = TextAlignmentOptions.TopLeft;
         _bodyTMP.richText = true;
         _bodyTMP.enableWordWrapping = true;
-        _bodyTMP.overflowMode = TextOverflowModes.Ellipsis;
+        _bodyTMP.overflowMode = TextOverflowModes.Overflow;
         _bodyTMP.raycastTarget = false;
         CinzelFontHelper.Apply(_bodyTMP);
 

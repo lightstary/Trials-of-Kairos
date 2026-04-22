@@ -90,7 +90,7 @@ public class GoalTile : MonoBehaviour
         panelGO.transform.SetParent(overlayGO.transform, false);
         RectTransform pRT = panelGO.AddComponent<RectTransform>();
         pRT.anchorMin = pRT.anchorMax = new Vector2(0.5f, 0.5f);
-        pRT.sizeDelta = new Vector2(400f, 300f);
+        pRT.sizeDelta = new Vector2(700f, 500f);
         Image pBg = panelGO.AddComponent<Image>();
         pBg.color = BG_COL; pBg.raycastTarget = true;
         CanvasGroup pCG = panelGO.AddComponent<CanvasGroup>();
@@ -99,19 +99,19 @@ public class GoalTile : MonoBehaviour
         MakeAccent(panelGO.transform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -3f), 3f);
 
         // Title
-        MakeText(panelGO.transform, "TRIAL COMPLETE", 22f, GOLD_COL, true,
+        MakeText(panelGO.transform, "TRIAL COMPLETE", 36f, GOLD_COL, true,
             new Vector2(0.05f, 0.72f), new Vector2(0.95f, 0.93f), 8f);
 
         // Subtitle
-        MakeText(panelGO.transform, "You have proven yourself worthy.\nThree trials now await — each more unforgiving than the last.", 13f, TEXT_COL, false,
+        MakeText(panelGO.transform, "You have proven yourself worthy.\nThree trials now await — each more unforgiving than the last.", 18f, TEXT_COL, false,
             new Vector2(0.08f, 0.45f), new Vector2(0.92f, 0.72f), 0f);
 
         // ── TRIAL SELECTION button ──
-        Button continueBtn = MakePopupButton(panelGO.transform, "TRIAL SELECTION", new Vector2(0f, 95f));
+        Button continueBtn = MakePopupButton(panelGO.transform, "TRIAL SELECTION", new Vector2(0f, 120f));
         continueBtn.onClick.AddListener(GoToTrialSelection);
 
         // ── RETRY HUB button ──
-        Button retryBtn = MakePopupButton(panelGO.transform, "RETRY HUB", new Vector2(0f, 38f));
+        Button retryBtn = MakePopupButton(panelGO.transform, "RETRY HUB", new Vector2(0f, 55f));
         retryBtn.onClick.AddListener(RetryHub);
 
         // Wire navigation between the two buttons
@@ -142,7 +142,7 @@ public class GoalTile : MonoBehaviour
         RectTransform bRT = btnGO.AddComponent<RectTransform>();
         bRT.anchorMin = new Vector2(0.5f, 0f); bRT.anchorMax = new Vector2(0.5f, 0f);
         bRT.pivot = new Vector2(0.5f, 0f);
-        bRT.sizeDelta = new Vector2(280f, 46f);
+        bRT.sizeDelta = new Vector2(340f, 54f);
         bRT.anchoredPosition = pos;
         Image bImg = btnGO.AddComponent<Image>();
         bImg.color = Color.white; bImg.raycastTarget = true;
@@ -168,7 +168,7 @@ public class GoalTile : MonoBehaviour
         accImg.color = GOLD_COL; accImg.raycastTarget = false;
 
         // Gold text on dark background = readable contrast
-        MakeText(btnGO.transform, label, 14f, GOLD_COL, true,
+        MakeText(btnGO.transform, label, 20f, GOLD_COL, true,
             Vector2.zero, Vector2.one, 5f);
 
         return btn;

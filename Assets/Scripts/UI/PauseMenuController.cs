@@ -114,10 +114,8 @@ public class PauseMenuController : MonoBehaviour
                     && MainMenuController.Instance.menuPanel != null
                     && MainMenuController.Instance.menuPanel.activeSelf;
 
-                // Block pause if any modal is open
-                bool modalOpen = TimeScaleIntroModal.IsTimeLocked
-                              || HowToPlayController.IsAnyOpen
-                              || BossFailUI.IsOpen
+                // Block pause only during boss intro/fail screens (not tutorials)
+                bool modalOpen = BossFailUI.IsOpen
                               || BossIntroModal.IsOpen;
 
                 if (!inMainMenu && !modalOpen)

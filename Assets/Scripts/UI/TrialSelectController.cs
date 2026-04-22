@@ -666,18 +666,21 @@ public class TrialSelectController : MonoBehaviour
         Image bg = backButton.GetComponent<Image>();
         if (bg != null) bg.color = new Color(0.08f, 0.08f, 0.16f, 0.5f);
 
-        // Update label to just "BACK"
-        TextMeshProUGUI lbl = backButton.GetComponentInChildren<TextMeshProUGUI>();
-        if (lbl != null)
+        // Add HorizontalLayoutGroup for icon + label side by side
+        HorizontalLayoutGroup hlg = backButton.GetComponent<HorizontalLayoutGroup>();
+        if (hlg == null)
         {
-            lbl.text = "BACK";
-            lbl.fontSize = 16f;
-            lbl.characterSpacing = 4f;
-            lbl.color = new Color(0.91f, 0.918f, 0.965f, 0.6f);
-            CinzelFontHelper.Apply(lbl, true);
+            hlg = backButton.gameObject.AddComponent<HorizontalLayoutGroup>();
+            hlg.spacing = 8f;
+            hlg.childAlignment = TextAnchor.MiddleCenter;
+            hlg.childControlWidth = false;
+            hlg.childControlHeight = false;
+            hlg.childForceExpandWidth = false;
+            hlg.childForceExpandHeight = false;
+            hlg.padding = new RectOffset(10, 10, 0, 0);
         }
 
-        // Add or update icon
+        // Add or update icon (must be first sibling for left positioning)
         Sprite backSprite = InputPromptManager.IsKeyboardMouse ? ControllerIcons.KeyEsc : ControllerIcons.CtrlB;
         Transform existingIcon = backButton.transform.Find("BackIcon");
         if (existingIcon != null)
@@ -685,6 +688,7 @@ public class TrialSelectController : MonoBehaviour
             Image existingImg = existingIcon.GetComponent<Image>();
             if (existingImg != null && backSprite != null)
                 existingImg.sprite = backSprite;
+            existingIcon.SetAsFirstSibling();
         }
         else if (backSprite != null)
         {
@@ -693,7 +697,38 @@ public class TrialSelectController : MonoBehaviour
             {
                 iconImg.gameObject.name = "BackIcon";
                 iconImg.transform.SetAsFirstSibling();
+                LayoutElement iconLE = iconImg.gameObject.AddComponent<LayoutElement>();
+                iconLE.preferredWidth = 28f;
+                iconLE.preferredHeight = 28f;
             }
+        }
+
+        // Update label (must come after icon in sibling order)
+        TextMeshProUGUI lbl = backButton.GetComponentInChildren<TextMeshProUGUI>();
+        if (lbl != null)
+        {
+            lbl.text = "BACK";
+            lbl.fontSize = 16f;
+            lbl.characterSpacing = 4f;
+            lbl.color = new Color(0.91f, 0.918f, 0.965f, 0.6f);
+            CinzelFontHelper.Apply(lbl, true);
+
+            // Remove the full-stretch anchors so the HLG controls layout
+            RectTransform lblRT = lbl.GetComponent<RectTransform>();
+            if (lblRT != null)
+            {
+                lblRT.anchorMin = new Vector2(0.5f, 0.5f);
+                lblRT.anchorMax = new Vector2(0.5f, 0.5f);
+                lblRT.pivot = new Vector2(0.5f, 0.5f);
+                lblRT.sizeDelta = new Vector2(60f, 30f);
+            }
+
+            LayoutElement lblLE = lbl.GetComponent<LayoutElement>();
+            if (lblLE == null) lblLE = lbl.gameObject.AddComponent<LayoutElement>();
+            lblLE.preferredWidth = 60f;
+            lblLE.preferredHeight = 30f;
+
+            lbl.transform.SetAsLastSibling();
         }
     }
 
