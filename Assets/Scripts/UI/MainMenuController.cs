@@ -4,9 +4,6 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using TMPro;
-#if ENABLE_INPUT_SYSTEM
-using UnityEngine.InputSystem;
-#endif
 
 /// <summary>
 /// In-scene main menu with rotating squares, shimmer tinting, crossfade transitions,
@@ -223,10 +220,6 @@ public class MainMenuController : MonoBehaviour
         if (menuPanel != null && menuPanel.activeSelf && !_transitioning)
         {
             bool backPressed = Input.GetKeyDown(KeyCode.JoystickButton1) || Input.GetKeyDown(KeyCode.Escape);
-#if ENABLE_INPUT_SYSTEM
-            if (Gamepad.current != null)
-                backPressed = backPressed || Gamepad.current.buttonEast.wasPressedThisFrame;
-#endif
             if (backPressed)
             {
                 if (controlsScreen    != null && controlsScreen.activeSelf)    { CloseControls();    return; }

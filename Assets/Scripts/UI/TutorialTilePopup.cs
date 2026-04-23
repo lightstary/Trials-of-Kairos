@@ -214,9 +214,9 @@ public class TutorialTilePopup : MonoBehaviour
     {
         switch (tileType)
         {
-            case TileType.Forward: return "\u25B6  TIME FORWARD";
-            case TileType.Frozen:  return "\u25A0  TIME FROZEN";
-            case TileType.Reverse: return "\u25C0  TIME REVERSE";
+            case TileType.Forward: return ">>  TIME FORWARD";
+            case TileType.Frozen:  return "||  TIME FROZEN";
+            case TileType.Reverse: return "<<  TIME REVERSE";
             default: return "TIME";
         }
     }

@@ -18,7 +18,9 @@ public class ScreenTransitionManager : MonoBehaviour
 
     [Header("Timing")]
     [SerializeField] private float defaultFadeDuration = 0.5f;
+    #pragma warning disable CS0414 // Reserved for Inspector configuration
     [SerializeField] private float flashDuration       = 0.15f;
+    #pragma warning restore CS0414
 
     private const float FLASH_PEAK_ALPHA = 0.8f;
 

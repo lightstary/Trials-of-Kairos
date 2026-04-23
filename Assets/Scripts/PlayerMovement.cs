@@ -35,22 +35,31 @@ public class PlayerMovement : MonoBehaviour
 
         Vector3 input = Vector3.zero;
 
-        if (Input.GetKeyDown(KeyCode.UpArrow)         || Input.GetKeyDown(KeyCode.W)) input = Vector3.forward;
-        else if (Input.GetKeyDown(KeyCode.DownArrow)  || Input.GetKeyDown(KeyCode.S)) input = Vector3.back;
-        else if (Input.GetKeyDown(KeyCode.LeftArrow)  || Input.GetKeyDown(KeyCode.A)) input = Vector3.left;
-        else if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D)) input = Vector3.right;
+        // ── Read raw input as 2D intent ─────────────────────────────────
+        Vector2 rawIntent = Vector2.zero;
+
+        if      (Input.GetKeyDown(KeyCode.UpArrow)    || Input.GetKeyDown(KeyCode.W)) rawIntent = Vector2.up;
+        else if (Input.GetKeyDown(KeyCode.DownArrow)   || Input.GetKeyDown(KeyCode.S)) rawIntent = Vector2.down;
+        else if (Input.GetKeyDown(KeyCode.LeftArrow)   || Input.GetKeyDown(KeyCode.A)) rawIntent = Vector2.left;
+        else if (Input.GetKeyDown(KeyCode.RightArrow)  || Input.GetKeyDown(KeyCode.D)) rawIntent = Vector2.right;
         else
         {
             float h = Input.GetAxis("Horizontal");
             float v = Input.GetAxis("Vertical");
 
-            if      (v >  AXIS_THRESHOLD && prevV <=  AXIS_THRESHOLD) input = Vector3.forward;
-            else if (v < -AXIS_THRESHOLD && prevV >= -AXIS_THRESHOLD) input = Vector3.back;
-            else if (h < -AXIS_THRESHOLD && prevH >= -AXIS_THRESHOLD) input = Vector3.left;
-            else if (h >  AXIS_THRESHOLD && prevH <=  AXIS_THRESHOLD) input = Vector3.right;
+            if      (v >  AXIS_THRESHOLD && prevV <=  AXIS_THRESHOLD) rawIntent = Vector2.up;
+            else if (v < -AXIS_THRESHOLD && prevV >= -AXIS_THRESHOLD) rawIntent = Vector2.down;
+            else if (h < -AXIS_THRESHOLD && prevH >= -AXIS_THRESHOLD) rawIntent = Vector2.left;
+            else if (h >  AXIS_THRESHOLD && prevH <=  AXIS_THRESHOLD) rawIntent = Vector2.right;
 
             prevH = h;
             prevV = v;
+        }
+
+        // ── Resolve intent relative to gameplay camera ──────────────────
+        if (rawIntent != Vector2.zero)
+        {
+            input = ResolveCameraRelativeDirection(rawIntent);
         }
 
         if (input != Vector3.zero)
@@ -70,6 +79,46 @@ public class PlayerMovement : MonoBehaviour
             bufferedInput = Vector3.zero;
             inputBufferTimer = 0f;
         }
+    }
+
+    /// <summary>
+    /// Converts a 2D input intent (up/down/left/right) into a world-space
+    /// cardinal direction (Vector3.forward/back/left/right) relative to
+    /// the current gameplay camera's facing direction on the horizontal plane.
+    /// </summary>
+    private Vector3 ResolveCameraRelativeDirection(Vector2 intent)
+    {
+        Camera cam = Camera.main;
+        if (cam == null) return new Vector3(intent.x, 0f, intent.y);
+
+        // Project camera axes onto the horizontal plane
+        Vector3 camForward = cam.transform.forward;
+        Vector3 camRight   = cam.transform.right;
+        camForward.y = 0f;
+        camRight.y   = 0f;
+        camForward.Normalize();
+        camRight.Normalize();
+
+        // If camera is looking straight down, fall back to world axes
+        if (camForward.sqrMagnitude < 0.001f)
+            return new Vector3(intent.x, 0f, intent.y);
+
+        // Compose the desired world direction from camera-relative intent
+        Vector3 desiredDir = camForward * intent.y + camRight * intent.x;
+
+        // Snap to the nearest cardinal direction for the tile/roll grid system
+        return SnapToCardinal(desiredDir);
+    }
+
+    /// <summary>
+    /// Returns the nearest cardinal direction (±X or ±Z) for a given vector.
+    /// </summary>
+    private static Vector3 SnapToCardinal(Vector3 dir)
+    {
+        if (Mathf.Abs(dir.x) >= Mathf.Abs(dir.z))
+            return dir.x >= 0f ? Vector3.right : Vector3.left;
+        else
+            return dir.z >= 0f ? Vector3.forward : Vector3.back;
     }
 
     IEnumerator Roll(Vector3 dir)

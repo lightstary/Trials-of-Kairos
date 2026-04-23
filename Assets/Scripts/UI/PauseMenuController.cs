@@ -4,12 +4,10 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
-#if ENABLE_INPUT_SYSTEM
-using UnityEngine.InputSystem;
-#endif
 
 /// <summary>
 /// Pause menu with Resume, Restart Trial, How To Play, Controls, Trial Selection, Return to Hub.
+/// Auto-creates itself in any scene that doesn't already have one.
 /// </summary>
 public class PauseMenuController : MonoBehaviour
 {
@@ -57,6 +55,54 @@ public class PauseMenuController : MonoBehaviour
     /// <summary>True during input cooldown after returning from a sub-screen.</summary>
     public bool IsInInputCooldown => _inputCooldown > 0f;
 
+    // ── Auto-creation ────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Ensures a PauseMenuController exists after every scene load.
+    /// If the loaded scene already has one (e.g. MainScene), this does nothing.
+    /// Otherwise a new one is created under the scene's Canvas.
+    /// </summary>
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void RegisterSceneCallback()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneLoaded += OnSceneLoaded;
+
+        // Also ensure one exists in the initial scene
+        EnsureExistsInScene();
+    }
+
+    private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        EnsureExistsInScene();
+    }
+
+    private static void EnsureExistsInScene()
+    {
+        if (FindObjectOfType<PauseMenuController>() != null) return;
+
+        // Find a Canvas to parent the pause menu under (skip cursor overlay canvases)
+        Canvas targetCanvas = null;
+        Canvas[] allCanvases = FindObjectsOfType<Canvas>();
+        foreach (Canvas c in allCanvases)
+        {
+            if (!c.isRootCanvas) continue;
+            if (c.gameObject.name.Contains("Cursor")) continue;
+            targetCanvas = c;
+            break;
+        }
+        if (targetCanvas == null) return;
+
+        GameObject go = new GameObject("PauseMenu");
+        go.transform.SetParent(targetCanvas.transform, false);
+        RectTransform rt = go.AddComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = rt.offsetMax = Vector2.zero;
+        go.AddComponent<CanvasGroup>();
+        go.AddComponent<PauseMenuController>();
+    }
+
     void Awake()
     {
         SetVisible(false);
@@ -92,14 +138,9 @@ public class PauseMenuController : MonoBehaviour
         if (_inputCooldown > 0f) _inputCooldown -= Time.unscaledDeltaTime;
 
         // ── Start / Menu button toggles pause ────────────────────────────
+        // JoystickButton7 = Start/Menu on Xbox. Escape = keyboard.
         bool startPressed = Input.GetKeyDown(KeyCode.JoystickButton7)
-                         || Input.GetKeyDown(KeyCode.JoystickButton9)
                          || Input.GetKeyDown(KeyCode.Escape);
-
-#if ENABLE_INPUT_SYSTEM
-        if (Gamepad.current != null)
-            startPressed = startPressed || Gamepad.current.startButton.wasPressedThisFrame;
-#endif
 
         if (startPressed)
         {
@@ -114,10 +155,9 @@ public class PauseMenuController : MonoBehaviour
                     && MainMenuController.Instance.menuPanel != null
                     && MainMenuController.Instance.menuPanel.activeSelf;
 
-                // Block pause during boss intro/fail, tutorial popups, and hub completion
+                // Block pause during boss intro/fail and hub completion
                 bool modalOpen = BossFailUI.IsOpen
                               || BossIntroModal.IsOpen
-                              || TutorialTilePopup.IsAnyVisible
                               || GoalTile.IsOpen;
 
                 if (!inMainMenu && !modalOpen)

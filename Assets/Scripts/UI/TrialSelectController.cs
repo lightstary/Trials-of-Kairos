@@ -537,7 +537,7 @@ public class TrialSelectController : MonoBehaviour
         foreach (TextMeshProUGUI lbl in labels)
         {
             string objName = lbl.gameObject.name.ToLowerInvariant();
-            if (objName.Contains("num"))        lbl.text = "\u2605";   // star icon
+            if (objName.Contains("num"))        lbl.text = "*";        // hub marker
              else if (objName.Contains("title")) lbl.text = "THE\nHUB";
              else if (objName.Contains("sub"))   lbl.text = "Tutorial";
         }

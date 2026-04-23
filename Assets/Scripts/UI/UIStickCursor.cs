@@ -53,6 +53,9 @@ public class UIStickCursor : MonoBehaviour
     private Image[]         _trailImgs;
 
     private RectTransform   _canvasRT;
+    // No dedicated cursor canvas — cursor elements live inside the scene's
+    // main GameCanvas and are reparented to the topmost active canvas each
+    // frame via LateUpdate so they always render last.
     private Vector2         _targetPos;
     private Vector2         _smoothPos;
     private float           _lastStickTime = -100f;
@@ -94,36 +97,144 @@ public class UIStickCursor : MonoBehaviour
         if (canvas != null) _canvasRT = canvas.GetComponent<RectTransform>();
     }
 
+    /// <summary>
+    /// Every frame after all Updates, reparent the cursor elements to
+    /// whichever root canvas currently has the highest sortingOrder.
+    /// This guarantees the cursor renders last regardless of what
+    /// dynamic canvases modals create at runtime.
+    /// </summary>
+    void LateUpdate()
+    {
+        if (_root == null || !IsCursorVisible) return;
+
+        // Find the topmost root canvas
+        Canvas topCanvas = null;
+        int topSort = int.MinValue;
+        Canvas[] allCanvases = FindObjectsOfType<Canvas>();
+        foreach (Canvas c in allCanvases)
+        {
+            if (!c.isRootCanvas) continue;
+            if (c.sortingOrder > topSort)
+            {
+                topSort = c.sortingOrder;
+                topCanvas = c;
+            }
+        }
+
+        if (topCanvas == null) return;
+        RectTransform targetRT = topCanvas.GetComponent<RectTransform>();
+        if (targetRT == null) return;
+
+        // Reparent cursor elements to the topmost canvas if needed
+        if (_root.parent != targetRT)
+        {
+            // Convert current screen position to new canvas space
+            Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(null, _root.position);
+
+            _root.SetParent(targetRT, false);
+            for (int i = 0; i < TRAIL_COUNT; i++)
+            {
+                if (_trailRTs != null && _trailRTs[i] != null)
+                    _trailRTs[i].SetParent(targetRT, false);
+            }
+
+            // Recalculate anchored position in new canvas space
+            Vector2 localPoint;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                targetRT, screenPos, null, out localPoint);
+            _smoothPos = localPoint;
+            _targetPos = localPoint;
+            _root.anchoredPosition = _smoothPos;
+        }
+
+        // Always keep cursor elements as last siblings so they draw last
+        for (int i = 0; i < TRAIL_COUNT; i++)
+        {
+            if (_trailRTs != null && _trailRTs[i] != null)
+                _trailRTs[i].SetAsLastSibling();
+        }
+        _root.SetAsLastSibling();
+    }
+
+    /// <summary>Clean up cursor visuals when this component is destroyed.</summary>
+    void OnDestroy()
+    {
+        if (_root != null) Destroy(_root.gameObject);
+        if (_trailRTs != null)
+        {
+            foreach (var t in _trailRTs)
+                if (t != null) Destroy(t.gameObject);
+        }
+    }
+
     void Update()
     {
+        // ── Rebuild safety: if container was destroyed (scene transition), rebuild ──
+        if (_canvasRT == null)
+        {
+            Canvas c = GetComponentInParent<Canvas>();
+            if (c == null) c = FindObjectOfType<Canvas>();
+            if (c != null) _canvasRT = c.GetComponent<RectTransform>();
+        }
         if (_canvasRT == null) return;
-        if (!_built) Build();
-        if (_root == null) return;
 
-        // ── Gameplay detection: hide cursor if in gameplay ───────────────
-        bool inMenu = IsAnyMenuActive();
+        if (_built && (_root == null))
+        {
+            _built = false;
+        }
+        if (!_built) Build();
+        if (_canvasRT == null || _root == null) return;
+
+        // ── Gameplay detection: hide cursor unless interactive UI is present ──
+        bool inMenu = HasInteractableUI();
         if (!inMenu)
         {
             SetCursorVisible(false);
+            SetTrailVisible(false);
             IsMouseMode = false;
+            // Ensure system cursor is hidden during gameplay even in scenes
+            // without CameraFollow (e.g., Hub).
+            Cursor.visible = false;
             return;
         }
 
-        // ── Read left stick ──────────────────────────────────────────────
-        float h = Input.GetAxisRaw("Horizontal");
-        float v = Input.GetAxisRaw("Vertical");
-        Vector2 rawStick = new Vector2(h, v);
+        // ── Interactive UI is present — unlock cursor so mouse clicks work ──
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = false;
 
-        // Apply dead zone with smooth ramp
-        float mag = rawStick.magnitude;
+        // Clear stale EventSystem selection to prevent Spacebar/Enter from
+        // auto-submitting a button the player didn't explicitly hover.
+        // Controller confirm (A button) is handled manually in CheckHover,
+        // so this does not break controller flow.
+        if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject != null)
+            EventSystem.current.SetSelectedGameObject(null);
+
+        // ── Read left stick (CONTROLLER ONLY — exclude keyboard WASD) ────
         Vector2 stick = Vector2.zero;
-        if (mag > DEAD_ZONE)
-        {
-            float remapped = (mag - DEAD_ZONE) / (1f - DEAD_ZONE);
-            stick = rawStick.normalized * remapped;
-        }
+        bool stickMoved = false;
 
-        bool stickMoved = stick.sqrMagnitude > 0.01f;
+        // Only read Horizontal/Vertical axes when NO keyboard movement keys
+        // are held. This prevents WASD from hijacking cursor into stick mode.
+        bool keyboardMoving = Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.A) ||
+                              Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.D) ||
+                              Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.DownArrow) ||
+                              Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.RightArrow);
+
+        if (!keyboardMoving)
+        {
+            float h = Input.GetAxisRaw("Horizontal");
+            float v = Input.GetAxisRaw("Vertical");
+            Vector2 rawStick = new Vector2(h, v);
+
+            float mag = rawStick.magnitude;
+            if (mag > DEAD_ZONE)
+            {
+                float remapped = (mag - DEAD_ZONE) / (1f - DEAD_ZONE);
+                stick = rawStick.normalized * remapped;
+            }
+
+            stickMoved = stick.sqrMagnitude > 0.01f;
+        }
 
         // ── Read mouse ───────────────────────────────────────────────────
         Vector2 mouseScreen = (Vector2)Input.mousePosition;
@@ -181,11 +292,6 @@ public class UIStickCursor : MonoBehaviour
 
         _root.anchoredPosition = _smoothPos;
         CursorWorldPosition = _root.position;
-
-        // Keep cursor + trail on top of everything (modals/popups created after cursor)
-        for (int i = 0; i < TRAIL_COUNT; i++)
-            if (_trailRTs != null && _trailRTs[i] != null) _trailRTs[i].transform.SetAsLastSibling();
-        _root.transform.SetAsLastSibling();
 
         // ── Update trail ─────────────────────────────────────────────────
         UpdateTrail();
@@ -246,48 +352,51 @@ public class UIStickCursor : MonoBehaviour
         }
     }
 
-    /// <summary>True when any menu overlay is visible (main menu, pause, sub-screens, popups).</summary>
-    private bool IsAnyMenuActive()
+    /// <summary>
+    /// Returns true when the player needs a free cursor — either because
+    /// interactive Buttons are on screen, or a known modal that handles
+    /// its own input (no Button components) is open.
+    /// </summary>
+    private bool HasInteractableUI()
     {
-        MainMenuController mmc = MainMenuController.Instance;
-        if (mmc != null && mmc.menuPanel != null && mmc.menuPanel.activeSelf) return true;
+        // ── Check for modals that don't use Button components ────────────
+        // HowToPlayController navigates via direct Input.GetKeyDown.
+        // It still needs the cursor so the player can see and move it.
+        if (HowToPlayController.IsAnyOpen) return true;
 
-        // Trial select screen
-        if (mmc != null)
+        // ── Check for active, interactable Buttons (non-HUD) ────────────
+        var selectables = Selectable.allSelectablesArray;
+        int count = Selectable.allSelectableCount;
+
+        for (int i = 0; i < count; i++)
         {
-            Transform ts = mmc.transform.parent != null ? mmc.transform.parent.Find("TrialSelectScreen") : null;
-            if (ts == null) ts = mmc.transform.Find("TrialSelectScreen");
-            if (ts != null && ts.gameObject.activeSelf) return true;
+            Selectable s = selectables[i];
+            if (s == null) continue;
+            if (!(s is Button)) continue;
+            if (!s.interactable) continue;
+            if (!s.gameObject.activeInHierarchy) continue;
+
+            // Gameplay HUD buttons (e.g., PauseButton) must not trigger the cursor
+            if (IsInsideHUD(s.transform)) continue;
+
+            // Skip buttons inside invisible or non-interactable CanvasGroups
+            CanvasGroup cg = s.GetComponentInParent<CanvasGroup>();
+            if (cg != null && (!cg.interactable || cg.alpha < 0.01f)) continue;
+
+            return true;
         }
 
-        // Pause menu
-        PauseMenuController pmc = FindObjectOfType<PauseMenuController>();
-        if (pmc != null && pmc.IsPaused) return true;
+        return false;
+    }
 
-        // Controls screen (opened from pause)
-        ControlsScreenController ctrl = FindObjectOfType<ControlsScreenController>();
-        if (ctrl != null && ctrl.gameObject.activeInHierarchy) return true;
-
-        // Boss fail UI
-        BossFailUI failUI = FindObjectOfType<BossFailUI>();
-        if (failUI != null && failUI.gameObject.activeInHierarchy) return true;
-
-        // Hub completion popup
-        GameObject overlay = GameObject.Find("CompletionOverlay");
-        if (overlay != null && overlay.activeInHierarchy) return true;
-
-        // TimeScale intro modal (pauses game, needs cursor for button navigation)
-        GameObject modal = GameObject.Find("TimeScaleIntroModal");
-        if (modal != null && modal.activeInHierarchy) return true;
-
-        // Win screen
-        WinScreenController wsc = FindObjectOfType<WinScreenController>();
-        if (wsc != null && wsc.gameObject.activeInHierarchy) return true;
-
-        // Game over screen
-        GameOverScreenController gosc = FindObjectOfType<GameOverScreenController>();
-        if (gosc != null && gosc.gameObject.activeInHierarchy) return true;
-
+    /// <summary>Returns true if the transform is a descendant of a GameObject named "HUD".</summary>
+    private static bool IsInsideHUD(Transform t)
+    {
+        while (t != null)
+        {
+            if (t.name == "HUD") return true;
+            t = t.parent;
+        }
         return false;
     }
 
@@ -393,12 +502,8 @@ public class UIStickCursor : MonoBehaviour
         Selectable closest = null;
         float closestDist = float.MaxValue;
 
-        Canvas parentCanvas = _canvasRT != null ? _canvasRT.GetComponent<Canvas>() : null;
-        // For ScreenSpaceOverlay, worldCamera must be null even if one is assigned
-        // in the inspector. Using the 3D camera gives completely wrong coordinates.
+        // Cursor canvas is always ScreenSpaceOverlay — no camera needed.
         Camera uiCam = null;
-        if (parentCanvas != null && parentCanvas.renderMode != RenderMode.ScreenSpaceOverlay)
-            uiCam = parentCanvas.worldCamera;
         Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(uiCam, _root.position);
 
         foreach (Selectable s in Selectable.allSelectablesArray)
@@ -446,8 +551,7 @@ public class UIStickCursor : MonoBehaviour
 
         // When cursor is active, clear the EventSystem selection so D-pad mode
         // doesn't have a stale selected object when it resumes.
-        if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject != null)
-            EventSystem.current.SetSelectedGameObject(null);
+        // (Selection is also cleared at the top of Update when inMenu is true.)
     }
 
     // ── Build ────────────────────────────────────────────────────────────
@@ -460,18 +564,16 @@ public class UIStickCursor : MonoBehaviour
         _targetPos = Vector2.zero;
         _smoothPos = Vector2.zero;
 
-        // Initialize dynamic colors to defaults
-        _currentHue = new Color(0.96f, 0.82f, 0.40f); // gold
+        _currentHue = new Color(0.96f, 0.82f, 0.40f);
         _targetHue  = _currentHue;
         _coreColor  = DEFAULT_CORE_COLOR;
         _innerColor = DEFAULT_INNER_COLOR;
         _outerColor = DEFAULT_OUTER_COLOR;
         _trailColor = DEFAULT_TRAIL_COLOR;
 
-        // Generate soft radial gradient sprite (circle, not a square)
         _orbSprite = CreateOrbSprite(64);
 
-        // ── Trail segments (rendered behind cursor, parented to canvas) ──
+        // ── Trail segments ───────────────────────────────────────────────
         _trailRTs  = new RectTransform[TRAIL_COUNT];
         _trailImgs = new Image[TRAIL_COUNT];
 
@@ -481,8 +583,8 @@ public class UIStickCursor : MonoBehaviour
             float size = Mathf.Lerp(TRAIL_START_R, 2f, t) * 2f;
 
             GameObject tGO = new GameObject($"CursorTrail_{i}");
-            tGO.transform.SetParent(_canvasRT, false);
             RectTransform tRT = tGO.AddComponent<RectTransform>();
+            tGO.transform.SetParent(_canvasRT, false);
             tRT.anchorMin = tRT.anchorMax = new Vector2(0.5f, 0.5f);
             tRT.pivot = new Vector2(0.5f, 0.5f);
             tRT.sizeDelta = new Vector2(size, size);
@@ -497,9 +599,8 @@ public class UIStickCursor : MonoBehaviour
 
         // ── Root container (all orb layers are children) ─────────────────
         GameObject rootGO = new GameObject("StickCursor");
-        rootGO.transform.SetParent(_canvasRT, false);
-        rootGO.transform.SetAsLastSibling();
         _root = rootGO.AddComponent<RectTransform>();
+        rootGO.transform.SetParent(_canvasRT, false);
         _root.anchorMin = _root.anchorMax = new Vector2(0.5f, 0.5f);
         _root.pivot = new Vector2(0.5f, 0.5f);
         _root.sizeDelta = Vector2.zero;

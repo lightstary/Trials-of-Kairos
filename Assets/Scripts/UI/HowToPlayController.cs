@@ -191,20 +191,20 @@ public class HowToPlayController : MonoBehaviour
 
         // ── Left: Visual diagram ──
         // Joystick icon (text-based)
-        CreateLabel(leftCol.transform, "JOYSTICK_ICON", "\u25CE", 80f,
+        CreateLabel(leftCol.transform, "JOYSTICK_ICON", "O", 80f,
             HEADER_WHITE, TextAlignmentOptions.Center, new Vector2(0, 0.65f), new Vector2(1, 0.95f));
 
         CreateLabel(leftCol.transform, "StickLabel", "LEFT STICK", 18f,
             HINT_DIM, TextAlignmentOptions.Center, new Vector2(0, 0.56f), new Vector2(1, 0.64f));
 
         // Direction arrows diagram
-        CreateLabel(leftCol.transform, "ArrowUp", "\u25B2", 28f,
+        CreateLabel(leftCol.transform, "ArrowUp", "^", 28f,
             FORWARD_COLOR, TextAlignmentOptions.Center, new Vector2(0.35f, 0.42f), new Vector2(0.65f, 0.52f));
-        CreateLabel(leftCol.transform, "ArrowDown", "\u25BC", 28f,
+        CreateLabel(leftCol.transform, "ArrowDown", "v", 28f,
             FORWARD_COLOR, TextAlignmentOptions.Center, new Vector2(0.35f, 0.18f), new Vector2(0.65f, 0.28f));
-        CreateLabel(leftCol.transform, "ArrowLeft", "\u25C0", 28f,
+        CreateLabel(leftCol.transform, "ArrowLeft", "<", 28f,
             FORWARD_COLOR, TextAlignmentOptions.Center, new Vector2(0.12f, 0.30f), new Vector2(0.38f, 0.40f));
-        CreateLabel(leftCol.transform, "ArrowRight", "\u25B6", 28f,
+        CreateLabel(leftCol.transform, "ArrowRight", ">", 28f,
             FORWARD_COLOR, TextAlignmentOptions.Center, new Vector2(0.62f, 0.30f), new Vector2(0.88f, 0.40f));
 
         // Center cube icon

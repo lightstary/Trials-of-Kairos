@@ -41,7 +41,9 @@ public class HUDController : MonoBehaviour
 
     private float targetHourglassAngle;
     private float currentHourglassAngle;
+    #pragma warning disable CS0414 // Set by public API, reserved for future use
     private bool  objectiveCompleted;
+    #pragma warning restore CS0414
 
     void Awake()
     {

@@ -37,12 +37,12 @@ public class SoundManager : MonoBehaviour
         PlayGameMusic();
     }
 
-    public void PlayWin()        => sfxSource.PlayOneShot(winSound);
-    public void PlayLose()       => sfxSource.PlayOneShot(loseSound);
-    public void PlayRoundClear() => sfxSource.PlayOneShot(roundClearSound);
-    public void PlayFall()       => sfxSource.PlayOneShot(fallSound);
-    public void PlayRespawn()    => sfxSource.PlayOneShot(respawnSound);
-    public void PlayMove()       => sfxSource.PlayOneShot(moveSound);
+    public void PlayWin()        { if (winSound != null) sfxSource.PlayOneShot(winSound); }
+    public void PlayLose()       { if (loseSound != null) sfxSource.PlayOneShot(loseSound); }
+    public void PlayRoundClear() { if (roundClearSound != null) sfxSource.PlayOneShot(roundClearSound); }
+    public void PlayFall()       { if (fallSound != null) sfxSource.PlayOneShot(fallSound); }
+    public void PlayRespawn()    { if (respawnSound != null) sfxSource.PlayOneShot(respawnSound); }
+    public void PlayMove()       { if (moveSound != null) sfxSource.PlayOneShot(moveSound); }
 
     public void PlayGameMusic()
     {

@@ -31,7 +31,9 @@ public class GameOverScreenController : MonoBehaviour
     [SerializeField] private Image redVignette;
 
     [Header("Config")]
+    #pragma warning disable CS0414 // Reserved for Inspector configuration
     [SerializeField] private string hubSceneName       = "HubScene";
+    #pragma warning restore CS0414
     [SerializeField] private float  fractureDuration   = 0.8f;
     [SerializeField] private float  titleShakeAmount   = 8f;
     [SerializeField] private float  titleShakeDuration = 0.1f;

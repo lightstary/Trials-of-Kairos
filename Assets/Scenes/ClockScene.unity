@@ -25524,13 +25524,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player: {fileID: 403358931}
-  offset: {x: 0, y: 6, z: -8}
-  followSpeed: 5
+  distance: 8
+  followSpeed: 10
+  rotationSmoothSpeed: 12
   lookOffset: {x: 0, y: 1, z: 0}
-  rotateSpeed: 5
-  zoomOffset: {x: 0.3, y: 1.5, z: -2.5}
-  zoomFollowSpeed: 8
   mouseSensitivity: 2
+  stickSensitivity: 120
+  stickDeadZone: 0.15
+  pitchMin: 5
+  pitchMax: 60
+  startYaw: 0
+  startPitch: 25
 --- !u!114 &1759268774
 MonoBehaviour:
   m_ObjectHideFlags: 0

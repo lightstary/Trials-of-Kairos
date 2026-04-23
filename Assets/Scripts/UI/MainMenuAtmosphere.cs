@@ -39,7 +39,9 @@ public class MainMenuAtmosphere : MonoBehaviour
     private float[]         _grainPhase;
     private float           _w = 1920f;
     private float           _h = 1080f;
+    #pragma warning disable CS0414 // Set by public API, reserved for future use
     private bool            _subtitleBreathingEnabled = true;
+    #pragma warning restore CS0414
 
     // ── Public API ────────────────────────────────────────────────────────────
 

@@ -781,6 +781,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a2dee978bfc51e4f8b27cee7e5e5f4b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  menuPanel: {fileID: 0}
+  hudPanel: {fileID: 0}
+  trialSelectScreen: {fileID: 0}
+  controlsScreen: {fileID: 0}
   titleLabel: {fileID: 1425595286}
   subtitleLabel: {fileID: 203346301}
   chapterLabel: {fileID: 526354021}
@@ -789,15 +793,15 @@ MonoBehaviour:
   timeRingCanvasGroup: {fileID: 2066015395}
   beginTrialButton: {fileID: 2035375016}
   continueButton: {fileID: 1379511327}
-  settingsButton: {fileID: 349325871}
+  trialSelectButton: {fileID: 0}
+  controlsButton: {fileID: 0}
   quitButton: {fileID: 1328865777}
   buttonGroups:
   - {fileID: 2035375015}
   - {fileID: 1379511326}
   - {fileID: 349325870}
   - {fileID: 1328865776}
-  firstTrialSceneName: MainScene
-  continueSceneName: 
+  beginTrialScene: HubScene
 --- !u!114 &360385915
 MonoBehaviour:
   m_ObjectHideFlags: 0

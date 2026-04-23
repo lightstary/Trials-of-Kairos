@@ -1,8 +1,5 @@
 using UnityEngine;
 using System;
-#if ENABLE_INPUT_SYSTEM
-using UnityEngine.InputSystem;
-#endif
 
 /// <summary>
 /// Detects whether the player is using keyboard/mouse or a controller
@@ -97,24 +94,20 @@ public class InputPromptManager : MonoBehaviour
         for (int i = (int)KeyCode.JoystickButton0; i <= (int)KeyCode.JoystickButton19; i++)
             if (Input.GetKeyDown((KeyCode)i)) return true;
 
-        // Joystick axes with deadzone
-        float h = Input.GetAxisRaw("Horizontal");
-        float v = Input.GetAxisRaw("Vertical");
-        if (h * h + v * v > 0.04f) return true;
+        // Joystick axes — but only when NO keyboard movement keys are held,
+        // because "Horizontal"/"Vertical" respond to both WASD and joystick.
+        bool keyboardMoving = Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.A) ||
+                              Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.D) ||
+                              Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.DownArrow) ||
+                              Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.RightArrow);
 
-#if ENABLE_INPUT_SYSTEM
-        if (Gamepad.current != null)
+        if (!keyboardMoving)
         {
-            if (Gamepad.current.buttonSouth.wasPressedThisFrame) return true;
-            if (Gamepad.current.buttonEast.wasPressedThisFrame)  return true;
-            if (Gamepad.current.buttonWest.wasPressedThisFrame)  return true;
-            if (Gamepad.current.buttonNorth.wasPressedThisFrame) return true;
-            if (Gamepad.current.startButton.wasPressedThisFrame) return true;
-            if (Gamepad.current.leftStick.ReadValue().sqrMagnitude > 0.04f) return true;
-            if (Gamepad.current.rightStick.ReadValue().sqrMagnitude > 0.04f) return true;
-            if (Gamepad.current.dpad.ReadValue().sqrMagnitude > 0.04f) return true;
+            float h = Input.GetAxisRaw("Horizontal");
+            float v = Input.GetAxisRaw("Vertical");
+            if (h * h + v * v > 0.04f) return true;
         }
-#endif
+
         return false;
     }
 }

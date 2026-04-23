@@ -470,13 +470,16 @@ public class ControlsScreenController : MonoBehaviour
 
     private IEnumerator FadeInElement(CanvasGroup cg)
     {
+        if (cg == null) yield break;
         RectTransform rt = cg.GetComponent<RectTransform>();
+        if (rt == null) yield break;
         Vector2 target = rt.anchoredPosition;
         rt.anchoredPosition = target + Vector2.down * 12f;
 
         float elapsed = 0f;
         while (elapsed < FADE_DURATION)
         {
+            if (cg == null || rt == null) yield break;
             elapsed += Time.unscaledDeltaTime;
             float t = Mathf.Clamp01(elapsed / FADE_DURATION);
             float ease = 1f - Mathf.Pow(1f - t, 3f);
@@ -484,8 +487,8 @@ public class ControlsScreenController : MonoBehaviour
             rt.anchoredPosition = Vector2.Lerp(target + Vector2.down * 12f, target, ease);
             yield return null;
         }
-        cg.alpha = 1f;
-        rt.anchoredPosition = target;
+        if (cg != null) cg.alpha = 1f;
+        if (rt != null) rt.anchoredPosition = target;
     }
 
     // ── Element builders ─────────────────────────────────────────────────────

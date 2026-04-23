@@ -11893,7 +11893,7 @@ GameObject:
   - component: {fileID: 1025498342}
   m_Layer: 0
   m_Name: Main Camera
-  m_TagString: Untagged
+  m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -12038,13 +12038,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player: {fileID: 1251370388}
-  offset: {x: 0.5, y: 4, z: -6}
-  followSpeed: 5
+  distance: 8
+  followSpeed: 10
+  rotationSmoothSpeed: 12
   lookOffset: {x: 0, y: 1, z: 0}
-  rotateSpeed: 5
-  zoomOffset: {x: 0.3, y: 1.5, z: -2.5}
-  zoomFollowSpeed: 8
   mouseSensitivity: 2
+  stickSensitivity: 120
+  pitchMin: 5
+  pitchMax: 60
+  startYaw: 0
+  startPitch: 25
 --- !u!20 &1025498345
 Camera:
   m_ObjectHideFlags: 0

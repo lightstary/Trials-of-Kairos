@@ -30,6 +30,11 @@ public class AreaTitleIntro : MonoBehaviour
             visiblePosition = stripPanel.anchoredPosition;
             hiddenPosition  = visiblePosition + Vector2.up * slideDistance;
         }
+
+        // Clear any default text that contains unsupported unicode glyphs
+        // (scene files may ship with placeholder text like \u25C6)
+        if (titleLabel != null) titleLabel.text = "";
+
         SetHidden();
     }
 
@@ -37,7 +42,7 @@ public class AreaTitleIntro : MonoBehaviour
     public void ShowTitle(string trialNumber, string areaName)
     {
         if (titleLabel != null)
-            titleLabel.text = $"{trialNumber}  \u2014  {areaName}".ToUpper();
+            titleLabel.text = $"{trialNumber}  -  {areaName}".ToUpper();
         StopAllCoroutines();
         StartCoroutine(Animate());
     }
