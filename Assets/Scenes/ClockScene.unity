@@ -6383,7 +6383,7 @@ Transform:
   m_GameObject: {fileID: 403358927}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2, y: 1.1, z: 0}
+  m_LocalPosition: {x: 2, y: 1.1, z: 30}
   m_LocalScale: {x: 1, y: 2, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -10564,7 +10564,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6991378c347179548a66d2c871e39af6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bossFight: {fileID: 735964033}
 --- !u!1 &680645033
 GameObject:
   m_ObjectHideFlags: 0
@@ -11211,83 +11210,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17efb5cc3d602fc47877ae731ba22d0b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  clockHandTransform: {fileID: 1278008851}
-  handSpeed: 18
-  targetHours: 09000000010000000600000003000000
-  allTiles:
-  - {fileID: 674816660}
-  - {fileID: 798613571}
-  - {fileID: 924241080}
-  - {fileID: 375500517}
-  - {fileID: 1789707163}
-  - {fileID: 14934618}
-  - {fileID: 1031737168}
-  - {fileID: 1388080081}
-  - {fileID: 851910194}
-  - {fileID: 867530736}
-  - {fileID: 1898266266}
-  - {fileID: 923090531}
-  - {fileID: 753238226}
-  - {fileID: 2089954373}
-  - {fileID: 540629743}
-  - {fileID: 1990313975}
-  - {fileID: 1333458446}
-  - {fileID: 331098346}
-  - {fileID: 1326391761}
-  - {fileID: 1208221479}
-  - {fileID: 776152703}
-  - {fileID: 750137419}
-  - {fileID: 462577454}
-  - {fileID: 202638837}
-  - {fileID: 1685547655}
-  - {fileID: 1992660404}
-  - {fileID: 1049955275}
-  - {fileID: 383621984}
-  - {fileID: 1989746455}
-  - {fileID: 837987812}
-  - {fileID: 840515795}
-  - {fileID: 368592140}
-  - {fileID: 621265574}
-  - {fileID: 1975012648}
-  - {fileID: 157982699}
-  - {fileID: 1478334237}
-  - {fileID: 1181999757}
-  - {fileID: 1928660741}
-  - {fileID: 780920983}
-  - {fileID: 941002144}
-  - {fileID: 1590143443}
-  - {fileID: 1876571207}
-  - {fileID: 1532671429}
-  - {fileID: 320157832}
-  - {fileID: 1285826642}
-  - {fileID: 879834442}
-  - {fileID: 74835164}
-  - {fileID: 2038936559}
-  - {fileID: 564542474}
-  - {fileID: 1052226089}
-  - {fileID: 1051569173}
-  - {fileID: 290105483}
-  - {fileID: 1672543566}
-  - {fileID: 154901834}
-  - {fileID: 176123998}
-  - {fileID: 304955027}
-  - {fileID: 1252264115}
-  - {fileID: 541423704}
-  - {fileID: 1539494958}
-  - {fileID: 511855905}
-  - {fileID: 802245097}
-  - {fileID: 627959288}
-  - {fileID: 1184414688}
-  - {fileID: 1068219589}
-  safeTilesPerPhase: 3
-  glowDuration: 3.5
-  blinkDuration: 2.5
-  fallDelay: 0.2
-  phaseResetDelay: 2
-  tileFallInterval: 12
-  safeColor: {r: 0, g: 1, b: 0.3, a: 1}
-  dangerColor: {r: 1, g: 0.2, b: 0, a: 1}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &736725181
 GameObject:
   m_ObjectHideFlags: 0
@@ -18086,6 +18008,135 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1208221479}
   m_Mesh: {fileID: -2269245349382216059, guid: 085e56dd87e185242a1861e04adf6826, type: 3}
+--- !u!1 &1229899628
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1229899630}
+  - component: {fileID: 1229899629}
+  m_Layer: 0
+  m_Name: BossCManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1229899629
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1229899628}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3be2cca268c07ff4ca8959ca5830f1ad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  allTiles:
+  - {fileID: 674816660}
+  - {fileID: 798613571}
+  - {fileID: 924241080}
+  - {fileID: 375500517}
+  - {fileID: 1789707163}
+  - {fileID: 14934618}
+  - {fileID: 1031737168}
+  - {fileID: 1388080081}
+  - {fileID: 851910194}
+  - {fileID: 867530736}
+  - {fileID: 1898266266}
+  - {fileID: 923090531}
+  - {fileID: 753238226}
+  - {fileID: 2089954373}
+  - {fileID: 540629743}
+  - {fileID: 1990313975}
+  - {fileID: 1333458446}
+  - {fileID: 331098346}
+  - {fileID: 1326391761}
+  - {fileID: 1208221479}
+  - {fileID: 776152703}
+  - {fileID: 750137419}
+  - {fileID: 462577454}
+  - {fileID: 202638837}
+  - {fileID: 1685547655}
+  - {fileID: 1992660404}
+  - {fileID: 1049955275}
+  - {fileID: 383621984}
+  - {fileID: 1989746455}
+  - {fileID: 837987812}
+  - {fileID: 840515795}
+  - {fileID: 368592140}
+  - {fileID: 621265574}
+  - {fileID: 1975012648}
+  - {fileID: 157982699}
+  - {fileID: 1478334237}
+  - {fileID: 1181999757}
+  - {fileID: 1928660741}
+  - {fileID: 780920983}
+  - {fileID: 941002144}
+  - {fileID: 1590143443}
+  - {fileID: 1876571207}
+  - {fileID: 1532671429}
+  - {fileID: 320157832}
+  - {fileID: 1285826642}
+  - {fileID: 879834442}
+  - {fileID: 74835164}
+  - {fileID: 2038936559}
+  - {fileID: 564542474}
+  - {fileID: 1052226089}
+  - {fileID: 1051569173}
+  - {fileID: 290105483}
+  - {fileID: 1672543566}
+  - {fileID: 154901834}
+  - {fileID: 176123998}
+  - {fileID: 304955027}
+  - {fileID: 1252264115}
+  - {fileID: 541423704}
+  - {fileID: 1539494958}
+  - {fileID: 511855905}
+  - {fileID: 802245097}
+  - {fileID: 627959288}
+  - {fileID: 1184414688}
+  - {fileID: 1068219589}
+  - {fileID: 1525239893}
+  - {fileID: 1673934299}
+  clockHand: {fileID: 1278008851}
+  challengeAngles:
+  - 90
+  - 180
+  - 270
+  angleThreshold: 5
+  tickInterval: 0.5
+  tickDegrees: 6
+  safePairsCount: 2
+  glowDuration: 3
+  blinkDuration: 2
+  fallDelay: 0.3
+  tileResetDelay: 3
+  tileAttackInterval: 6
+  safeColor: {r: 0, g: 1, b: 0.3, a: 1}
+  dangerColor: {r: 1, g: 0.2, b: 0, a: 1}
+  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  bossActive: 0
+--- !u!4 &1229899630
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1229899628}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.9759655, y: 0.6791252, z: 30.25}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1230865114
 GameObject:
   m_ObjectHideFlags: 0
@@ -18859,7 +18910,7 @@ Transform:
   m_GameObject: {fileID: 1278008850}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 5, z: -15}
+  m_LocalPosition: {x: 7.12, y: 5, z: 42.7}
   m_LocalScale: {x: 0.3, y: 4, z: 0.3}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -25530,7 +25581,6 @@ MonoBehaviour:
   lookOffset: {x: 0, y: 1, z: 0}
   mouseSensitivity: 2
   stickSensitivity: 120
-  stickDeadZone: 0.15
   pitchMin: 5
   pitchMax: 60
   startYaw: 0
@@ -26846,6 +26896,101 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1837420772}
   m_CullTransparentMesh: 1
+--- !u!1 &1841608290
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1841608293}
+  - component: {fileID: 1841608292}
+  - component: {fileID: 1841608291}
+  - component: {fileID: 1841608294}
+  m_Layer: 0
+  m_Name: BossCTrigger
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!65 &1841608291
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1841608290}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1841608292
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1841608290}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a6ffe0f464a0644b9eff5b01dea9038, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bossCFight: {fileID: 1229899629}
+--- !u!4 &1841608293
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1841608290}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.9759655, y: 0.93, z: 33}
+  m_LocalScale: {x: 4.2366, y: 1.2877, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!54 &1841608294
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1841608290}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1 &1855798900
 GameObject:
   m_ObjectHideFlags: 0
@@ -30721,3 +30866,5 @@ SceneRoots:
   - {fileID: 221571062}
   - {fileID: 647339091}
   - {fileID: 1278008851}
+  - {fileID: 1841608293}
+  - {fileID: 1229899630}
