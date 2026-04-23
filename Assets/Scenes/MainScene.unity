@@ -14922,7 +14922,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   winSound: {fileID: 8300000, guid: 5a7af606b09f73242b626757bbeddede, type: 3}
   loseSound: {fileID: 8300000, guid: d2de193b314e7e2408823c19afcf9a82, type: 3}
-  roundClearSound: {fileID: 0}
+  roundClearSound: {fileID: 8300000, guid: 04d97627a813a454e86d5f3c4f8d4cc8, type: 3}
   fallSound: {fileID: 8300000, guid: d2de193b314e7e2408823c19afcf9a82, type: 3}
   respawnSound: {fileID: 0}
   moveSound: {fileID: 8300000, guid: eddd0cd9a9cc29c4aafa84e48a6cbf57, type: 3}

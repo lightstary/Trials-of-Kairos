@@ -14006,10 +14006,10 @@ MonoBehaviour:
   winSound: {fileID: 0}
   loseSound: {fileID: 0}
   roundClearSound: {fileID: 0}
-  fallSound: {fileID: 0}
+  fallSound: {fileID: 8300000, guid: d2de193b314e7e2408823c19afcf9a82, type: 3}
   respawnSound: {fileID: 0}
-  moveSound: {fileID: 0}
-  gameMusic: {fileID: 0}
+  moveSound: {fileID: 8300000, guid: eddd0cd9a9cc29c4aafa84e48a6cbf57, type: 3}
+  gameMusic: {fileID: 8300000, guid: fd94521fe7012644f9be2b64ca571c07, type: 3}
   bossFightMusic: {fileID: 0}
 --- !u!21 &1222273567
 Material:

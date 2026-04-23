@@ -16851,12 +16851,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   winSound: {fileID: 8300000, guid: 5a7af606b09f73242b626757bbeddede, type: 3}
   loseSound: {fileID: 8300000, guid: d2de193b314e7e2408823c19afcf9a82, type: 3}
-  roundClearSound: {fileID: 0}
+  roundClearSound: {fileID: 8300000, guid: 04d97627a813a454e86d5f3c4f8d4cc8, type: 3}
   fallSound: {fileID: 8300000, guid: d2de193b314e7e2408823c19afcf9a82, type: 3}
   respawnSound: {fileID: 0}
   moveSound: {fileID: 8300000, guid: eddd0cd9a9cc29c4aafa84e48a6cbf57, type: 3}
-  gameMusic: {fileID: 8300000, guid: 9fd5a49945562e64ba13a2f11f1b62cc, type: 3}
-  bossFightMusic: {fileID: 8300000, guid: dbc9ea8ae9d025145bf30927eb200b1d, type: 3}
+  gameMusic: {fileID: 8300000, guid: e22f9052b849e054b9ca447907a72171, type: 3}
+  bossFightMusic: {fileID: 8300000, guid: 226ada005004b9e44bddf79af5c4ad30, type: 3}
 --- !u!4 &851431767
 Transform:
   m_ObjectHideFlags: 0
