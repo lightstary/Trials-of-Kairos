@@ -34,7 +34,6 @@ public class BossFight : MonoBehaviour
     private Dictionary<GameObject, Vector3> originalPositions = new Dictionary<GameObject, Vector3>();
     private Vector3 arenaCenter;
 
-    /// <summary>Total trial completion time tracked using realtime (unaffected by timeScale).</summary>
     private float TrialElapsedTime => Time.realtimeSinceStartup - MainMenuController.GameplayStartRealtime;
 
     void Awake()
@@ -62,36 +61,31 @@ public class BossFight : MonoBehaviour
         if (bossActive) return;
         bossActive = true;
 
-        // Update HUD objective
         if (HUDController.Instance != null)
             HUDController.Instance.SetBossObjective(0, totalRounds);
+
+        SoundManager.Instance?.PlayBossMusic();
 
         StartCoroutine(RunBossFight());
     }
 
-    /// <summary>Fully stops and resets the boss fight to its initial state.</summary>
     public void StopBossFight()
     {
         StopAllCoroutines();
         bossActive = false;
         currentRound = 0;
 
-        // Reset all tiles to original positions and default colors
         ResetArena();
 
-        // Clear internal tile lists
         safeTiles.Clear();
         dangerTiles.Clear();
 
-        // Reset time-scale meter
         if (TimeScaleLogic.Instance != null)
             TimeScaleLogic.Instance.ResetMeter();
 
-        // Clear HUD boss objective back to default
         if (HUDController.Instance != null)
             HUDController.Instance.ClearBossObjective();
 
-        // Swap back to game music
         SoundManager.Instance?.PlayGameMusic();
     }
 
@@ -115,7 +109,6 @@ public class BossFight : MonoBehaviour
             yield return StartCoroutine(FlashSafeTiles());
             SoundManager.Instance?.PlayRoundClear();
 
-            // Update wave counter on HUD
             if (HUDController.Instance != null)
                 HUDController.Instance.SetBossObjective(currentRound + 1, totalRounds);
 
@@ -124,7 +117,6 @@ public class BossFight : MonoBehaviour
             yield return new WaitForSeconds(1f);
         }
 
-        // Boss defeated — stop the fight, reset meter, show win screen
         bossActive = false;
         if (TimeScaleLogic.Instance != null)
             TimeScaleLogic.Instance.ResetMeter();
@@ -132,7 +124,6 @@ public class BossFight : MonoBehaviour
         float completionTime = TrialElapsedTime;
         SoundManager.Instance?.PlayWin();
 
-        // Freeze game so the win screen is interactable
         Time.timeScale = 0f;
 
         WinScreenController winScreen = FindObjectOfType<WinScreenController>(true);
