@@ -123,6 +123,10 @@ public class FallDetection : MonoBehaviour
         if (bossBFight != null)
             bossBFight.StopBossFight();
 
+        BossCFight bossCFight = FindObjectOfType<BossCFight>();
+        if (bossCFight != null)
+            bossCFight.StopBossFight();
+
         playerMovement.ResetMovement();
         playerMovement.enabled = false;
 
