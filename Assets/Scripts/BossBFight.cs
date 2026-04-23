@@ -18,7 +18,7 @@ public class BossBFight : MonoBehaviour
     public float bossPointerSpeedIncrease = 0.4f;
 
     [Header("Tile Attack Settings")]
-    public int safeTilesPerAttack = 3;
+    public int safePairsCount = 2;
     public float glowDuration = 3f;
     public float blinkDuration = 2f;
     public float fallDelay = 0.3f;
@@ -38,6 +38,7 @@ public class BossBFight : MonoBehaviour
     private float survivalTimer = 0f;
 
     private Renderer tileRenderer;
+    private TimeScaleMeter _meter;
     private Dictionary<GameObject, Vector3> originalPositions = new Dictionary<GameObject, Vector3>();
     private List<GameObject> safeTiles = new List<GameObject>();
     private List<GameObject> dangerTiles = new List<GameObject>();
@@ -51,6 +52,11 @@ public class BossBFight : MonoBehaviour
                 originalPositions[tile] = tile.transform.position;
     }
 
+    void Start()
+    {
+        _meter = FindObjectOfType<TimeScaleMeter>();
+    }
+
     void Update()
     {
         if (!bossActive) return;
@@ -58,6 +64,9 @@ public class BossBFight : MonoBehaviour
         survivalTimer += Time.deltaTime;
         UpdateBossPointer();
         CheckBossPointerKill();
+
+        // TEMP DEBUG
+        Debug.Log("Boss pointer value: " + bossPointerValue + " | Meter: " + (_meter != null ? "FOUND" : "NULL"));
     }
 
     void UpdateBossPointer()
@@ -81,6 +90,9 @@ public class BossBFight : MonoBehaviour
             bossPointerValue += bossPointerDirection * bossPointerSpeed * Time.deltaTime;
             bossPointerValue = Mathf.Clamp(bossPointerValue, minV, maxV);
         }
+
+        if (_meter != null)
+            _meter.SetBossPointer(bossPointerValue, minV, maxV);
     }
 
     void CheckBossPointerKill()
@@ -140,12 +152,8 @@ public class BossBFight : MonoBehaviour
 
         while (survivalTimer < survivalTime)
         {
-            // Show countdown in existing HUD
             if (HUDController.Instance != null)
-            {
-                int secondsLeft = Mathf.CeilToInt(survivalTime - survivalTimer);
                 HUDController.Instance.SetBossObjective(0, 1);
-            }
 
             if (survivalTimer >= nextAttackTime)
             {
@@ -163,28 +171,58 @@ public class BossBFight : MonoBehaviour
     {
         attackCount++;
 
-        // Flip direction and speed up each attack
         bossPointerDirection *= -1;
         bossPointerSpeed += bossPointerSpeedIncrease;
 
         safeTiles.Clear();
         dangerTiles.Clear();
 
-        List<GameObject> shuffled = new List<GameObject>(allTiles);
-        Shuffle(shuffled);
+        List<GameObject> activeTiles = new List<GameObject>();
+        foreach (GameObject tile in allTiles)
+            if (tile != null && tile.activeSelf)
+                activeTiles.Add(tile);
 
-        for (int i = 0; i < shuffled.Count; i++)
+        Shuffle(activeTiles);
+
+        List<GameObject> chosenSafeTiles = new List<GameObject>();
+
+        for (int p = 0; p < safePairsCount; p++)
         {
-            if (shuffled[i] != null && shuffled[i].activeSelf)
+            if (activeTiles.Count == 0) break;
+
+            GameObject anchor = activeTiles[0];
+            activeTiles.RemoveAt(0);
+            chosenSafeTiles.Add(anchor);
+
+            GameObject neighbor = null;
+            float closestDist = float.MaxValue;
+
+            foreach (GameObject candidate in activeTiles)
             {
-                if (safeTiles.Count < safeTilesPerAttack)
-                    safeTiles.Add(shuffled[i]);
-                else
-                    dangerTiles.Add(shuffled[i]);
+                float dist = Vector3.Distance(anchor.transform.position, candidate.transform.position);
+                if (dist < closestDist)
+                {
+                    closestDist = dist;
+                    neighbor = candidate;
+                }
+            }
+
+            if (neighbor != null)
+            {
+                chosenSafeTiles.Add(neighbor);
+                activeTiles.Remove(neighbor);
             }
         }
 
-        // Glow safe tiles green
+        foreach (GameObject tile in allTiles)
+        {
+            if (tile == null || !tile.activeSelf) continue;
+            if (chosenSafeTiles.Contains(tile))
+                safeTiles.Add(tile);
+            else
+                dangerTiles.Add(tile);
+        }
+
         foreach (GameObject tile in safeTiles)
         {
             tileRenderer = tile.GetComponent<Renderer>();
@@ -194,10 +232,8 @@ public class BossBFight : MonoBehaviour
 
         yield return new WaitForSeconds(glowDuration);
 
-        // Blink danger tiles
         yield return StartCoroutine(BlinkTiles(dangerTiles));
 
-        // Drop danger tiles
         foreach (GameObject tile in dangerTiles)
         {
             StartCoroutine(DropTile(tile));
