@@ -76,7 +76,6 @@ public class PlayerMovement : MonoBehaviour
     {
         isMoving = true;
 
-        // Play move sound
         SoundManager.Instance?.PlayMove();
 
         float halfHeight = GetHalfHeight();
@@ -143,20 +142,16 @@ public class PlayerMovement : MonoBehaviour
         {
             case Orientation.Standing:
                 return alongX ? Orientation.FlatX : Orientation.FlatZ;
-
             case Orientation.FlatX:
                 return alongX ? Orientation.UpsideDown : Orientation.FlatX;
             case Orientation.FlatZ:
                 return alongX ? Orientation.FlatZ : Orientation.UpsideDown;
-
             case Orientation.UpsideDown:
                 return alongX ? Orientation.FlatX_R : Orientation.FlatZ_R;
-
             case Orientation.FlatX_R:
                 return alongX ? Orientation.Standing : Orientation.FlatX_R;
             case Orientation.FlatZ_R:
                 return alongX ? Orientation.FlatZ_R : Orientation.Standing;
-
             default: return Orientation.Standing;
         }
     }

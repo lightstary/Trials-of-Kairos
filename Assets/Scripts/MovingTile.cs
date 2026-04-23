@@ -15,9 +15,7 @@ public class MovingTile : MonoBehaviour
     [Tooltip("When true, the tile moves continuously instead of jumping on ticks.")]
     public bool smoothMovement = false;
 
-    /// <summary>How close (XZ) the player center must be to ride this tile.</summary>
     private const float RIDE_RADIUS = 0.7f;
-    /// <summary>Max vertical distance above tile top to count as riding.</summary>
     private const float RIDE_HEIGHT = 2.5f;
 
     private Vector3 startPosition;
@@ -37,15 +35,12 @@ public class MovingTile : MonoBehaviour
     {
         if (TimeState.Instance == null) return;
 
-        // Lazy player lookup — the player may not exist yet when this tile is
-        // created (HubLevelManager builds tiles before the player is spawned).
         if (_player == null)
         {
             GameObject p = GameObject.FindWithTag("Player");
             if (p != null) _player = p.transform;
         }
 
-        // Check if the player is on this tile BEFORE we move it.
         bool riding = _player != null && IsPlayerOnTile();
 
         Vector3 posBeforeMove = transform.position;
@@ -55,7 +50,6 @@ public class MovingTile : MonoBehaviour
         else
             UpdateTicked();
 
-        // Carry the player along with the tile.
         if (riding)
         {
             Vector3 delta = transform.position - posBeforeMove;
@@ -80,10 +74,8 @@ public class MovingTile : MonoBehaviour
                     ApplyPosition();
                 }
                 break;
-
             case TimeState.State.Frozen:
                 break;
-
             case TimeState.State.Reverse:
                 if (currentTime > minTime)
                 {
@@ -110,11 +102,9 @@ public class MovingTile : MonoBehaviour
                     ApplyPosition();
                 }
                 break;
-
             case TimeState.State.Frozen:
                 tickTimer = 0f;
                 break;
-
             case TimeState.State.Reverse:
                 if (currentTime <= minTime) return;
                 tickTimer += Time.deltaTime;
@@ -129,9 +119,10 @@ public class MovingTile : MonoBehaviour
         }
     }
 
-    /// <summary>Checks if the player is standing on this tile using XZ distance and height.</summary>
-    private bool IsPlayerOnTile()
+    public bool IsPlayerOnTile()
     {
+        if (_player == null) return false;
+
         Vector3 tilePos = transform.position;
         float tileTopY = tilePos.y + transform.lossyScale.y * 0.5f;
         Vector3 playerPos = _player.position;

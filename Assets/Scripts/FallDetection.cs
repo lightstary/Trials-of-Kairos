@@ -28,6 +28,7 @@ public class FallDetection : MonoBehaviour
     {
         if (playerMovement.isMoving) return;
         if (isFalling) return;
+        if (IsRidingMovingTile()) return;
 
         int supported = 0;
         Vector3[] points = GetFootprintPoints();
@@ -40,6 +41,15 @@ public class FallDetection : MonoBehaviour
 
         if (supported == 0)
             Respawn();
+    }
+
+    bool IsRidingMovingTile()
+    {
+        foreach (MovingTile tile in FindObjectsOfType<MovingTile>())
+        {
+            if (tile.IsPlayerOnTile()) return true;
+        }
+        return false;
     }
 
     Vector3[] GetFootprintPoints()
@@ -105,19 +115,15 @@ public class FallDetection : MonoBehaviour
     {
         isFalling = true;
 
-        // Stop boss fight if active
         BossFight bossFight = FindObjectOfType<BossFight>();
         if (bossFight != null)
             bossFight.StopBossFight();
 
-        // Disable movement while falling
         playerMovement.ResetMovement();
         playerMovement.enabled = false;
 
-        // Play fall sound if u want one
         SoundManager.Instance?.PlayFall();
 
-        // Fall into the abyss hehe
         float elapsed = 0f;
         float fallTime = 0.8f;
         Vector3 startPos = transform.position;
@@ -130,14 +136,12 @@ public class FallDetection : MonoBehaviour
             yield return null;
         }
 
-        // Respawn
         playerMovement.enabled = true;
         transform.position = spawnPosition;
         transform.rotation = spawnRotation;
         playerMovement.orientation = PlayerMovement.Orientation.Standing;
         playerMovement.ResetMovement();
 
-        // Play respawn sound
         SoundManager.Instance?.PlayRespawn();
 
         isFalling = false;
