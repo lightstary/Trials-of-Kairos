@@ -5497,7 +5497,7 @@ MonoBehaviour:
   tileAttackInterval: 6
   bossPointerStartSpeed: 0.5
   bossPointerSpeedIncrease: 0.4
-  safeTilesPerAttack: 3
+  safePairsCount: 2
   glowDuration: 3
   blinkDuration: 2
   fallDelay: 0.3
@@ -7769,7 +7769,7 @@ Transform:
   m_GameObject: {fileID: 403358927}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1, y: 1.1, z: 0}
+  m_LocalPosition: {x: 2, y: 1.1, z: 0}
   m_LocalScale: {x: 1, y: 2, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -32085,7 +32085,6 @@ MonoBehaviour:
   lookOffset: {x: 0, y: 1, z: 0}
   mouseSensitivity: 2
   stickSensitivity: 120
-  stickDeadZone: 0.15
   pitchMin: 5
   pitchMax: 60
   startYaw: 0
