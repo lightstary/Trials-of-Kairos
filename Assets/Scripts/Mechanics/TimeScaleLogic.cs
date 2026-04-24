@@ -51,7 +51,9 @@ public class TimeScaleLogic : MonoBehaviour
         if (TimeState.Instance == null) return;
 
         // Boss fights bypass the hub tutorial lock
-        bool bossActive = BossFight.Instance != null && BossFight.Instance.bossActive;
+        bool bossActive = (BossFight.Instance != null && BossFight.Instance.bossActive)
+                       || (BossBFight.Instance != null && BossBFight.Instance.bossActive)
+                       || (BossCFight.Instance != null && BossCFight.Instance.bossActive);
 
         // Don't accrue time until the intro modal has been dismissed (hub only)
         if (!bossActive && TimeScaleIntroModal.IsTimeLocked) return;
@@ -90,7 +92,9 @@ public class TimeScaleLogic : MonoBehaviour
     /// <summary>Evaluates boss-fight threat level and triggers fail at extremes.</summary>
     private void UpdateThreatState()
     {
-        bool bossActive = BossFight.Instance != null && BossFight.Instance.bossActive;
+        bool bossActive = (BossFight.Instance != null && BossFight.Instance.bossActive)
+                       || (BossBFight.Instance != null && BossBFight.Instance.bossActive)
+                       || (BossCFight.Instance != null && BossCFight.Instance.bossActive);
         if (!bossActive)
         {
             currentThreat = ThreatState.Safe;
@@ -125,6 +129,14 @@ public class TimeScaleLogic : MonoBehaviour
     /// <summary>Triggers the boss fight lose flow with proper UI.</summary>
     private void TriggerBossLose()
     {
+        // Stop all boss fights
+        if (BossFight.Instance != null && BossFight.Instance.bossActive)
+            BossFight.Instance.StopBossFight();
+        if (BossBFight.Instance != null && BossBFight.Instance.bossActive)
+            BossBFight.Instance.StopBossFight();
+        if (BossCFight.Instance != null && BossCFight.Instance.bossActive)
+            BossCFight.Instance.StopBossFight();
+
         BossFailUI failUI = FindObjectOfType<BossFailUI>(true);
         if (failUI == null)
         {

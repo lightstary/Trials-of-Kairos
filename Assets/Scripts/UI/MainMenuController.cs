@@ -95,6 +95,7 @@ public class MainMenuController : MonoBehaviour
     {
         Instance = this;
         Time.timeScale = 0f;
+
         if (hudPanel          != null) hudPanel.SetActive(false);
         if (trialSelectScreen != null) trialSelectScreen.SetActive(false);
         if (controlsScreen    != null) controlsScreen.SetActive(false);

@@ -19,8 +19,8 @@ public class MenuShimmerController : MonoBehaviour
     };
 
     // ── Timing ───────────────────────────────────────────────────────────────
-    private const float SWEEP_DURATION   = 10f;
-    private const float PAUSE_BETWEEN    = 7f;
+    private const float SWEEP_DURATION   = 8f;
+    private const float PAUSE_BETWEEN    = 4f;
     private const float BAND_WIDTH_RATIO = 1.2f;
     private const float MAX_ALPHA        = 0.025f;
     private const float SWEEP_ANGLE      = 25f;

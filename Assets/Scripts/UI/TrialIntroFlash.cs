@@ -18,6 +18,12 @@ public class TrialIntroFlash : MonoBehaviour
     private const float TITLE_SIZE   = 64f;
     private const float CHAR_SPACING = 16f;
 
+    /// <summary>Reference to the active flash instance for dismissal.</summary>
+    private static TrialIntroFlash _activeInstance;
+
+    private GameObject _overlayGO;
+    private bool _dismissed;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void RegisterSceneCallback()
     {
@@ -48,6 +54,7 @@ public class TrialIntroFlash : MonoBehaviour
         if (string.IsNullOrEmpty(trialName)) return;
         GameObject go = new GameObject("[TrialIntroFlash]");
         TrialIntroFlash flash = go.AddComponent<TrialIntroFlash>();
+        _activeInstance = flash;
         flash.StartCoroutine(flash.ShowFlash(trialName));
     }
 
@@ -76,25 +83,25 @@ public class TrialIntroFlash : MonoBehaviour
         if (canvas == null) canvas = FindObjectOfType<Canvas>();
         if (canvas == null)
         {
-            Destroy(gameObject);
+            CleanUp();
             yield break;
         }
 
         // Create overlay
-        GameObject overlayGO = new GameObject("TrialFlashOverlay");
-        overlayGO.transform.SetParent(canvas.transform, false);
-        RectTransform overlayRT = overlayGO.AddComponent<RectTransform>();
+        _overlayGO = new GameObject("TrialFlashOverlay");
+        _overlayGO.transform.SetParent(canvas.transform, false);
+        RectTransform overlayRT = _overlayGO.AddComponent<RectTransform>();
         overlayRT.anchorMin = Vector2.zero;
         overlayRT.anchorMax = Vector2.one;
         overlayRT.offsetMin = Vector2.zero;
         overlayRT.offsetMax = Vector2.zero;
-        Image overlayImg = overlayGO.AddComponent<Image>();
+        Image overlayImg = _overlayGO.AddComponent<Image>();
         overlayImg.color = new Color(0f, 0f, 0f, 0f);
         overlayImg.raycastTarget = false;
 
         // Create title text
         GameObject textGO = new GameObject("TrialFlashText");
-        textGO.transform.SetParent(overlayGO.transform, false);
+        textGO.transform.SetParent(_overlayGO.transform, false);
         RectTransform textRT = textGO.AddComponent<RectTransform>();
         textRT.anchorMin = new Vector2(0.1f, 0.35f);
         textRT.anchorMax = new Vector2(0.9f, 0.65f);
@@ -114,23 +121,33 @@ public class TrialIntroFlash : MonoBehaviour
         float elapsed = 0f;
         while (elapsed < FADE_IN_DUR)
         {
-            elapsed += Time.deltaTime;
+            if (_dismissed) { CleanUp(); yield break; }
+            elapsed += Time.unscaledDeltaTime;
             float t = Mathf.Clamp01(elapsed / FADE_IN_DUR);
-            float eased = t * t; // ease in
+            float eased = t * t;
             tmp.color = new Color(GOLD.r, GOLD.g, GOLD.b, eased);
             overlayImg.color = new Color(0f, 0f, 0f, eased * 0.35f);
             yield return null;
         }
+
+        if (_dismissed) { CleanUp(); yield break; }
         tmp.color = new Color(GOLD.r, GOLD.g, GOLD.b, 1f);
 
         // Hold
-        yield return new WaitForSeconds(HOLD_DUR);
+        float holdElapsed = 0f;
+        while (holdElapsed < HOLD_DUR)
+        {
+            if (_dismissed) { CleanUp(); yield break; }
+            holdElapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
 
         // Fade out
         elapsed = 0f;
         while (elapsed < FADE_OUT_DUR)
         {
-            elapsed += Time.deltaTime;
+            if (_dismissed) { CleanUp(); yield break; }
+            elapsed += Time.unscaledDeltaTime;
             float t = Mathf.Clamp01(elapsed / FADE_OUT_DUR);
             float alpha = 1f - t;
             tmp.color = new Color(GOLD.r, GOLD.g, GOLD.b, alpha);
@@ -138,7 +155,24 @@ public class TrialIntroFlash : MonoBehaviour
             yield return null;
         }
 
-        Destroy(overlayGO);
+        CleanUp();
+    }
+
+    /// <summary>Destroys overlay and this GameObject safely.</summary>
+    private void CleanUp()
+    {
+        if (_overlayGO != null)
+            Destroy(_overlayGO);
+        _overlayGO = null;
+        if (_activeInstance == this)
+            _activeInstance = null;
         Destroy(gameObject);
+    }
+
+    /// <summary>Immediately dismisses the flash overlay if active.</summary>
+    public static void Dismiss()
+    {
+        if (_activeInstance != null)
+            _activeInstance._dismissed = true;
     }
 }

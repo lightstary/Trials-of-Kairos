@@ -132,8 +132,11 @@ public class HUDController : MonoBehaviour
     }
 
     private static readonly Color OBJECTIVE_FLASH_GREEN = new Color(0.2f, 1f, 0.4f, 1f);
+    private const float CENTER_FLASH_HOLD = 4f;
+    private const float CENTER_FLASH_FADE_OUT = 0.5f;
     private TextMeshProUGUI _centerFlashLabel;
     private Coroutine _centerFlashRoutine;
+    private bool _centerFlashDismissed;
 
     /// <summary>Updates the boss fight objective with wave progress and flashes green.</summary>
     public void SetBossObjective(int wavesCompleted, int totalWaves)
@@ -176,6 +179,7 @@ public class HUDController : MonoBehaviour
     private void ShowCenterFlash(string text)
     {
         if (_centerFlashRoutine != null) StopCoroutine(_centerFlashRoutine);
+        _centerFlashDismissed = false;
 
         if (_centerFlashLabel == null)
         {
@@ -203,7 +207,7 @@ public class HUDController : MonoBehaviour
         _centerFlashRoutine = StartCoroutine(AnimateCenterFlash());
     }
 
-    /// <summary>Fades in large, then fades out and scales down slightly.</summary>
+    /// <summary>Fades in large, holds for 4 seconds, then fades out. Dismisses early if flagged.</summary>
     private IEnumerator AnimateCenterFlash()
     {
         _centerFlashLabel.color = OBJECTIVE_FLASH_GREEN;
@@ -212,7 +216,7 @@ public class HUDController : MonoBehaviour
         float elapsed = 0f;
         while (elapsed < 0.2f)
         {
-            elapsed += Time.deltaTime;
+            elapsed += Time.unscaledDeltaTime;
             float a = Mathf.Clamp01(elapsed / 0.2f);
             _centerFlashLabel.color = new Color(
                 OBJECTIVE_FLASH_GREEN.r, OBJECTIVE_FLASH_GREEN.g,
@@ -220,15 +224,20 @@ public class HUDController : MonoBehaviour
             yield return null;
         }
 
-        // Hold
-        yield return new WaitForSeconds(0.6f);
+        // Hold — break early if dismissed (e.g. win screen appeared)
+        elapsed = 0f;
+        while (elapsed < CENTER_FLASH_HOLD && !_centerFlashDismissed)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
 
         // Fade out
         elapsed = 0f;
-        while (elapsed < 0.5f)
+        while (elapsed < CENTER_FLASH_FADE_OUT)
         {
-            elapsed += Time.deltaTime;
-            float a = 1f - Mathf.Clamp01(elapsed / 0.5f);
+            elapsed += Time.unscaledDeltaTime;
+            float a = 1f - Mathf.Clamp01(elapsed / CENTER_FLASH_FADE_OUT);
             _centerFlashLabel.color = new Color(
                 OBJECTIVE_FLASH_GREEN.r, OBJECTIVE_FLASH_GREEN.g,
                 OBJECTIVE_FLASH_GREEN.b, a);
@@ -238,8 +247,36 @@ public class HUDController : MonoBehaviour
         _centerFlashLabel.gameObject.SetActive(false);
     }
 
+    /// <summary>Immediately begins fading out the center flash if one is active.</summary>
+    public void DismissCenterFlash()
+    {
+        _centerFlashDismissed = true;
+    }
+
     /// <summary>Marks the current objective as complete.</summary>
     public void CompleteObjective() => objectiveCompleted = true;
+
+    /// <summary>Sets objective for Boss C clock challenge with dynamic target time.</summary>
+    public void SetClockObjective(string targetTime, int currentTarget, int totalTargets)
+    {
+        objectiveCompleted = false;
+        if (objectiveText     != null) objectiveText.text     = "REACH THE TARGET TIME\nTARGET: " + targetTime;
+        if (trialProgressText != null) trialProgressText.text = $"TARGET  {currentTarget}/{totalTargets}";
+        if (objectivePanel    != null) objectivePanel.SetActive(true);
+        if (objectiveCanvasGroup != null) StartCoroutine(FadeObjectiveIn());
+    }
+
+    /// <summary>Flashes center screen with clock target reached feedback.</summary>
+    public void ShowClockTargetReached(string reachedTime, string nextTime)
+    {
+        if (trialProgressText != null)
+            StartCoroutine(FlashTextGreen(trialProgressText));
+
+        string flash = reachedTime + " REACHED";
+        if (!string.IsNullOrEmpty(nextTime))
+            flash += "\n<size=60%>NEW TIME IS " + nextTime + "</size>";
+        ShowCenterFlash(flash);
+    }
 
     /// <summary>Clears boss objective and resets HUD to default state.</summary>
     public void ClearBossObjective()

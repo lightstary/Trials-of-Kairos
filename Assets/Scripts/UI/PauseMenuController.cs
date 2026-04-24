@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.Rendering.PostProcessing;
 using TMPro;
 
 /// <summary>
@@ -39,12 +40,17 @@ public class PauseMenuController : MonoBehaviour
     [SerializeField] private string currentTrialInfo  = "TRIAL I";
 
     private const float SCALE_START       = 0.9f;
-    private const float OVERLAY_MAX_ALPHA = 0.6f;
+    private const float OVERLAY_MAX_ALPHA = 0.7f;
     private const float INPUT_COOLDOWN    = 0.25f;
 
     private bool  _isPaused;
     private bool  _subScreenOpen;
     private float _inputCooldown;
+    private bool  _builtByBuilder;
+    private CanvasGroup _stateTextCG;
+    private CanvasGroup _hudCG;
+    private CanvasGroup _clockBossHudCG;
+    private PostProcessVolume _blurVolume;
 
     /// <summary>True when game is paused.</summary>
     public bool IsPaused => _isPaused;
@@ -105,6 +111,15 @@ public class PauseMenuController : MonoBehaviour
 
     void Awake()
     {
+        // Destroy any pre-built pause panel immediately to prevent
+        // "missing script" warnings from stale scene-baked components.
+        // It will be rebuilt at runtime via HubPauseMenuBuilder on first pause.
+        if (pausePanel != null && !_builtByBuilder)
+        {
+            Destroy(pausePanel);
+            pausePanel = null;
+        }
+
         SetVisible(false);
     }
 
@@ -187,9 +202,14 @@ public class PauseMenuController : MonoBehaviour
     {
         if (_isPaused) return;
 
-        // Self-bootstrap: if pausePanel is null, build the UI now
-        if (pausePanel == null)
+        // Always build via HubPauseMenuBuilder for consistent visuals across all scenes
+        if (!_builtByBuilder)
+        {
+            if (pausePanel != null)
+                Destroy(pausePanel);
             HubPauseMenuBuilder.Build(this);
+            _builtByBuilder = true;
+        }
 
         // Ensure the controller's own CanvasGroup (if any) doesn't block child rendering
         CanvasGroup selfCG = GetComponent<CanvasGroup>();
@@ -205,6 +225,9 @@ public class PauseMenuController : MonoBehaviour
 
         SetVisible(true);
         HideSubPanels();
+        FadeStateText(false);
+        EnablePauseBlur(true);
+        TrialIntroFlash.Dismiss();
         StartCoroutine(AnimateIn());
         StartCoroutine(DelayedSelectFirstButton());
     }
@@ -215,6 +238,8 @@ public class PauseMenuController : MonoBehaviour
         if (!_isPaused) return;
         _isPaused = false;
         Time.timeScale = 1f;
+        FadeStateText(true);
+        EnablePauseBlur(false);
         StartCoroutine(AnimateOut());
     }
 
@@ -420,4 +445,105 @@ public class PauseMenuController : MonoBehaviour
 
     private static float EaseOut(float t) => 1f - Mathf.Pow(1f - t, 3f);
     private static float EaseIn(float t)  => t * t * t;
+
+    /// <summary>Fades all HUD UI elements in or out when pausing/resuming.</summary>
+    private void FadeStateText(bool show)
+    {
+        // Fade the standalone time-state label
+        if (_stateTextCG == null)
+        {
+            GameObject labelGO = GameObject.Find("TimeStateLabel_Text");
+            if (labelGO != null)
+            {
+                _stateTextCG = labelGO.GetComponent<CanvasGroup>();
+                if (_stateTextCG == null)
+                    _stateTextCG = labelGO.AddComponent<CanvasGroup>();
+            }
+        }
+
+        // Fade the entire HUD panel so all gameplay UI disappears behind the pause menu
+        if (_hudCG == null)
+        {
+            HUDController hud = FindObjectOfType<HUDController>(true);
+            if (hud != null)
+            {
+                _hudCG = hud.GetComponent<CanvasGroup>();
+                if (_hudCG == null)
+                    _hudCG = hud.gameObject.AddComponent<CanvasGroup>();
+            }
+        }
+
+        // Fade the ClockBossHUD clock face (parented directly under root canvas, not HUD)
+        if (_clockBossHudCG == null)
+        {
+            GameObject clockFace = GameObject.Find("ClockFaceHUD");
+            if (clockFace != null)
+            {
+                _clockBossHudCG = clockFace.GetComponent<CanvasGroup>();
+                if (_clockBossHudCG == null)
+                    _clockBossHudCG = clockFace.AddComponent<CanvasGroup>();
+            }
+        }
+
+        StartCoroutine(AnimateHUDFade(show));
+    }
+
+    /// <summary>Enables or disables a PostProcessing depth-of-field blur effect for the pause menu.</summary>
+    private void EnablePauseBlur(bool enable)
+    {
+        if (enable)
+        {
+            if (_blurVolume == null)
+            {
+                GameObject blurGO = new GameObject("[PauseBlurVolume]");
+                blurGO.layer = LayerMask.NameToLayer("PostProcessing");
+                _blurVolume = blurGO.AddComponent<PostProcessVolume>();
+                _blurVolume.isGlobal = true;
+                _blurVolume.priority = 100;
+                _blurVolume.profile = ScriptableObject.CreateInstance<PostProcessProfile>();
+
+                DepthOfField dof = _blurVolume.profile.AddSettings<DepthOfField>();
+                dof.enabled.value = true;
+                dof.focusDistance.Override(0.01f);
+                dof.aperture.Override(32f);
+                dof.focalLength.Override(300f);
+            }
+
+            _blurVolume.weight = 1f;
+            _blurVolume.gameObject.SetActive(true);
+        }
+        else
+        {
+            if (_blurVolume != null)
+            {
+                _blurVolume.weight = 0f;
+                _blurVolume.gameObject.SetActive(false);
+            }
+        }
+    }
+
+    /// <summary>Fades all HUD canvas groups in or out together.</summary>
+    private IEnumerator AnimateHUDFade(bool show)
+    {
+        float from = show ? 0f : 1f;
+        float to   = show ? 1f : 0f;
+        float elapsed = 0f;
+        float duration = animationDuration;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            float alpha = Mathf.Lerp(from, to, t);
+
+            if (_stateTextCG    != null) _stateTextCG.alpha    = alpha;
+            if (_hudCG          != null) _hudCG.alpha          = alpha;
+            if (_clockBossHudCG != null) _clockBossHudCG.alpha = alpha;
+            yield return null;
+        }
+
+        if (_stateTextCG    != null) _stateTextCG.alpha    = to;
+        if (_hudCG          != null) _hudCG.alpha          = to;
+        if (_clockBossHudCG != null) _clockBossHudCG.alpha = to;
+    }
 }

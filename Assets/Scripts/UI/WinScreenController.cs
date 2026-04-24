@@ -82,6 +82,10 @@ public class WinScreenController : MonoBehaviour
         EnsureListenersWired();
         if (winPanel != null) winPanel.SetActive(true);
 
+        // Dismiss any lingering center flash so it doesn't overlap the win screen
+        if (HUDController.Instance != null)
+            HUDController.Instance.DismissCenterFlash();
+
         if (titleLabel    != null) { titleLabel.text = TITLE_TEXT; titleLabel.alpha = 1f; }
         if (subtitleLabel != null) { subtitleLabel.text = ""; subtitleLabel.alpha = 0f; }
 
@@ -111,6 +115,10 @@ public class WinScreenController : MonoBehaviour
         _shown = true;
         EnsureListenersWired();
         if (winPanel != null) winPanel.SetActive(true);
+
+        // Dismiss any lingering center flash so it doesn't overlap the win screen
+        if (HUDController.Instance != null)
+            HUDController.Instance.DismissCenterFlash();
         if (titleLabel    != null) titleLabel.text    = TITLE_TEXT;
         if (subtitleLabel != null) subtitleLabel.text = "TRIAL COMPLETE";
 

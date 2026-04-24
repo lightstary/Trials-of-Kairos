@@ -17,6 +17,12 @@ public class BossIntroModal : MonoBehaviour
     /// <summary>True while the modal is displayed. Blocks pause menu.</summary>
     public static bool IsOpen { get; private set; }
 
+    /// <summary>Fired on every page change and on dismiss. Args: (currentPage, totalPages). Page -1 means dismissed.</summary>
+    public static event Action<int, int> OnPageChanged;
+
+    /// <summary>Current page index (0-based). -1 when closed.</summary>
+    public static int CurrentPage => _instance != null && IsOpen ? _instance._currentPage : -1;
+
     // ── Visual constants ───────────────────────────────────────────────
     private static readonly Color PANEL_BG      = new Color(0.04f, 0.06f, 0.12f, 0.95f);
     private static readonly Color OVERLAY_BG    = new Color(0f, 0f, 0f, 0.55f);
@@ -114,6 +120,8 @@ public class BossIntroModal : MonoBehaviour
         Time.timeScale = 1f;
         InputPromptManager.OnInputModeChanged -= OnInputModeChanged;
 
+        OnPageChanged?.Invoke(-1, 0);
+
         if (_modalGO != null) Destroy(_modalGO);
         _modalGO = null;
 
@@ -160,6 +168,8 @@ public class BossIntroModal : MonoBehaviour
             _btnLabelTMP.text = _currentPage < _pages.Length - 1 ? "CONTINUE" : "BEGIN";
 
         if (_backBtn != null) _backBtn.gameObject.SetActive(_currentPage > 0);
+
+        OnPageChanged?.Invoke(_currentPage, _pages.Length);
     }
 
     // ── Input mode updates ─────────────────────────────────────────────

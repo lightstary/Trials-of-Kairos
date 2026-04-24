@@ -871,7 +871,7 @@ public class TrialSelectController : MonoBehaviour
                 if (completed)
                 {
                     float best = BestTimeTracker.Get(key);
-                    sub.text = $"\u2713  BEST  —  {BestTimeTracker.Format(best)}";
+                    sub.text = $"*  BEST  -  {BestTimeTracker.Format(best)}";
                     sub.color = new Color(0.2f, 1f, 0.45f, 0.85f); // green for completed
                 }
                 else

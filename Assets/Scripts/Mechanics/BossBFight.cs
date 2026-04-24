@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -16,6 +17,7 @@ public class BossBFight : MonoBehaviour
     [Header("Boss Pointer Settings")]
     public float bossPointerStartSpeed = 0.5f;
     public float bossPointerSpeedIncrease = 0.4f;
+    public float sameDirectionMultiplier = 1.6f;
 
     [Header("Tile Attack Settings")]
     public int safePairsCount = 2;
@@ -33,15 +35,35 @@ public class BossBFight : MonoBehaviour
     private float bossPointerSpeed = 0f;
     private int bossPointerDirection = 1;
     private int attackCount = 0;
+    private bool _isContesting = false;
 
     public bool bossActive = false;
     private float survivalTimer = 0f;
+
+    /// <summary>True when the player is successfully opposing the boss pointer.</summary>
+    public bool IsContesting => _isContesting;
+
+    /// <summary>Current boss pointer direction (+1 or -1).</summary>
+    public int BossDirection => bossPointerDirection;
+
+    /// <summary>Event fired when contesting state changes. True = player is blocking the boss.</summary>
+    public event System.Action<bool> OnContestingChanged;
 
     private Renderer tileRenderer;
     private TimeScaleMeter _meter;
     private Dictionary<GameObject, Vector3> originalPositions = new Dictionary<GameObject, Vector3>();
     private List<GameObject> safeTiles = new List<GameObject>();
     private List<GameObject> dangerTiles = new List<GameObject>();
+
+    // Tutorial glow
+    private static GameObject _bossPointerGlow;
+    internal static bool _showPointerGlow = false;
+
+    /// <summary>Returns the current list of safe tiles for external queries.</summary>
+    public List<GameObject> GetSafeTiles() => safeTiles;
+
+    /// <summary>Shows or hides the tutorial glow ring around the boss pointer.</summary>
+    public static void SetPointerGlowVisible(bool visible) => _showPointerGlow = visible;
 
     void Awake()
     {
@@ -64,9 +86,6 @@ public class BossBFight : MonoBehaviour
         survivalTimer += Time.deltaTime;
         UpdateBossPointer();
         CheckBossPointerKill();
-
-        // TEMP DEBUG
-        Debug.Log("Boss pointer value: " + bossPointerValue + " | Meter: " + (_meter != null ? "FOUND" : "NULL"));
     }
 
     void UpdateBossPointer()
@@ -85,14 +104,29 @@ public class BossBFight : MonoBehaviour
         bool contesting = (playerReverse && bossGoingForward) ||
                           (playerForward && bossGoingReverse);
 
-        if (!contesting)
+        bool sameDirection = (playerForward && bossGoingForward) ||
+                             (playerReverse && bossGoingReverse);
+
+        // Fire event on contesting state change
+        if (contesting != _isContesting)
         {
-            bossPointerValue += bossPointerDirection * bossPointerSpeed * Time.deltaTime;
+            _isContesting = contesting;
+            OnContestingChanged?.Invoke(_isContesting);
+        }
+
+        if (contesting)
+        {
+            // Player fully neutralizes the boss — no movement
+        }
+        else
+        {
+            float speedMod = sameDirection ? sameDirectionMultiplier : 1f;
+            bossPointerValue += bossPointerDirection * bossPointerSpeed * speedMod * Time.deltaTime;
             bossPointerValue = Mathf.Clamp(bossPointerValue, minV, maxV);
         }
 
         if (_meter != null)
-            _meter.SetBossPointer(bossPointerValue, minV, maxV);
+            _meter.SetBossPointer(bossPointerValue, minV, maxV, _isContesting);
     }
 
     void CheckBossPointerKill()
@@ -275,9 +309,33 @@ public class BossBFight : MonoBehaviour
     {
         if (tile == null) yield break;
 
+        // Shake before falling to warn the player
+        float shakeTime = 0.9f;
+        float shakeElapsed = 0f;
+        Vector3 originalPos = tile.transform.position;
+        float shakeIntensity = 0.05f;
+        float shakeFrequency = 9f;
+
+        while (shakeElapsed < shakeTime)
+        {
+            shakeElapsed += Time.deltaTime;
+            float t = shakeElapsed / shakeTime;
+            float ramp = t * t;
+            float currentIntensity = shakeIntensity * (0.3f + ramp * 0.7f);
+            float wave = Mathf.Sin(shakeElapsed * shakeFrequency);
+            Vector3 offset = new Vector3(
+                wave * currentIntensity,
+                Mathf.Sin(shakeElapsed * shakeFrequency * 0.7f) * currentIntensity * 0.4f,
+                Mathf.Cos(shakeElapsed * shakeFrequency * 0.9f) * currentIntensity
+            );
+            tile.transform.position = originalPos + offset;
+            yield return null;
+        }
+        tile.transform.position = originalPos;
+
         float elapsed = 0f;
         float dropTime = 0.5f;
-        Vector3 startPos = tile.transform.position;
+        Vector3 startPos = originalPos;
         Vector3 endPos = startPos + Vector3.down * 10f;
 
         while (elapsed < dropTime)
@@ -329,7 +387,7 @@ public class BossBFight : MonoBehaviour
         if (winScreen != null)
         {
             winScreen.gameObject.SetActive(true);
-            winScreen.Show("THE CITADEL II", 0f, 1, false, true, true, true);
+            winScreen.Show("THE GARDEN", 0f, 1, false, true, true, true);
         }
     }
 

@@ -22,12 +22,14 @@ public class MainMenuAtmosphere : MonoBehaviour
     [SerializeField] private Color squareCCWColor = new Color(1f, 0.843f, 0f, 0.035f);
 
     [Header("Grain / Dust")]
-    [SerializeField] private int   grainCount    = 50;
+    [SerializeField] private int   grainCount    = 80;
     [SerializeField] private float grainMinSize  = 1f;
-    [SerializeField] private float grainMaxSize  = 4f;
-    [SerializeField] private float grainMinSpeed = 8f;
-    [SerializeField] private float grainMaxSpeed = 22f;
+    [SerializeField] private float grainMaxSize  = 5f;
+    [SerializeField] private float grainMinSpeed = 10f;
+    [SerializeField] private float grainMaxSpeed = 30f;
     [SerializeField] private Color grainColor    = new Color(0.95f, 0.82f, 0.35f, 0.45f);
+
+    private const int CIRCLE_TEX_SIZE = 32;
 
     // ── State ─────────────────────────────────────────────────────────────────
     private RectTransform   _cwSquare;
@@ -39,6 +41,7 @@ public class MainMenuAtmosphere : MonoBehaviour
     private float[]         _grainPhase;
     private float           _w = 1920f;
     private float           _h = 1080f;
+    private static Sprite   _circleSprite;
     #pragma warning disable CS0414 // Set by public API, reserved for future use
     private bool            _subtitleBreathingEnabled = true;
     #pragma warning restore CS0414
@@ -99,6 +102,9 @@ public class MainMenuAtmosphere : MonoBehaviour
 
     private void MakeGrains()
     {
+        if (_circleSprite == null)
+            _circleSprite = CreateCircleSprite(CIRCLE_TEX_SIZE);
+
         _grains          = new RectTransform[grainCount];
         _grainImgs       = new Image[grainCount];
         _grainBaseAlpha  = new float[grainCount];
@@ -112,6 +118,8 @@ public class MainMenuAtmosphere : MonoBehaviour
             go.transform.SetParent(transform, false);
 
             var img = go.AddComponent<Image>();
+            img.sprite = _circleSprite;
+            img.type = Image.Type.Simple;
             float baseAlpha = Random.Range(grainColor.a * 0.3f, grainColor.a);
             img.color = new Color(grainColor.r, grainColor.g, grainColor.b, baseAlpha);
             img.raycastTarget = false;
@@ -132,6 +140,30 @@ public class MainMenuAtmosphere : MonoBehaviour
             _grains[i]     = rt;
             _grainImgs[i]  = img;
         }
+    }
+
+    /// <summary>Generates a soft radial gradient circle sprite for grain particles.</summary>
+    private static Sprite CreateCircleSprite(int size)
+    {
+        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        tex.wrapMode = TextureWrapMode.Clamp;
+        tex.filterMode = FilterMode.Bilinear;
+        float center = size * 0.5f;
+        float maxR = center;
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float dx = x - center;
+                float dy = y - center;
+                float dist = Mathf.Sqrt(dx * dx + dy * dy) / maxR;
+                float alpha = Mathf.Clamp01(1f - dist);
+                alpha = alpha * alpha; // quadratic falloff for soft edges
+                tex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+            }
+        }
+        tex.Apply();
+        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
     }
 
     private void DriftGrains(float dt)

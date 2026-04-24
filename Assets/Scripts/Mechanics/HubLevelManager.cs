@@ -108,7 +108,7 @@ public class HubLevelManager : MonoBehaviour
                     if (x == 0 && z == 12) AddTutorialTrigger(child.gameObject, TutorialTilePopup.TileType.Forward);
 
                     // Goal tile
-                    if (x == 0 && z == 36 && child.GetComponent<GoalTile>() == null)
+                    if (x == 0 && z == 35 && child.GetComponent<GoalTile>() == null)
                     {
                         child.gameObject.name = "GoalTile";
                         child.gameObject.AddComponent<GoalTile>();
@@ -399,13 +399,13 @@ public class HubLevelManager : MonoBehaviour
             for (int x = -1; x <= 1; x++)
                 tiles[(x, z)] = basePlatformMat;
 
-        // ── Path to goal (z=33..35) ──
-        for (int z = 33; z <= 35; z++)
+        // ── Path to goal (z=33..34) ──
+        for (int z = 33; z <= 34; z++)
             for (int x = -1; x <= 1; x++)
                 tiles[(x, z)] = basePlatformMat;
 
         // ── Goal tile ──
-        tiles[(0, 36)] = goalTileMat;
+        tiles[(0, 35)] = goalTileMat;
 
         // ── Create all tiles (exactly one per position) ──
         foreach (var kvp in tiles)

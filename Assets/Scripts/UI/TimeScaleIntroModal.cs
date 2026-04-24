@@ -25,7 +25,7 @@ public class TimeScaleIntroModal : MonoBehaviour
     private const int GLOW_TEX_SIZE = 64;
 
     // Page indices for zone highlighting
-    private const int PAGE_DANGER_ZONES = 2;
+    private const int PAGE_DANGER_ZONES = 3;
 
     private static readonly Color PANEL_BG       = new Color(0.04f, 0.06f, 0.12f, 0.95f);
     private static readonly Color ACCENT_GOLD    = new Color(0.961f, 0.784f, 0.259f, 1f);
@@ -36,6 +36,9 @@ public class TimeScaleIntroModal : MonoBehaviour
 
     private static readonly string[] PAGES = new string[]
     {
+        // Index 0 is a placeholder — replaced dynamically by GetPageText()
+        "",
+
         "<color=#F5C842><size=32>TIME SCALE</size></color>\n\n" +
         "You control a <b>global time value</b>.\n\n" +
         "It starts at <b>zero</b> when each level begins.\n\n" +
@@ -604,7 +607,7 @@ public class TimeScaleIntroModal : MonoBehaviour
     {
         if (_bodyTMP == null || _pageIndicator == null) return;
 
-        _bodyTMP.text = PAGES[_currentPage];
+        _bodyTMP.text = GetPageText(_currentPage);
         _pageIndicator.text = $"{_currentPage + 1} / {PAGES.Length}";
 
         if (_btnLabelTMP != null)
@@ -680,7 +683,7 @@ public class TimeScaleIntroModal : MonoBehaviour
 
     // ── Helpers ──────────────────────────────────────────────────────────
 
-    /// <summary>Updates button icons when input mode changes.</summary>
+    /// <summary>Updates button icons and page text when input mode changes.</summary>
     private void OnInputModeChanged(InputPromptManager.InputMode newMode)
     {
         if (!_isOpen) return;
@@ -690,6 +693,36 @@ public class TimeScaleIntroModal : MonoBehaviour
 
         if (_continueBtnIcon != null)
             _continueBtnIcon.sprite = ControllerIcons.ConfirmIcon;
+
+        // Refresh current page text in case it has dynamic content
+        if (_bodyTMP != null)
+            _bodyTMP.text = GetPageText(_currentPage);
+    }
+
+    /// <summary>
+    /// Returns the display text for the given page index.
+    /// Page 0 (camera movement) is dynamic based on current input mode.
+    /// </summary>
+    private string GetPageText(int pageIndex)
+    {
+        if (pageIndex == 0)
+            return BuildCameraMovementPage();
+        return PAGES[pageIndex];
+    }
+
+    /// <summary>Builds the camera movement page with input-mode-aware control labels.</summary>
+    private string BuildCameraMovementPage()
+    {
+        bool kbm = InputPromptManager.IsKeyboardMouse;
+        string moveLabel = kbm ? "WASD" : "Left Stick";
+        string lookLabel = kbm ? "Mouse" : "Right Stick";
+
+        return "<color=#F5C842><size=32>CAMERA MOVEMENT</size></color>\n\n" +
+            "Your movement follows the <b>camera</b>.\n\n" +
+            "Push forward to move in the direction\nthe camera is facing.\n" +
+            "If you rotate the camera, your forward\ndirection changes with it.\n\n" +
+            $"<color=#F5C842>{moveLabel}</color>  \u2014  Move\n" +
+            $"<color=#5AB4F0>{lookLabel}</color>  \u2014  Rotate Camera";
     }
 
     private static GameObject MakeRect(string name, Transform parent, Vector2 anchorMin, Vector2 anchorMax)

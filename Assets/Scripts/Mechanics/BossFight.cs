@@ -29,6 +29,9 @@ public class BossFight : MonoBehaviour
 
     private List<GameObject> safeTiles = new List<GameObject>();
     private List<GameObject> dangerTiles = new List<GameObject>();
+
+    /// <summary>Returns the current list of safe tiles for external queries.</summary>
+    public List<GameObject> GetSafeTiles() => safeTiles;
     private int currentRound = 0;
     public bool bossActive = false;
     private Dictionary<GameObject, Vector3> originalPositions = new Dictionary<GameObject, Vector3>();
@@ -301,9 +304,35 @@ public class BossFight : MonoBehaviour
     {
         if (tile == null) yield break;
 
+        // Shake before falling to warn the player
+        float shakeTime = 0.9f;
+        float shakeElapsed = 0f;
+        Vector3 originalPos = tile.transform.position;
+        float shakeIntensity = 0.05f;
+        float shakeFrequency = 9f;
+
+        while (shakeElapsed < shakeTime)
+        {
+            shakeElapsed += Time.deltaTime;
+            float t = shakeElapsed / shakeTime;
+            // Intensity ramps up over time — starts subtle, gets urgent
+            float ramp = t * t;
+            float currentIntensity = shakeIntensity * (0.3f + ramp * 0.7f);
+            float wave = Mathf.Sin(shakeElapsed * shakeFrequency);
+            Vector3 offset = new Vector3(
+                wave * currentIntensity,
+                Mathf.Sin(shakeElapsed * shakeFrequency * 0.7f) * currentIntensity * 0.4f,
+                Mathf.Cos(shakeElapsed * shakeFrequency * 0.9f) * currentIntensity
+            );
+            tile.transform.position = originalPos + offset;
+            yield return null;
+        }
+        tile.transform.position = originalPos;
+
+        // Drop
         float elapsed = 0f;
         float dropTime = 0.5f;
-        Vector3 startPos = tile.transform.position;
+        Vector3 startPos = originalPos;
         Vector3 endPos = startPos + Vector3.down * 10f;
 
         while (elapsed < dropTime)

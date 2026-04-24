@@ -37,16 +37,24 @@ public class TimeScaleMeter : MonoBehaviour
     // Boss pointer
     private Image         _bossMarker;
     private RectTransform _bossMarkerRT;
+    private Image         _bossGlowRing;
+    private RectTransform _bossGlowRingRT;
     private float         _bossPointerValue = 0f;
     private float         _bossMinV = -10f;
     private float         _bossMaxV = 10f;
+    private bool          _bossContesting = false;
 
-    /// <summary>Called by BossBFight every frame to update boss pointer position.</summary>
-    public void SetBossPointer(float value, float min, float max)
+    // Contesting feedback
+    private static readonly Color CONTEST_COL = new Color(0.2f, 1f, 0.5f, 0.6f);
+    private Image _contestFlash;
+
+    /// <summary>Called by BossBFight every frame to update boss pointer position and contesting state.</summary>
+    public void SetBossPointer(float value, float min, float max, bool contesting = false)
     {
         _bossPointerValue = value;
         _bossMinV = min;
         _bossMaxV = max;
+        _bossContesting = contesting;
     }
 
     void Update()
@@ -121,9 +129,11 @@ public class TimeScaleMeter : MonoBehaviour
 
         bool bossActive = BossFight.Instance != null && BossFight.Instance.bossActive;
         bool bossBActive = BossBFight.Instance != null && BossBFight.Instance.bossActive;
-        bool showZones = bossActive || bossBActive || AlwaysShowZones;
+        bool bossCActive = BossCFight.Instance != null && BossCFight.Instance.bossActive;
+        bool anyBossActive = bossActive || bossBActive || bossCActive;
+        bool showZones = anyBossActive || AlwaysShowZones;
 
-        if (bossActive)
+        if (anyBossActive)
         {
             float absDisplay = Mathf.Abs(_display);
             if (absDisplay >= dng)
@@ -138,12 +148,12 @@ public class TimeScaleMeter : MonoBehaviour
             }
         }
 
-        bool inWarning = bossActive && threat >= TimeScaleLogic.ThreatState.Warning;
+        bool inWarning = anyBossActive && threat >= TimeScaleLogic.ThreatState.Warning;
         float wp = inWarning ? Mathf.Sin(Time.time * 3f) * 0.15f + 0.25f : 0.08f;
         if (_warnR != null) { _warnR.enabled = showZones; Color c = WARN_COL; c.a = wp * (raw >= wrn ? 1f : 0.3f); _warnR.color = c; }
         if (_warnL != null) { _warnL.enabled = showZones; Color c = WARN_COL; c.a = wp * (raw <= -wrn ? 1f : 0.3f); _warnL.color = c; }
 
-        bool inDanger = bossActive && threat >= TimeScaleLogic.ThreatState.Danger;
+        bool inDanger = anyBossActive && threat >= TimeScaleLogic.ThreatState.Danger;
         float dp = inDanger ? Mathf.Sin(Time.time * 6f) * 0.3f + 0.7f : 0.15f;
         if (_dangerR != null) { _dangerR.enabled = showZones; Color c = DANGER_COL; c.a = dp * (raw >= dng ? 1f : 0.3f); _dangerR.color = c; }
         if (_dangerL != null) { _dangerL.enabled = showZones; Color c = DANGER_COL; c.a = dp * (raw <= -dng ? 1f : 0.3f); _dangerL.color = c; }
@@ -175,11 +185,53 @@ public class TimeScaleMeter : MonoBehaviour
                 _bossMarkerRT.anchorMax = new Vector2(bossNorm + 0.004f,  1.5f);
                 _bossMarkerRT.offsetMin = _bossMarkerRT.offsetMax = Vector2.zero;
 
-                // Pulse the boss marker
-                float g = (Mathf.Sin(Time.time * GLOW_SPEED * 1.5f) + 1f) * 0.5f;
-                Color bc = BOSS_COL;
+                // Pulse the boss marker — more intense when boss is winning
+                float pulseSpeed = _bossContesting ? GLOW_SPEED : GLOW_SPEED * 2f;
+                float g = (Mathf.Sin(Time.time * pulseSpeed) + 1f) * 0.5f;
+                Color bc = _bossContesting
+                    ? Color.Lerp(BOSS_COL, CONTEST_COL, 0.5f)
+                    : BOSS_COL;
                 bc.a = Mathf.Lerp(0.7f, 1f, g);
                 _bossMarker.color = bc;
+            }
+        }
+
+        // ── Boss pointer glow ring (tutorial only) ───────────────────────
+        if (_bossGlowRingRT != null && _bossGlowRing != null)
+        {
+            bool showGlow = BossBFight._showPointerGlow;
+            _bossGlowRing.enabled = showGlow;
+
+            if (showGlow && _bossMarkerRT != null)
+            {
+                // Position the glow ring centered on the boss marker
+                float bossRange2 = _bossMaxV - _bossMinV;
+                float bossNorm2 = bossRange2 > 0f
+                    ? Mathf.Clamp01((_bossPointerValue - _bossMinV) / bossRange2)
+                    : 0.5f;
+
+                _bossGlowRingRT.anchorMin = new Vector2(bossNorm2 - 0.03f, -1.2f);
+                _bossGlowRingRT.anchorMax = new Vector2(bossNorm2 + 0.03f,  2.2f);
+                _bossGlowRingRT.offsetMin = _bossGlowRingRT.offsetMax = Vector2.zero;
+
+                float gp = (Mathf.Sin(Time.unscaledTime * 4f) + 1f) * 0.5f;
+                Color gc = BOSS_COL;
+                gc.a = Mathf.Lerp(0.3f, 0.7f, gp);
+                _bossGlowRing.color = gc;
+            }
+        }
+
+        // ── Contesting flash overlay on bar ──────────────────────────────
+        if (_contestFlash != null)
+        {
+            bool showContest = bossBActive && _bossContesting;
+            _contestFlash.enabled = showContest;
+            if (showContest)
+            {
+                float cf = (Mathf.Sin(Time.time * 4f) + 1f) * 0.5f;
+                Color cc = CONTEST_COL;
+                cc.a = Mathf.Lerp(0.02f, 0.08f, cf);
+                _contestFlash.color = cc;
             }
         }
     }
@@ -254,6 +306,17 @@ public class TimeScaleMeter : MonoBehaviour
         _bossMarker = I(MkR("BM", barGO.transform, V(zA - 0.004f, -0.5f), V(zA + 0.004f, 1.5f)), BOSS_COL);
         _bossMarkerRT = _bossMarker.GetComponent<RectTransform>();
         _bossMarker.enabled = false;
+
+        // ── Boss pointer glow ring (tutorial highlight, hidden by default) ──
+        _bossGlowRing = I(MkR("BossGlow", barGO.transform, V(zA - 0.03f, -1.2f), V(zA + 0.03f, 2.2f)),
+            new Color(BOSS_COL.r, BOSS_COL.g, BOSS_COL.b, 0f));
+        _bossGlowRingRT = _bossGlowRing.GetComponent<RectTransform>();
+        _bossGlowRing.enabled = false;
+
+        // ── Contesting flash overlay (subtle green wash when player blocks boss) ──
+        _contestFlash = I(MkR("ContestFlash", barGO.transform, V(0, 0), V(1, 1)),
+            new Color(CONTEST_COL.r, CONTEST_COL.g, CONTEST_COL.b, 0f));
+        _contestFlash.enabled = false;
 
         string minS = Mathf.RoundToInt(minV).ToString();
         string maxS = (maxV > 0 ? "+" : "") + Mathf.RoundToInt(maxV).ToString();

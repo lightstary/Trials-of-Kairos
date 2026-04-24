@@ -8,15 +8,16 @@ using UnityEngine.UI;
 /// </summary>
 public class MenuParticlesController : MonoBehaviour
 {
-    private const int   MOTE_COUNT    = 100;
-    private const float MIN_LIFE      = 5f;
-    private const float MAX_LIFE      = 14f;
+    private const int   MOTE_COUNT    = 180;
+    private const float MIN_LIFE      = 4f;
+    private const float MAX_LIFE      = 12f;
     private const float MIN_SIZE      = 1.5f;
-    private const float MAX_SIZE      = 8f;
-    private const float DRIFT_X_MIN   = -18f;
-    private const float DRIFT_X_MAX   = 42f;
-    private const float DRIFT_Y_MIN   = 16f;
-    private const float DRIFT_Y_MAX   = 65f;
+    private const float MAX_SIZE      = 10f;
+    private const float DRIFT_X_MIN   = -25f;
+    private const float DRIFT_X_MAX   = 50f;
+    private const float DRIFT_Y_MIN   = 18f;
+    private const float DRIFT_Y_MAX   = 75f;
+    private const int   CIRCLE_TEX_SIZE = 32;
 
     /// <summary>Color palette matching the shimmer time-state colors.</summary>
     private static readonly Color[] MOTE_PALETTE = new Color[]
@@ -45,11 +46,15 @@ public class MenuParticlesController : MonoBehaviour
 
     private Mote[]        _motes;
     private RectTransform _canvasRect;
+    private static Sprite _circleSprite;
 
     void Start()
     {
         Canvas canvas = GetComponentInParent<Canvas>();
         _canvasRect   = canvas != null ? canvas.GetComponent<RectTransform>() : GetComponent<RectTransform>();
+
+        if (_circleSprite == null)
+            _circleSprite = CreateCircleSprite(CIRCLE_TEX_SIZE);
 
         float halfW = _canvasRect.rect.width  * 0.5f;
         float halfH = _canvasRect.rect.height * 0.5f;
@@ -119,6 +124,8 @@ public class MenuParticlesController : MonoBehaviour
         rect.pivot     = new Vector2(0.5f, 0.5f);
 
         var img = go.GetComponent<Image>();
+        img.sprite = _circleSprite;
+        img.type = Image.Type.Simple;
         img.raycastTarget = false;
 
         var mote = new Mote { rect = rect, image = img };
@@ -167,5 +174,29 @@ public class MenuParticlesController : MonoBehaviour
                 c.a = 0f;
                 _motes[i].image.color = c;
             }
+    }
+
+    /// <summary>Generates a soft radial gradient circle sprite for mote particles.</summary>
+    private static Sprite CreateCircleSprite(int size)
+    {
+        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        tex.wrapMode = TextureWrapMode.Clamp;
+        tex.filterMode = FilterMode.Bilinear;
+        float center = size * 0.5f;
+        float maxR = center;
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float dx = x - center;
+                float dy = y - center;
+                float dist = Mathf.Sqrt(dx * dx + dy * dy) / maxR;
+                float alpha = Mathf.Clamp01(1f - dist);
+                alpha = alpha * alpha; // quadratic falloff for soft edges
+                tex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+            }
+        }
+        tex.Apply();
+        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
     }
 }

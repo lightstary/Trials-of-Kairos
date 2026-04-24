@@ -81,7 +81,7 @@ public class CheckpointPopup : MonoBehaviour
         GameObject subGO = new GameObject("SubText");
         subGO.transform.SetParent(container.transform, false);
         _subText = subGO.AddComponent<TextMeshProUGUI>();
-        _subText.text = "\u25C6";
+        _subText.text = "-";
         _subText.fontSize = 14f;
         _subText.alignment = TextAlignmentOptions.Center;
         _subText.color = SUB_COLOR;

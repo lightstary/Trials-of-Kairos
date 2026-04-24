@@ -12,12 +12,15 @@ using TMPro;
 public static class HubPauseMenuBuilder
 {
     private static readonly Color BG_COLOR     = new Color(0.059f, 0.102f, 0.188f, 0.97f);
-    private static readonly Color OVERLAY_COL  = new Color(0f, 0f, 0f, 0.6f);
+    private static readonly Color OVERLAY_COL  = new Color(0f, 0f, 0.02f, 0.65f);
+
+    private static readonly string BLUR_MAT_PATH = "Materials/UIBlur";
     private static readonly Color BTN_IMG_COL  = new Color(0.08f, 0.12f, 0.22f, 1f);
-    private static readonly Color BTN_HIGHLIGHT = new Color(0.961f, 0.784f, 0.259f, 1f);
-    private static readonly Color BTN_SELECTED = new Color(0.961f, 0.784f, 0.259f, 1f);
-    private static readonly Color BTN_PRESSED  = new Color(0.7f, 0.5f, 0.1f, 1f);
+    private static readonly Color BTN_HIGHLIGHT = new Color(0.22f, 0.20f, 0.35f, 1f);
+    private static readonly Color BTN_SELECTED = new Color(0.22f, 0.20f, 0.35f, 1f);
+    private static readonly Color BTN_PRESSED  = new Color(0.15f, 0.14f, 0.28f, 1f);
     private static readonly Color LABEL_WHITE  = new Color(0.91f, 0.918f, 0.965f, 1f);
+    private static readonly Color BORDER_GOLD  = new Color(0.961f, 0.784f, 0.259f, 0.35f);
 
     /// <summary>Builds the full PauseMenu UI under the PauseMenuController's transform.</summary>
     public static void Build(PauseMenuController pmc)
@@ -25,17 +28,26 @@ public static class HubPauseMenuBuilder
         Transform root = pmc.transform;
         BindingFlags bf = BindingFlags.NonPublic | BindingFlags.Instance;
 
-        // ── Blur overlay (full screen dark background) ──
+        // ── Blur overlay (full screen with blur shader) ──
         GameObject overlayGO = MakeRect("BlurOverlay", root, Vector2.zero, Vector2.one);
         Image overlayImg = overlayGO.AddComponent<Image>();
-        overlayImg.color = OVERLAY_COL;
+        Material blurMat = Resources.Load<Material>(BLUR_MAT_PATH);
+        if (blurMat != null)
+        {
+            overlayImg.material = blurMat;
+            overlayImg.color = Color.white;
+        }
+        else
+        {
+            overlayImg.color = OVERLAY_COL;
+        }
         overlayImg.raycastTarget = true;
         SetField(pmc, "blurOverlay", overlayImg, bf);
 
-        // ── Pause Panel (centered card) ──
+        // ── Pause Panel (centered card — matches MainScene 340x480) ──
         GameObject panelGO = MakeRect("PausePanel", root, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f));
         RectTransform panelRT = panelGO.GetComponent<RectTransform>();
-        panelRT.sizeDelta = new Vector2(440f, 600f);
+        panelRT.sizeDelta = new Vector2(340f, 480f);
         Image panelBg = panelGO.AddComponent<Image>();
         panelBg.color = BG_COLOR;
         panelBg.raycastTarget = true;
@@ -44,6 +56,31 @@ public static class HubPauseMenuBuilder
         SetField(pmc, "pausePanel", panelGO, bf);
         SetField(pmc, "pauseCanvasGroup", panelCG, bf);
         SetField(pmc, "panelRect", panelRT, bf);
+
+        // ── Panel border outline (subtle gold edge matching MainScene) ──
+        Outline panelOutline = panelGO.AddComponent<Outline>();
+        panelOutline.effectColor = BORDER_GOLD;
+        panelOutline.effectDistance = new Vector2(1.5f, 1.5f);
+
+        // ── Top accent line ──
+        GameObject topLine = MakeRect("TopLine", panelGO.transform, new Vector2(0.05f, 1f), new Vector2(0.95f, 1f));
+        RectTransform topLineRT = topLine.GetComponent<RectTransform>();
+        topLineRT.pivot = new Vector2(0.5f, 1f);
+        topLineRT.sizeDelta = new Vector2(0f, 1.5f);
+        topLineRT.anchoredPosition = new Vector2(0f, -18f);
+        Image topLineImg = topLine.AddComponent<Image>();
+        topLineImg.color = BORDER_GOLD;
+        topLineImg.raycastTarget = false;
+
+        // ── Bottom accent line ──
+        GameObject botLine = MakeRect("BottomLine", panelGO.transform, new Vector2(0.05f, 0f), new Vector2(0.95f, 0f));
+        RectTransform botLineRT = botLine.GetComponent<RectTransform>();
+        botLineRT.pivot = new Vector2(0.5f, 0f);
+        botLineRT.sizeDelta = new Vector2(0f, 1.5f);
+        botLineRT.anchoredPosition = new Vector2(0f, 45f);
+        Image botLineImg = botLine.AddComponent<Image>();
+        botLineImg.color = BORDER_GOLD;
+        botLineImg.raycastTarget = false;
 
         // ── Title ──
         GameObject titleGO = MakeRect("PauseTitle", panelGO.transform, new Vector2(0f, 1f), new Vector2(1f, 1f));
@@ -67,22 +104,23 @@ public static class HubPauseMenuBuilder
         infoRT.sizeDelta = new Vector2(-20f, 28f);
         infoRT.anchoredPosition = new Vector2(0f, 16f);
         TextMeshProUGUI infoTMP = infoGO.AddComponent<TextMeshProUGUI>();
-        infoTMP.text = "HUB";
-        infoTMP.fontSize = 18f;
+        infoTMP.text = pmc.GetType()
+            .GetField("currentTrialInfo", bf)?.GetValue(pmc) as string ?? "HUB";
+        infoTMP.fontSize = 15f;
         infoTMP.alignment = TextAlignmentOptions.Center;
         infoTMP.color = new Color(LABEL_WHITE.r, LABEL_WHITE.g, LABEL_WHITE.b, 0.4f);
         infoTMP.raycastTarget = false;
         AssignFont(infoTMP);
         SetField(pmc, "trialInfoLabel", infoTMP, bf);
 
-        // ── Buttons (center-anchored, matching MainScene layout) ──
-        float btnStep = 64f;
+        // ── Buttons (center-anchored, matching MainScene layout: 44px tall, 55px step) ──
+        float btnStep = 55f;
 
-        Button resume       = MakeButton("ResumeButton",     panelGO.transform, "RESUME",              130f);
-        Button restart      = MakeButton("RestartButton",    panelGO.transform, "RESTART TRIAL",        130f - btnStep);
-        Button controls     = MakeButton("ControlsButton",  panelGO.transform, "CONTROLS",             130f - btnStep * 2f);
-        Button trialSelect  = MakeButton("SettingsButton",   panelGO.transform, "TRIAL SELECTION",      130f - btnStep * 3f);
-        Button returnMainMenu = MakeButton("ReturnToHubButton", panelGO.transform, "RETURN TO MAIN MENU", 130f - btnStep * 4f);
+        Button resume       = MakeButton("ResumeButton",     panelGO.transform, "RESUME",              110f);
+        Button restart      = MakeButton("RestartButton",    panelGO.transform, "RESTART TRIAL",        110f - btnStep);
+        Button controls     = MakeButton("ControlsButton",  panelGO.transform, "CONTROLS",             110f - btnStep * 2f);
+        Button trialSelect  = MakeButton("SettingsButton",   panelGO.transform, "TRIAL SELECTION",      110f - btnStep * 3f);
+        Button returnMainMenu = MakeButton("ReturnToHubButton", panelGO.transform, "RETURN TO MAIN MENU", 110f - btnStep * 4f);
 
         SetField(pmc, "resumeButton", resume, bf);
         SetField(pmc, "restartButton", restart, bf);
@@ -150,17 +188,17 @@ public static class HubPauseMenuBuilder
         // Stretch horizontally like MainScene (anchor 0-1 at vertical center)
         GameObject btnGO = MakeRect(name, parent, new Vector2(0f, 0.5f), new Vector2(1f, 0.5f));
         RectTransform rt = btnGO.GetComponent<RectTransform>();
-        rt.sizeDelta = new Vector2(-40f, 56f);
+        rt.sizeDelta = new Vector2(-40f, 44f);
         rt.anchoredPosition = new Vector2(0f, yOffset);
 
         Image btnImg = btnGO.AddComponent<Image>();
-        btnImg.color = BTN_IMG_COL;
+        btnImg.color = Color.white;
         btnImg.raycastTarget = true;
 
         Button btn = btnGO.AddComponent<Button>();
         btn.targetGraphic = btnImg;
         ColorBlock cb = btn.colors;
-        cb.normalColor = Color.white;
+        cb.normalColor = BTN_IMG_COL;
         cb.highlightedColor = BTN_HIGHLIGHT;
         cb.selectedColor = BTN_SELECTED;
         cb.pressedColor = BTN_PRESSED;
@@ -195,6 +233,6 @@ public static class HubPauseMenuBuilder
 
     private static void AssignFont(TextMeshProUGUI tmp)
     {
-        CinzelFontHelper.Apply(tmp, tmp.fontStyle == FontStyles.Bold);
+        CinzelFontHelper.Apply(tmp, true);
     }
 }
