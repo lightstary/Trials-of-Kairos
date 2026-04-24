@@ -32,7 +32,10 @@ public class TilePlayerGlow : MonoBehaviour
     private readonly List<GameObject> _edgeQuads = new List<GameObject>();
     private readonly Dictionary<GameObject, Material> _tileMaterials = new Dictionary<GameObject, Material>();
     private Collider _playerCollider;
+    private Material _baseMaterial;
     private bool _glowActive;
+
+    private const string BASE_MATERIAL_PATH = "Materials/TileGlowBase";
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoAttach()
@@ -56,6 +59,9 @@ public class TilePlayerGlow : MonoBehaviour
     void Start()
     {
         _playerCollider = GetComponent<Collider>();
+        _baseMaterial = Resources.Load<Material>(BASE_MATERIAL_PATH);
+        if (_baseMaterial == null)
+            Debug.LogError("[TilePlayerGlow] Base material not found at Resources/" + BASE_MATERIAL_PATH);
     }
 
     void Update()
@@ -169,6 +175,8 @@ public class TilePlayerGlow : MonoBehaviour
     private void CreateEdgeGlow(GameObject tile)
     {
         Material mat = CreateGlowMaterial();
+        if (mat == null) return;
+
         _tileMaterials[tile] = mat;
 
         bool isSafe = IsTileSafe(tile);
@@ -252,21 +260,41 @@ public class TilePlayerGlow : MonoBehaviour
         }
     }
 
-    /// <summary>Creates an additive transparent emissive material for glow edges.</summary>
+    /// <summary>
+    /// Creates a glow material using the same approach as GlowOrbSetup (Fade mode
+    /// with _ALPHABLEND_ON) to ensure the shader variant is included in builds.
+    /// Uses additive destination blend for the bright glow effect.
+    /// </summary>
     private Material CreateGlowMaterial()
     {
-        Shader shader = Shader.Find("Standard");
-        Material mat = new Material(shader);
+        Material mat;
 
-        mat.SetFloat("_Mode", 3f);
+        if (_baseMaterial != null)
+        {
+            mat = new Material(_baseMaterial);
+        }
+        else
+        {
+            Shader shader = Shader.Find("Standard");
+            if (shader == null)
+            {
+                Debug.LogError("[TilePlayerGlow] Standard shader not found in build.");
+                return null;
+            }
+            mat = new Material(shader);
+        }
+
+        // Fade mode with additive destination blend for bright glow
+        mat.SetFloat("_Mode", 2f);
         mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
         mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.One);
         mat.SetInt("_ZWrite", 0);
         mat.DisableKeyword("_ALPHATEST_ON");
-        mat.DisableKeyword("_ALPHABLEND_ON");
-        mat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+        mat.EnableKeyword("_ALPHABLEND_ON");
+        mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
         mat.renderQueue = 3100;
 
+        // Emission for glow
         mat.EnableKeyword("_EMISSION");
         mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
         mat.SetFloat("_Metallic", 0f);
