@@ -30,6 +30,20 @@ public class SoundManager : MonoBehaviour
         musicSource = gameObject.AddComponent<AudioSource>();
         musicSource.loop = true;
         musicSource.volume = 0.5f;
+
+        // Apply saved volume settings
+        GameSettings.ApplyAudio();
+        GameSettings.OnAudioChanged += OnAudioSettingsChanged;
+    }
+
+    void OnDestroy()
+    {
+        GameSettings.OnAudioChanged -= OnAudioSettingsChanged;
+    }
+
+    private void OnAudioSettingsChanged()
+    {
+        SetVolumes(GameSettings.MasterVolume, GameSettings.MusicVolume, GameSettings.SFXVolume);
     }
 
     void Start()
@@ -63,5 +77,14 @@ public class SoundManager : MonoBehaviour
     public void StopMusic()
     {
         musicSource.Stop();
+    }
+
+    /// <summary>Applies volume levels from GameSettings.</summary>
+    public void SetVolumes(float master, float music, float sfx)
+    {
+        if (musicSource != null)
+            musicSource.volume = music * master;
+        if (sfxSource != null)
+            sfxSource.volume = sfx * master;
     }
 }

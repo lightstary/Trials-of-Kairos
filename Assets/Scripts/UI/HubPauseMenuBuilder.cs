@@ -47,7 +47,7 @@ public static class HubPauseMenuBuilder
         // ── Pause Panel (centered card — matches MainScene 340x480) ──
         GameObject panelGO = MakeRect("PausePanel", root, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f));
         RectTransform panelRT = panelGO.GetComponent<RectTransform>();
-        panelRT.sizeDelta = new Vector2(340f, 480f);
+        panelRT.sizeDelta = new Vector2(340f, 535f);
         Image panelBg = panelGO.AddComponent<Image>();
         panelBg.color = BG_COLOR;
         panelBg.raycastTarget = true;
@@ -116,20 +116,22 @@ public static class HubPauseMenuBuilder
         // ── Buttons (center-anchored, matching MainScene layout: 44px tall, 55px step) ──
         float btnStep = 55f;
 
-        Button resume       = MakeButton("ResumeButton",     panelGO.transform, "RESUME",              110f);
-        Button restart      = MakeButton("RestartButton",    panelGO.transform, "RESTART TRIAL",        110f - btnStep);
-        Button controls     = MakeButton("ControlsButton",  panelGO.transform, "CONTROLS",             110f - btnStep * 2f);
-        Button trialSelect  = MakeButton("SettingsButton",   panelGO.transform, "TRIAL SELECTION",      110f - btnStep * 3f);
-        Button returnMainMenu = MakeButton("ReturnToHubButton", panelGO.transform, "RETURN TO MAIN MENU", 110f - btnStep * 4f);
+        Button resume       = MakeButton("ResumeButton",       panelGO.transform, "RESUME",              110f);
+        Button restart      = MakeButton("RestartButton",      panelGO.transform, "RESTART TRIAL",        110f - btnStep);
+        Button controls     = MakeButton("ControlsButton",    panelGO.transform, "CONTROLS",             110f - btnStep * 2f);
+        Button options      = MakeButton("OptionsButton",     panelGO.transform, "OPTIONS",              110f - btnStep * 3f);
+        Button trialSelect  = MakeButton("SettingsButton",     panelGO.transform, "TRIAL SELECTION",      110f - btnStep * 4f);
+        Button returnMainMenu = MakeButton("ReturnToHubButton", panelGO.transform, "RETURN TO MAIN MENU", 110f - btnStep * 5f);
 
         SetField(pmc, "resumeButton", resume, bf);
         SetField(pmc, "restartButton", restart, bf);
         SetField(pmc, "controlsButton", controls, bf);
+        SetField(pmc, "optionsButton", options, bf);
         SetField(pmc, "settingsButton", trialSelect, bf);
         SetField(pmc, "returnToHubButton", returnMainMenu, bf);
 
         // Set vertical navigation with wrap (matches MainScene)
-        Button[] allBtns = { resume, restart, controls, trialSelect, returnMainMenu };
+        Button[] allBtns = { resume, restart, controls, options, trialSelect, returnMainMenu };
         for (int i = 0; i < allBtns.Length; i++)
         {
             Navigation nav = new Navigation();
@@ -139,7 +141,7 @@ public static class HubPauseMenuBuilder
         }
 
         // Wire onClick listeners directly
-        WireButtonListeners(pmc, resume, restart, controls, trialSelect, returnMainMenu);
+        WireButtonListeners(pmc, resume, restart, controls, options, trialSelect, returnMainMenu);
 
         // ── Hide the panel (Awake already ran with null refs, so manually hide) ──
         panelGO.SetActive(false);
@@ -149,9 +151,10 @@ public static class HubPauseMenuBuilder
         overlayImg.gameObject.SetActive(false);
     }
 
-    /// <summary>Directly wires onClick listeners for the 5-button Hub pause menu.</summary>
+    /// <summary>Directly wires onClick listeners for the 6-button Hub pause menu.</summary>
     private static void WireButtonListeners(PauseMenuController pmc,
-        Button resume, Button restart, Button controls, Button trialSelect, Button returnMainMenu)
+        Button resume, Button restart, Button controls, Button options,
+        Button trialSelect, Button returnMainMenu)
     {
         BindingFlags bf = BindingFlags.NonPublic | BindingFlags.Instance;
 
@@ -160,6 +163,7 @@ public static class HubPauseMenuBuilder
 
         MethodInfo restartMI  = typeof(PauseMenuController).GetMethod("RestartTrial", bf);
         MethodInfo ctrlMI     = typeof(PauseMenuController).GetMethod("ShowControls", bf);
+        MethodInfo optsMI     = typeof(PauseMenuController).GetMethod("ShowOptions", bf);
         MethodInfo tsMI       = typeof(PauseMenuController).GetMethod("OpenTrialSelection", bf);
         MethodInfo rtmMI      = typeof(PauseMenuController).GetMethod("ReturnToMainMenu", bf);
 
@@ -168,6 +172,9 @@ public static class HubPauseMenuBuilder
 
         if (controls != null && ctrlMI != null)
             controls.onClick.AddListener(() => ctrlMI.Invoke(pmc, null));
+
+        if (options != null && optsMI != null)
+            options.onClick.AddListener(() => optsMI.Invoke(pmc, null));
 
         if (trialSelect != null && tsMI != null)
             trialSelect.onClick.AddListener(() => tsMI.Invoke(pmc, null));

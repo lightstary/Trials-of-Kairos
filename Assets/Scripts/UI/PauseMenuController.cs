@@ -23,6 +23,7 @@ public class PauseMenuController : MonoBehaviour
     [SerializeField] private Button restartButton;
     [SerializeField] private Button howToPlayButton;
     [SerializeField] private Button controlsButton;
+    [SerializeField] private Button optionsButton;
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button returnToHubButton;
     [SerializeField] private Button mainMenuButton;
@@ -129,6 +130,7 @@ public class PauseMenuController : MonoBehaviour
         if (restartButton     != null) restartButton.onClick.AddListener(RestartTrial);
         if (howToPlayButton   != null) howToPlayButton.onClick.AddListener(ShowHowToPlay);
         if (controlsButton    != null) controlsButton.onClick.AddListener(ShowControls);
+        if (optionsButton     != null) optionsButton.onClick.AddListener(ShowOptions);
         if (settingsButton    != null)
         {
             settingsButton.onClick.RemoveAllListeners();
@@ -265,13 +267,25 @@ public class PauseMenuController : MonoBehaviour
         _inputCooldown = INPUT_COOLDOWN;
     }
 
+    /// <summary>Called by OptionsMenuController when it closes.</summary>
+    public void ReturnFromOptions()
+    {
+        _subScreenOpen = false;
+        _inputCooldown = INPUT_COOLDOWN;
+
+        if (pausePanel != null) pausePanel.SetActive(true);
+        if (pauseCanvasGroup != null) pauseCanvasGroup.alpha = 1f;
+
+        StartCoroutine(DelayedSelectFirstButton());
+    }
+
     /// <summary>Updates the trial info footer text.</summary>
     public void SetTrialInfo(string info) { currentTrialInfo = info; if (trialInfoLabel != null) trialInfoLabel.text = info; }
 
     /// <summary>Selects the first visible pause button for controller navigation.</summary>
     private void SelectFirstPauseButton()
     {
-        Button[] buttons = new[] { resumeButton, restartButton, controlsButton, settingsButton, returnToHubButton };
+        Button[] buttons = new[] { resumeButton, restartButton, controlsButton, optionsButton, settingsButton, returnToHubButton };
         foreach (Button b in buttons)
         {
             if (b != null && b.gameObject.activeInHierarchy && b.interactable)
@@ -337,6 +351,28 @@ public class PauseMenuController : MonoBehaviour
         }
     }
 
+    private void ShowOptions()
+    {
+        _subScreenOpen = true;
+        HideSubPanels();
+
+        if (pausePanel != null) pausePanel.SetActive(false);
+
+        Canvas canvas = GetComponentInParent<Canvas>();
+        if (canvas == null) return;
+
+        Transform os = canvas.transform.Find("OptionsScreen");
+        if (os == null)
+        {
+            OptionsMenuController optCtrl = OptionsMenuBuilder.Build(canvas.transform);
+            os = optCtrl.transform;
+        }
+
+        OptionsMenuController ctrl = os.GetComponent<OptionsMenuController>();
+        if (ctrl != null) ctrl.Origin = OptionsMenuController.OptionsOrigin.PauseMenu;
+        os.gameObject.SetActive(true);
+    }
+
     private void OpenTrialSelection()
     {
         _isPaused = false;
@@ -355,13 +391,17 @@ public class PauseMenuController : MonoBehaviour
         if (controlsPanel != null) controlsPanel.SetActive(false);
         if (settingsPanel != null) settingsPanel.SetActive(false);
 
-        // Also hide the ControlsScreen if it was opened from pause
+        // Also hide the ControlsScreen and OptionsScreen if opened from pause
         Canvas canvas = GetComponentInParent<Canvas>();
         if (canvas != null)
         {
             Transform cs = canvas.transform.Find("ControlsScreen");
             if (cs != null && cs.gameObject.activeSelf)
                 cs.gameObject.SetActive(false);
+
+            Transform os = canvas.transform.Find("OptionsScreen");
+            if (os != null && os.gameObject.activeSelf)
+                os.gameObject.SetActive(false);
         }
     }
 

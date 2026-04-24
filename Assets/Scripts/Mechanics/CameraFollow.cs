@@ -23,10 +23,6 @@ public class CameraFollow : MonoBehaviour
     [Header("Look Target")]
     public Vector3 lookOffset = new Vector3(0f, 1f, 0f);
 
-    [Header("Sensitivity")]
-    [SerializeField] private float mouseSensitivity = 2f;
-    [SerializeField] private float stickSensitivity = 120f;
-
     [Header("Pitch Limits")]
     [SerializeField] private float pitchMin = 5f;
     [SerializeField] private float pitchMax = 60f;
@@ -41,7 +37,6 @@ public class CameraFollow : MonoBehaviour
     private bool _pauseMenuSearched;
 
     private const float MOUSE_DEAD_ZONE = 0.02f;
-    private const float STICK_DEAD_ZONE = 0.15f;
 
     // ── Reflection cache for Input System Gamepad.current.rightStick ──
     private bool _inputSystemAvailable;
@@ -152,18 +147,22 @@ public class CameraFollow : MonoBehaviour
         // ── Mouse look (legacy Input) ────────────────────────────────────
         float mx = Input.GetAxisRaw("Mouse X");
         float my = Input.GetAxisRaw("Mouse Y");
+        float currentMouseSens = GameSettings.MouseSensitivity;
+        float invertMul = GameSettings.InvertYAxis ? 1f : -1f;
         if (Mathf.Abs(mx) > MOUSE_DEAD_ZONE || Mathf.Abs(my) > MOUSE_DEAD_ZONE)
         {
-            _yaw   += mx * mouseSensitivity;
-            _pitch -= my * mouseSensitivity;
+            _yaw   += mx * currentMouseSens;
+            _pitch += my * invertMul * currentMouseSens;
         }
 
         // ── Controller right stick (Input System via reflection) ─────────
+        float stickDead = GameSettings.StickDeadzone;
+        float currentStickSens = GameSettings.StickSensitivity;
         Vector2 rs = ReadRightStick();
-        if (rs.sqrMagnitude > STICK_DEAD_ZONE * STICK_DEAD_ZONE)
+        if (rs.sqrMagnitude > stickDead * stickDead)
         {
-            _yaw   += rs.x * stickSensitivity * Time.unscaledDeltaTime;
-            _pitch -= rs.y * stickSensitivity * Time.unscaledDeltaTime;
+            _yaw   += rs.x * currentStickSens * Time.unscaledDeltaTime;
+            _pitch += rs.y * invertMul * currentStickSens * Time.unscaledDeltaTime;
         }
 
         _pitch = Mathf.Clamp(_pitch, pitchMin, pitchMax);

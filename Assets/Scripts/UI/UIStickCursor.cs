@@ -44,6 +44,10 @@ public class UIStickCursor : MonoBehaviour
     /// <summary>The cursor's current world position (screen-space for Overlay canvases).</summary>
     public static Vector3 CursorWorldPosition { get; private set; }
 
+    /// <summary>When true, the cursor will not clear the EventSystem selection.
+    /// Used by menus that manage their own D-pad navigation.</summary>
+    public static bool PreserveSelection { get; set; }
+
     // ── Private ──────────────────────────────────────────────────────────
     private RectTransform   _root;
     private Image           _coreImg;
@@ -206,21 +210,24 @@ public class UIStickCursor : MonoBehaviour
         // auto-submitting a button the player didn't explicitly hover.
         // Controller confirm (A button) is handled manually in CheckHover,
         // so this does not break controller flow.
-        if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject != null)
+        // When PreserveSelection is true, menus manage their own selection.
+        if (!PreserveSelection
+            && EventSystem.current != null
+            && EventSystem.current.currentSelectedGameObject != null)
             EventSystem.current.SetSelectedGameObject(null);
 
         // ── Read left stick (CONTROLLER ONLY — exclude keyboard WASD) ────
+        // When SuppressInput is active, skip stick reading to prevent cursor
+        // interference during hold-A slider drag in options menus.
         Vector2 stick = Vector2.zero;
         bool stickMoved = false;
 
-        // Only read Horizontal/Vertical axes when NO keyboard movement keys
-        // are held. This prevents WASD from hijacking cursor into stick mode.
         bool keyboardMoving = Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.A) ||
                               Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.D) ||
                               Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.DownArrow) ||
                               Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.RightArrow);
 
-        if (!keyboardMoving)
+        if (!keyboardMoving && !UIGamepadNavigator.SuppressInput)
         {
             float h = Input.GetAxisRaw("Horizontal");
             float v = Input.GetAxisRaw("Vertical");

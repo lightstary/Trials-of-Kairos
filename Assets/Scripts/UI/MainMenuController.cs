@@ -41,6 +41,7 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private Button continueButton;
     [SerializeField] private Button trialSelectButton;
     [SerializeField] private Button controlsButton;
+    [SerializeField] private Button optionsButton;
     [SerializeField] private Button quitButton;
 
     [Header("Button Canvas Groups (stagger order)")]
@@ -77,7 +78,8 @@ public class MainMenuController : MonoBehaviour
     private Color _targetSquareHue  = SQ_DEFAULT_COLOR;
     private bool _entranceDone, _menuContentHidden, _transitioning;
     private GameObject _titleGroup, _buttonPanel, _sharedDustLayer, _shimmerLayer, _menuBgPanel;
-    private CanvasGroup _menuContentGroup, _controlsCG, _trialSelectCG;
+    private CanvasGroup _menuContentGroup, _controlsCG, _trialSelectCG, _optionsCG;
+    private GameObject _optionsScreen;
 
     private static bool _openTrialSelectOnLoad;
     private static bool _restartTrialOnLoad;
@@ -99,6 +101,7 @@ public class MainMenuController : MonoBehaviour
         if (hudPanel          != null) hudPanel.SetActive(false);
         if (trialSelectScreen != null) trialSelectScreen.SetActive(false);
         if (controlsScreen    != null) controlsScreen.SetActive(false);
+        if (_optionsScreen    != null) _optionsScreen.SetActive(false);
         if (menuPanel         != null) menuPanel.SetActive(true);
         if (chapterLabel      != null) chapterLabel.gameObject.SetActive(false);
         if (timeRingTransform != null) timeRingTransform.gameObject.SetActive(false);
@@ -118,6 +121,8 @@ public class MainMenuController : MonoBehaviour
         if (continueButton    != null) continueButton.gameObject.SetActive(false);
         if (trialSelectButton != null) trialSelectButton.onClick.AddListener(OpenTrialSelect);
         if (controlsButton    != null) controlsButton.onClick.AddListener(OpenControls);
+        if (optionsButton     != null) optionsButton.onClick.AddListener(OpenOptions);
+        else EnsureOptionsButton();
         if (quitButton        != null) quitButton.onClick.AddListener(QuitGame);
         if (versionLabel      != null) versionLabel.text = "v1.0";
         // Force title to always be two lines and apply Cinzel font
@@ -331,6 +336,135 @@ public class MainMenuController : MonoBehaviour
         _menuBgPanel.transform.SetAsFirstSibling();
     }
 
+    /// <summary>Creates the OptionsScreen on demand via OptionsMenuBuilder.</summary>
+    private void EnsureOptionsScreen()
+    {
+        if (_optionsScreen != null) return;
+        Canvas canvas = GetComponentInParent<Canvas>(); if (canvas == null) return;
+
+        OptionsMenuController ctrl = OptionsMenuBuilder.Build(canvas.transform);
+        _optionsScreen = ctrl.gameObject;
+        _optionsCG = ctrl.canvasGroup;
+        _optionsScreen.SetActive(false);
+    }
+
+    /// <summary>
+    /// Dynamically creates an OPTIONS button in the ButtonPanel if one
+    /// doesn't already exist (for scene-baked menus without the button).
+    /// Shifts the quit button down to make room.
+    /// </summary>
+    private void EnsureOptionsButton()
+    {
+        if (_buttonPanel == null) return;
+        if (controlsButton == null) return;
+
+        // Calculate button step from existing layout
+        RectTransform ctrlRT = controlsButton.GetComponent<RectTransform>();
+        RectTransform selRT  = trialSelectButton != null ? trialSelectButton.GetComponent<RectTransform>() : null;
+        float btnStep = 55f;
+        if (selRT != null)
+            btnStep = Mathf.Abs(selRT.anchoredPosition.y - ctrlRT.anchoredPosition.y);
+
+        // Shift quit button down one step to make room
+        if (quitButton != null)
+        {
+            RectTransform quitRT = quitButton.GetComponent<RectTransform>();
+            quitRT.anchoredPosition += Vector2.down * btnStep;
+        }
+
+        // Place OPTIONS where quit used to be (one step below controls)
+        float optionsY = ctrlRT.anchoredPosition.y - btnStep;
+
+        GameObject btnGO = new GameObject("OptionsButton");
+        btnGO.transform.SetParent(_buttonPanel.transform, false);
+        RectTransform rt = btnGO.AddComponent<RectTransform>();
+        rt.anchorMin = ctrlRT.anchorMin;
+        rt.anchorMax = ctrlRT.anchorMax;
+        rt.sizeDelta = ctrlRT.sizeDelta;
+        rt.anchoredPosition = new Vector2(ctrlRT.anchoredPosition.x, optionsY);
+
+        // Copy the Image + Button styling from controlsButton
+        Image refImg = controlsButton.GetComponent<Image>();
+        Image btnImg = btnGO.AddComponent<Image>();
+        if (refImg != null)
+        {
+            btnImg.color = refImg.color;
+            btnImg.sprite = refImg.sprite;
+            btnImg.type = refImg.type;
+        }
+        btnImg.raycastTarget = true;
+
+        Button btn = btnGO.AddComponent<Button>();
+        btn.targetGraphic = btnImg;
+        btn.colors = controlsButton.colors;
+
+        Navigation nav = btn.navigation;
+        nav.mode = Navigation.Mode.Vertical;
+        nav.wrapAround = true;
+        btn.navigation = nav;
+
+        // Copy label style from the controls button's child label
+        TextMeshProUGUI refLabel = controlsButton.GetComponentInChildren<TextMeshProUGUI>();
+        GameObject lblGO = new GameObject("Label");
+        lblGO.transform.SetParent(btnGO.transform, false);
+        RectTransform lblRT = lblGO.AddComponent<RectTransform>();
+        lblRT.anchorMin = Vector2.zero; lblRT.anchorMax = Vector2.one;
+        lblRT.offsetMin = Vector2.zero; lblRT.offsetMax = Vector2.zero;
+        TextMeshProUGUI tmp = lblGO.AddComponent<TextMeshProUGUI>();
+        tmp.text = "OPTIONS";
+        if (refLabel != null)
+        {
+            tmp.fontSize = refLabel.fontSize;
+            tmp.alignment = refLabel.alignment;
+            tmp.color = refLabel.color;
+            tmp.characterSpacing = refLabel.characterSpacing;
+            tmp.font = refLabel.font;
+        }
+        else
+        {
+            tmp.fontSize = 20f;
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.color = new Color(0.91f, 0.918f, 0.965f, 1f);
+            CinzelFontHelper.Apply(tmp);
+        }
+        tmp.raycastTarget = false;
+
+        // CanvasGroup for stagger animation — start invisible to match entrance
+        CanvasGroup cg = btnGO.AddComponent<CanvasGroup>();
+        cg.alpha = 0f;
+
+        // Insert into buttonGroups array so the entrance stagger animates it
+        if (buttonGroups != null)
+        {
+            // Find the index after the controls button's group
+            int insertIdx = buttonGroups.Length;
+            if (controlsButton != null)
+            {
+                CanvasGroup ctrlCG = controlsButton.GetComponent<CanvasGroup>();
+                if (ctrlCG == null) ctrlCG = controlsButton.GetComponentInParent<CanvasGroup>();
+                for (int i = 0; i < buttonGroups.Length; i++)
+                {
+                    if (buttonGroups[i] == ctrlCG)
+                    {
+                        insertIdx = i + 1;
+                        break;
+                    }
+                }
+            }
+
+            CanvasGroup[] newGroups = new CanvasGroup[buttonGroups.Length + 1];
+            for (int i = 0; i < insertIdx && i < buttonGroups.Length; i++)
+                newGroups[i] = buttonGroups[i];
+            newGroups[insertIdx] = cg;
+            for (int i = insertIdx; i < buttonGroups.Length; i++)
+                newGroups[i + 1] = buttonGroups[i];
+            buttonGroups = newGroups;
+        }
+
+        optionsButton = btn;
+        btn.onClick.AddListener(OpenOptions);
+    }
+
     /// <summary>Creates the ShimmerLayer if it doesn't exist in the scene.</summary>
     private void EnsureShimmerLayer()
     {
@@ -437,6 +571,26 @@ public class MainMenuController : MonoBehaviour
     }
 
     public void CloseControls() { if (_transitioning) return; StartCoroutine(CrossfadeFromScreen(controlsScreen, _controlsCG)); }
+
+    /// <summary>Opens the Options screen with a crossfade from the main menu.</summary>
+    public void OpenOptions()
+    {
+        if (_transitioning) return;
+        EnsureOptionsScreen();
+        if (_optionsScreen == null) return;
+
+        var ctrl = _optionsScreen.GetComponent<OptionsMenuController>();
+        if (ctrl != null) ctrl.Origin = OptionsMenuController.OptionsOrigin.MainMenu;
+        StartCoroutine(CrossfadeToScreen(_optionsScreen, _optionsCG));
+    }
+
+    /// <summary>Closes the Options screen and crossfades back to the main menu.</summary>
+    public void CloseOptions()
+    {
+        if (_transitioning) return;
+        if (_optionsScreen != null)
+            StartCoroutine(CrossfadeFromScreen(_optionsScreen, _optionsCG));
+    }
 
     private void QuitGame()
     {

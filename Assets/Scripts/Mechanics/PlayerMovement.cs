@@ -10,7 +10,10 @@ public class PlayerMovement : MonoBehaviour
     public Orientation orientation = Orientation.Standing;
 
     private const float TILE_TOP       = 0.1f;
-    private const float AXIS_THRESHOLD = 0.5f;
+
+    /// <summary>Threshold for analog stick input to register as a directional tap.
+    /// Falls back to 0.5 when the left stick deadzone is lower.</summary>
+    private float AxisThreshold => Mathf.Max(GameSettings.LeftStickDeadzone, 0.25f);
 
     private float prevH = 0f;
     private float prevV = 0f;
@@ -46,11 +49,12 @@ public class PlayerMovement : MonoBehaviour
         {
             float h = Input.GetAxis("Horizontal");
             float v = Input.GetAxis("Vertical");
+            float threshold = AxisThreshold;
 
-            if      (v >  AXIS_THRESHOLD && prevV <=  AXIS_THRESHOLD) rawIntent = Vector2.up;
-            else if (v < -AXIS_THRESHOLD && prevV >= -AXIS_THRESHOLD) rawIntent = Vector2.down;
-            else if (h < -AXIS_THRESHOLD && prevH >= -AXIS_THRESHOLD) rawIntent = Vector2.left;
-            else if (h >  AXIS_THRESHOLD && prevH <=  AXIS_THRESHOLD) rawIntent = Vector2.right;
+            if      (v >  threshold && prevV <=  threshold) rawIntent = Vector2.up;
+            else if (v < -threshold && prevV >= -threshold) rawIntent = Vector2.down;
+            else if (h < -threshold && prevH >= -threshold) rawIntent = Vector2.left;
+            else if (h >  threshold && prevH <=  threshold) rawIntent = Vector2.right;
 
             prevH = h;
             prevV = v;
