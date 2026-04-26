@@ -88,10 +88,7 @@ public class TimeScaleMeter : MonoBehaviour
         if (TimeState.Instance != null)
             state = TimeState.Instance.currentState;
 
-        if (state == TimeState.State.Frozen)
-            _display = raw;
-        else
-            _display = Mathf.Lerp(_display, raw, fillLerpSpeed * Time.deltaTime);
+        _display = raw;
 
         float totalRange = maxV - minV;
         float zeroAnchor = totalRange > 0f ? (-minV / totalRange) : 0.5f;

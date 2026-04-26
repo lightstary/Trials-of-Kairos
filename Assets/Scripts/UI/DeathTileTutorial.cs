@@ -36,7 +36,6 @@ public class DeathTileTutorial : MonoBehaviour
     private bool _waitingForInput;
     private GameObject _modalGO;
     private Image _btnIcon;
-    private TextMeshProUGUI _hintTMP;
 
     void Start()
     {
@@ -97,17 +96,13 @@ public class DeathTileTutorial : MonoBehaviour
         if (_modalGO != null) Destroy(_modalGO);
         _modalGO = null;
         _btnIcon = null;
-        _hintTMP = null;
     }
 
-    /// <summary>Swaps the button icon and hint text when input mode changes.</summary>
+    /// <summary>Swaps the button icon when input mode changes.</summary>
     private void OnInputModeChanged(InputPromptManager.InputMode newMode)
     {
         if (!IsOpen) return;
         if (_btnIcon != null) _btnIcon.sprite = ControllerIcons.ConfirmIcon;
-        if (_hintTMP != null) _hintTMP.text = InputPromptManager.IsKeyboardMouse
-            ? "Left Click or Space to continue"
-            : "A to continue";
     }
 
     // ================================================================
@@ -231,7 +226,7 @@ public class DeathTileTutorial : MonoBehaviour
         btnHlg.childForceExpandHeight = false;
         btnHlg.padding = new RectOffset(12, 12, 4, 4);
 
-        // Controller icon (dynamically swaps with input mode)
+        // Controller / mouse icon (dynamically swaps with input mode)
         Sprite confirmIcon = ControllerIcons.ConfirmIcon;
         if (confirmIcon != null)
         {
@@ -257,23 +252,6 @@ public class DeathTileTutorial : MonoBehaviour
         LayoutElement lle = lblGO.AddComponent<LayoutElement>();
         lle.preferredWidth = 160f;
         lle.preferredHeight = 32f;
-
-        // Hint text below button (dynamically swaps with input mode)
-        GameObject hintGO = MakeRect("Hint", panel.transform,
-            new Vector2(0.5f, 0f), new Vector2(0.5f, 0f));
-        RectTransform hintRT = hintGO.GetComponent<RectTransform>();
-        hintRT.pivot = new Vector2(0.5f, 0f);
-        hintRT.sizeDelta = new Vector2(400f, 20f);
-        hintRT.anchoredPosition = new Vector2(0f, 6f);
-        _hintTMP = hintGO.AddComponent<TextMeshProUGUI>();
-        _hintTMP.text = InputPromptManager.IsKeyboardMouse
-            ? "Left Click or Space to continue"
-            : "A to continue";
-        _hintTMP.fontSize = 13f;
-        _hintTMP.color = TEXT_DIM;
-        _hintTMP.alignment = TextAlignmentOptions.Center;
-        _hintTMP.raycastTarget = false;
-        CinzelFontHelper.Apply(_hintTMP);
 
         // Select the button for EventSystem
         if (UnityEngine.EventSystems.EventSystem.current != null)
