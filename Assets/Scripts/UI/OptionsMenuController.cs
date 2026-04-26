@@ -648,6 +648,7 @@ public class OptionsMenuController : MonoBehaviour
         GameSettings.ResolutionIndex = _resIndex;
         UpdateResolutionLabel();
         GameSettings.ApplyResolution();
+        UIStickCursor.SuppressMouseSwitch();
     }
 
     /// <summary>Cycles through display modes and applies immediately.</summary>
@@ -658,6 +659,7 @@ public class OptionsMenuController : MonoBehaviour
         GameSettings.DisplayMode = _displayMode;
         UpdateDisplayModeLabel();
         GameSettings.ApplyResolution();
+        UIStickCursor.SuppressMouseSwitch();
     }
 
     /// <summary>Cycles through quality levels and applies immediately.</summary>

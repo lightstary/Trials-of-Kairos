@@ -172,10 +172,13 @@ public class PauseMenuController : MonoBehaviour
                     && MainMenuController.Instance.menuPanel != null
                     && MainMenuController.Instance.menuPanel.activeSelf;
 
-                // Block pause during boss intro/fail and hub completion
+                // Block pause during boss intro/fail, hub completion, game over, fall modal, and death tile tutorial
                 bool modalOpen = BossFailUI.IsOpen
                               || BossIntroModal.IsOpen
-                              || GoalTile.IsOpen;
+                              || GoalTile.IsOpen
+                              || GameOverScreenController.IsOpen
+                              || FallModal.IsOpen
+                              || DeathTileTutorial.IsOpen;
 
                 if (!inMainMenu && !modalOpen)
                     Pause();

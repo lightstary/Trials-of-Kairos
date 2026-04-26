@@ -48,42 +48,27 @@ public static class BossIntroContent
     /// <summary>Intro pages for The Garden (Boss B) -- shared time scale with boss pointer.</summary>
     public static readonly string[] Garden = new string[]
     {
-        // PAGE 1: The Boss
+        // PAGE 1: What's happening
         "<color=#F5C842><size=32>THE GARDEN</size></color>\n\n" +
-        "You and the Boss share the same <b>Time Scale</b>.\n" +
-        "If it reaches <b>+10</b> or <b>-10</b>,\n" +
-        "you <b>fail immediately</b>.\n\n" +
-        "The Boss has its own marker on the Time Scale.\n" +
-        "It moves on its own.",
+        "A <color=#FF2690>pink marker</color> will appear on your Time Scale.\n" +
+        "That is the <b>Death Pointer</b>.\n\n" +
+        "It moves on its own, pushing toward\n" +
+        "<b>+10</b> or <b>-10</b> to kill you.",
 
-        // PAGE 2: Visual demo (boss pointer glow active on this page)
+        // PAGE 2: How to survive (boss pointer glow active on this page)
         "<color=#F5C842><size=32>THE GARDEN</size></color>\n\n" +
-        "The Boss has its own <color=#33FFE5>pointer</color>.\n" +
-        "It will try to push the Time Scale to the limit.\n\n" +
-        "<b>Watch where it is.</b>",
+        "To block it, roll the <b>opposite direction</b>.\n\n" +
+        "Boss pushes right? Roll <b>upside-down</b> (reverse).\n" +
+        "Boss pushes left? Roll <b>upright</b> (forward).\n\n" +
+        "Going the <b>same</b> direction makes it <b>faster</b>.\n" +
+        "<color=#5BB4F0>Frozen</color> pauses it briefly, then it resumes.",
 
-        // PAGE 3: How to fight it
+        // PAGE 3: Win condition
         "<color=#F5C842><size=32>THE GARDEN</size></color>\n\n" +
-        "You can fight it.\n\n" +
-        "Move in the <b>opposite direction</b>\n" +
-        "to <b>stop</b> the Time Scale from moving.\n\n" +
-        "If you move in the <b>same</b> direction,\n" +
-        "the Boss pushes <b>faster</b>.",
-
-        // PAGE 4: Attack phases
-        "<color=#F5C842><size=32>THE GARDEN</size></color>\n\n" +
-        "When the tiles fall, the Boss changes behavior.\n\n" +
-        "It will <b>reverse direction</b>\n" +
-        "and begin moving <b>faster than before</b>.\n\n" +
-        "The tile beneath you will <b>glow</b>:\n" +
-        "<color=#00FF4D>Green</color> = safe, <color=#FF3300>Red</color> = danger.\n" +
-        "Watch for <b>shaking</b> before tiles fall.",
-
-        // PAGE 5: Final
-        "<color=#F5C842><size=32>THE GARDEN</size></color>\n\n" +
-        "Survive the tiles.\n" +
-        "Control the Time Scale.\n" +
-        "Do not let it reach the end.\n\n" +
+        "The boss <b>swaps direction</b> every few seconds\n" +
+        "and gets <b>faster</b> each time.\n\n" +
+        "<b>Survive long enough and you win.</b>\n\n" +
+        "Don't let the meter hit the edges.\n" +
         "<b>Good luck.</b>"
     };
 

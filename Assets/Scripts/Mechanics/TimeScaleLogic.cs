@@ -137,6 +137,19 @@ public class TimeScaleLogic : MonoBehaviour
         if (BossCFight.Instance != null && BossCFight.Instance.bossActive)
             BossCFight.Instance.StopBossFight();
 
+        SoundManager sm = FindObjectOfType<SoundManager>();
+        if (sm != null) sm.PlayLose();
+
+        // Prefer GameOverScreenController for a proper lose screen
+        GameOverScreenController gosc = FindObjectOfType<GameOverScreenController>(true);
+        if (gosc != null)
+        {
+            Time.timeScale = 0f;
+            gosc.Show("THE TIMELINE HAS COLLAPSED");
+            return;
+        }
+
+        // Fallback to BossFailUI
         BossFailUI failUI = FindObjectOfType<BossFailUI>(true);
         if (failUI == null)
         {
@@ -151,12 +164,6 @@ public class TimeScaleLogic : MonoBehaviour
 
         if (failUI != null)
             failUI.ShowFail();
-
-        if (BossPopup.Instance != null)
-            BossPopup.Instance.ShowLose();
-
-        SoundManager sm = FindObjectOfType<SoundManager>();
-        if (sm != null) sm.PlayLose();
     }
 
     /// <summary>Resets time to 0 and clears death state.</summary>

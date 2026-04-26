@@ -6942,6 +6942,81 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 548400449}
   m_Mesh: {fileID: -2269245349382216059, guid: 085e56dd87e185242a1861e04adf6826, type: 3}
+--- !u!1 &554414567
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 554414570}
+  - component: {fileID: 554414569}
+  - component: {fileID: 554414568}
+  m_Layer: 0
+  m_Name: StateVignette
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &554414568
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 554414567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &554414569
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 554414567}
+  m_CullTransparentMesh: 1
+--- !u!224 &554414570
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 554414567}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 959218695}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &559728833
 GameObject:
   m_ObjectHideFlags: 0
@@ -12158,6 +12233,7 @@ RectTransform:
   - {fileID: 1524563397}
   - {fileID: 573843043}
   - {fileID: 1364273990}
+  - {fileID: 554414570}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -12248,7 +12324,9 @@ MonoBehaviour:
   voidDark: {r: 0.031, g: 0.043, b: 0.078, a: 1}
   cosmicMid: {r: 0.059, g: 0.102, b: 0.188, a: 1}
   starfieldWhite: {r: 0.91, g: 0.918, b: 0.965, a: 1}
-  vignetteOverlay: {fileID: 0}
+  vignetteOverlay: {fileID: 554414568}
+  overlayAlpha: 0.045
+  transitionDuration: 1.2
 --- !u!1 &963691387
 GameObject:
   m_ObjectHideFlags: 0
@@ -13444,16 +13522,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa7dba6e9233e004ca8087f4380c876a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forwardColor: {r: 0.906, g: 0.707, b: 0.474, a: 1}
-  frozenColor: {r: 0.577, g: 0.677, b: 0.934, a: 1}
-  reverseColor: {r: 0.703, g: 0.441, b: 0.943, a: 1}
-  forwardAmbient: {r: 0.18, g: 0.14, b: 0.08, a: 1}
-  frozenAmbient: {r: 0.08, g: 0.12, b: 0.22, a: 1}
-  reverseAmbient: {r: 0.14, g: 0.06, b: 0.2, a: 1}
-  forwardFog: {r: 0.12, g: 0.1, b: 0.06, a: 1}
-  frozenFog: {r: 0.06, g: 0.09, b: 0.18, a: 1}
-  reverseFog: {r: 0.1, g: 0.04, b: 0.14, a: 1}
-  transitionSpeed: 3
+  forwardColor: {r: 0.07, g: 0.06, b: 0.04, a: 1}
+  frozenColor: {r: 0.04, g: 0.06, b: 0.1, a: 1}
+  reverseColor: {r: 0.06, g: 0.03, b: 0.08, a: 1}
+  forwardAmbient: {r: 0.12, g: 0.1, b: 0.06, a: 1}
+  frozenAmbient: {r: 0.06, g: 0.08, b: 0.14, a: 1}
+  reverseAmbient: {r: 0.1, g: 0.05, b: 0.13, a: 1}
+  forwardFog: {r: 0.08, g: 0.07, b: 0.04, a: 1}
+  frozenFog: {r: 0.04, g: 0.06, b: 0.12, a: 1}
+  reverseFog: {r: 0.07, g: 0.03, b: 0.09, a: 1}
+  transitionDuration: 1.2
 --- !u!114 &1025498344
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13471,8 +13549,6 @@ MonoBehaviour:
   followSpeed: 10
   rotationSmoothSpeed: 12
   lookOffset: {x: 0, y: 1, z: 0}
-  mouseSensitivity: 2
-  stickSensitivity: 120
   pitchMin: 5
   pitchMax: 60
   startYaw: 0
@@ -25773,6 +25849,7 @@ MonoBehaviour:
   restartButton: {fileID: 0}
   howToPlayButton: {fileID: 0}
   controlsButton: {fileID: 0}
+  optionsButton: {fileID: 0}
   settingsButton: {fileID: 0}
   returnToHubButton: {fileID: 0}
   mainMenuButton: {fileID: 0}

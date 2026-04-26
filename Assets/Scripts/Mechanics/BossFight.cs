@@ -102,10 +102,11 @@ public class BossFight : MonoBehaviour
             if (!survived)
             {
                 StopBossFight();
-                if (BossPopup.Instance != null)
-                    BossPopup.Instance.ShowLose();
                 SoundManager.Instance?.PlayLose();
-                FindObjectOfType<FallDetection>().Respawn();
+
+                // Tile-based death → respawn at checkpoint (not game over)
+                FallDetection fd = FindObjectOfType<FallDetection>();
+                if (fd != null) fd.Respawn();
                 yield break;
             }
 

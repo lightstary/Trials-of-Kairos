@@ -7940,6 +7940,8 @@ MonoBehaviour:
   cosmicMid: {r: 0.059, g: 0.102, b: 0.188, a: 1}
   starfieldWhite: {r: 0.91, g: 0.918, b: 0.965, a: 1}
   vignetteOverlay: {fileID: 1737917980}
+  overlayAlpha: 0.045
+  transitionDuration: 1.2
 --- !u!114 &427237474
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7994,6 +7996,7 @@ MonoBehaviour:
   continueButton: {fileID: 0}
   trialSelectButton: {fileID: 1069406062}
   controlsButton: {fileID: 940813783}
+  optionsButton: {fileID: 0}
   quitButton: {fileID: 1837420775}
   buttonGroups:
   - {fileID: 1943002613}
@@ -17261,19 +17264,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6ee9e7f42ac2f6b4a95078f9ad34308b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gameOverPanel: {fileID: 275350819}
-  canvasGroup: {fileID: 998919383}
-  titleLabel: {fileID: 1998227107}
-  subtitleLabel: {fileID: 1204286508}
-  titleRect: {fileID: 1998227106}
-  quoteLabel: {fileID: 1115049729}
-  quoteAttribution: {fileID: 434100602}
-  retryButton: {fileID: 89565046}
-  returnToHubButton: {fileID: 1581295180}
-  fractureOverlay: {fileID: 1620586601}
-  redVignette: {fileID: 403107580}
-  hubSceneName: HubScene
-  fractureDuration: 0.8
   titleShakeAmount: 8
   titleShakeDuration: 0.1
   quoteDelay: 0.6
@@ -27767,16 +27757,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa7dba6e9233e004ca8087f4380c876a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forwardColor: {r: 0.9056604, g: 0.70652026, b: 0.47419012, a: 1}
-  frozenColor: {r: 0.5771182, g: 0.67703456, b: 0.9339623, a: 1}
-  reverseColor: {r: 0.7029036, g: 0.4405482, b: 0.9433962, a: 1}
-  forwardAmbient: {r: 0.18, g: 0.14, b: 0.08, a: 1}
-  frozenAmbient: {r: 0.08, g: 0.12, b: 0.22, a: 1}
-  reverseAmbient: {r: 0.14, g: 0.06, b: 0.2, a: 1}
-  forwardFog: {r: 0.12, g: 0.1, b: 0.06, a: 1}
-  frozenFog: {r: 0.06, g: 0.09, b: 0.18, a: 1}
-  reverseFog: {r: 0.1, g: 0.04, b: 0.14, a: 1}
-  transitionSpeed: 3
+  forwardColor: {r: 0.07, g: 0.06, b: 0.04, a: 1}
+  frozenColor: {r: 0.04, g: 0.06, b: 0.1, a: 1}
+  reverseColor: {r: 0.06, g: 0.03, b: 0.08, a: 1}
+  forwardAmbient: {r: 0.12, g: 0.1, b: 0.06, a: 1}
+  frozenAmbient: {r: 0.06, g: 0.08, b: 0.14, a: 1}
+  reverseAmbient: {r: 0.1, g: 0.05, b: 0.13, a: 1}
+  forwardFog: {r: 0.08, g: 0.07, b: 0.04, a: 1}
+  frozenFog: {r: 0.04, g: 0.06, b: 0.12, a: 1}
+  reverseFog: {r: 0.07, g: 0.03, b: 0.09, a: 1}
+  transitionDuration: 1.2
 --- !u!45 &1759268772
 Skybox:
   m_ObjectHideFlags: 0
@@ -27803,8 +27793,6 @@ MonoBehaviour:
   followSpeed: 10
   rotationSmoothSpeed: 12
   lookOffset: {x: 0, y: 1, z: 0}
-  mouseSensitivity: 2
-  stickSensitivity: 120
   pitchMin: 5
   pitchMax: 60
   startYaw: 0
@@ -32332,6 +32320,7 @@ MonoBehaviour:
   restartButton: {fileID: 0}
   howToPlayButton: {fileID: 0}
   controlsButton: {fileID: 0}
+  optionsButton: {fileID: 0}
   settingsButton: {fileID: 0}
   returnToHubButton: {fileID: 0}
   mainMenuButton: {fileID: 0}

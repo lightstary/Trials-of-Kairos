@@ -4,7 +4,8 @@ using UnityEngine.UI;
 
 /// <summary>
 /// Central broadcaster for time-state color changes.
-/// All UI elements register here to receive state color updates.
+/// Applies a barely-visible flat color wash over the entire screen via a UI Image.
+/// No shader, no gradient — just a uniform tint at very low alpha.
 /// </summary>
 public class TimeStateUIManager : MonoBehaviour
 {
@@ -22,11 +23,17 @@ public class TimeStateUIManager : MonoBehaviour
     public Color cosmicMid        = new Color(0.059f, 0.102f, 0.188f); // #0F1A30
     public Color starfieldWhite   = new Color(0.910f, 0.918f, 0.965f); // #E8EAF6
 
-    [Header("Vignette")]
+    [Header("Overlay")]
     [SerializeField] private Image vignetteOverlay;
 
-    private const float VIGNETTE_FADE_DURATION = 0.5f;
-    private const float VIGNETTE_MAX_ALPHA     = 0.15f;
+    [Tooltip("Alpha of the flat color wash. Keep very low (0.03–0.08) for subtlety.")]
+    [Range(0f, 0.3f)]
+    [SerializeField] private float overlayAlpha = 0.045f;
+
+    [Header("Transition")]
+    [Tooltip("How long (seconds) the color crossfade takes when switching states.")]
+    [Range(0.1f, 5f)]
+    [SerializeField] private float transitionDuration = 1.2f;
 
     /// <summary>Fired when the active state color changes.</summary>
     public event Action<Color> OnStateColorChanged;
@@ -34,8 +41,10 @@ public class TimeStateUIManager : MonoBehaviour
     /// <summary>Fired when the time state changes.</summary>
     public event Action<TimeState.State> OnTimeStateChanged;
 
-    private Color  currentVignetteTarget;
-    private float  vignetteTimer;
+    private Color _fromColor;
+    private Color _currentColor;
+    private Color _targetColor;
+    private float _fadeTimer;
 
     void Awake()
     {
@@ -57,18 +66,30 @@ public class TimeStateUIManager : MonoBehaviour
 
     void Start()
     {
+        // Ensure the overlay uses the default UI material (no custom shader)
+        if (vignetteOverlay != null)
+            vignetteOverlay.material = null;
+
         // Late-bind in case TimeState initialises after us
         if (TimeState.Instance != null)
         {
             TimeState.Instance.OnStateChanged -= HandleTimeStateChanged;
             TimeState.Instance.OnStateChanged += HandleTimeStateChanged;
-            HandleTimeStateChanged(TimeState.Instance.currentState);
+
+            // Initialise to the current state color with no transition
+            Color initial = GetStateColor(TimeState.Instance.currentState);
+            _fromColor    = initial;
+            _currentColor = initial;
+            _targetColor  = initial;
+            _fadeTimer    = transitionDuration; // already at target
         }
+
+        ApplyOverlayColor();
     }
 
     void Update()
     {
-        UpdateVignette();
+        UpdateOverlay();
     }
 
     /// <summary>Returns the color mapped to a given time state.</summary>
@@ -90,25 +111,43 @@ public class TimeStateUIManager : MonoBehaviour
         return GetStateColor(TimeState.Instance.currentState);
     }
 
+    // ── State change handling ───────────────────────────────────────────
+
     private void HandleTimeStateChanged(TimeState.State newState)
     {
         Color stateColor = GetStateColor(newState);
         OnStateColorChanged?.Invoke(stateColor);
         OnTimeStateChanged?.Invoke(newState);
 
-        if (vignetteOverlay != null)
-        {
-            currentVignetteTarget   = stateColor;
-            currentVignetteTarget.a = VIGNETTE_MAX_ALPHA;
-            vignetteTimer           = 0f;
-        }
+        // Snapshot current color as the starting point for this transition
+        _fromColor   = _currentColor;
+        _targetColor = stateColor;
+        _fadeTimer   = 0f;
     }
 
-    private void UpdateVignette()
+    // ── Per-frame overlay update ────────────────────────────────────────
+
+    private void UpdateOverlay()
     {
         if (vignetteOverlay == null) return;
-        vignetteTimer += Time.unscaledDeltaTime;
-        float t = Mathf.Clamp01(vignetteTimer / VIGNETTE_FADE_DURATION);
-        vignetteOverlay.color = Color.Lerp(vignetteOverlay.color, currentVignetteTarget, t);
+
+        // Advance the transition timer
+        _fadeTimer += Time.unscaledDeltaTime;
+        float t = Mathf.Clamp01(_fadeTimer / transitionDuration);
+
+        // Smooth ease-in-out curve (hermite) for a gentle crossfade
+        t = t * t * (3f - 2f * t);
+
+        // Proper from-to lerp so the curve shape is respected
+        _currentColor = Color.Lerp(_fromColor, _targetColor, t);
+
+        ApplyOverlayColor();
+    }
+
+    /// <summary>Sets the overlay Image color with the configured alpha.</summary>
+    private void ApplyOverlayColor()
+    {
+        if (vignetteOverlay == null) return;
+        vignetteOverlay.color = new Color(_currentColor.r, _currentColor.g, _currentColor.b, overlayAlpha);
     }
 }

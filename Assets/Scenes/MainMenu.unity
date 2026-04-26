@@ -877,6 +877,7 @@ MonoBehaviour:
   continueButton: {fileID: 1379511327}
   trialSelectButton: {fileID: 0}
   controlsButton: {fileID: 0}
+  optionsButton: {fileID: 0}
   quitButton: {fileID: 1328865777}
   buttonGroups:
   - {fileID: 2035375015}

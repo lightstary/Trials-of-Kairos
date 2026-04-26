@@ -1,77 +1,90 @@
 using UnityEngine;
-using UnityEngine.UI;
 using System.Collections;
-using System.Collections.Generic;
 
+/// <summary>
+/// Garden Boss (Boss B) — a pointer-vs-pointer duel on the time scale meter.
+///
+/// The boss has a pointer that moves toward one end of the meter each round.
+/// The player must set their time state to the OPPOSITE direction to contest
+/// and push back. When both pointers overlap, the boss pointer stops.
+///
+/// Frozen time pauses both pointers briefly before the boss resumes
+/// (the boss can ignore time constraints).
+///
+/// The fight is designed to last 20–30 seconds across several short rounds.
+/// Lose condition: boss pointer reaches either edge of the meter.
+/// Win condition: survive the full duration.
+/// </summary>
 public class BossBFight : MonoBehaviour
 {
     public static BossBFight Instance;
 
-    [Header("Boss Arena Tiles")]
-    public List<GameObject> allTiles = new List<GameObject>();
-
     [Header("Survival Settings")]
-    public float survivalTime = 30f;
-    public float tileAttackInterval = 6f;
+    [Tooltip("Total time (seconds) the player must survive to win.")]
+    public float survivalTime = 25f;
+
+    [Header("Round Settings")]
+    [Tooltip("Seconds between boss direction changes.")]
+    public float roundDuration = 4f;
+
+    [Tooltip("Minimum round duration as the fight progresses.")]
+    public float minRoundDuration = 2f;
+
+    [Tooltip("Seconds removed from round duration each round.")]
+    public float roundDurationShrink = 0.3f;
 
     [Header("Boss Pointer Settings")]
-    public float bossPointerStartSpeed = 0.5f;
-    public float bossPointerSpeedIncrease = 0.4f;
-    public float sameDirectionMultiplier = 1.6f;
+    [Tooltip("Starting movement speed of the boss pointer (units/sec).")]
+    public float bossStartSpeed = 1.8f;
 
-    [Header("Tile Attack Settings")]
-    public int safePairsCount = 2;
-    public float glowDuration = 3f;
-    public float blinkDuration = 2f;
-    public float fallDelay = 0.3f;
-    public float tileResetDelay = 3f;
+    [Tooltip("Speed increase each round.")]
+    public float bossSpeedIncrease = 0.35f;
 
-    [Header("Colors")]
-    public Color safeColor = new Color(0f, 1f, 0.3f);
-    public Color dangerColor = new Color(1f, 0.2f, 0f);
-    public Color defaultColor = new Color(1f, 1f, 1f);
+    [Tooltip("Speed multiplier when the player moves in the same direction as the boss.")]
+    public float sameDirectionMultiplier = 1.5f;
 
-    private float bossPointerValue = 0f;
-    private float bossPointerSpeed = 0f;
-    private int bossPointerDirection = 1;
-    private int attackCount = 0;
-    private bool _isContesting = false;
+    [Tooltip("How much the boss pointer is slowed when contested (0 = full stop, 0.5 = half speed).")]
+    public float contestSlowFactor = 0f;
 
-    public bool bossActive = false;
-    private float survivalTimer = 0f;
+    [Header("Frozen Time")]
+    [Tooltip("How long frozen time pauses both pointers before the boss resumes.")]
+    public float frozenPauseDuration = 1.5f;
+
+    // ── Runtime state ───────────────────────────────────────────────────
+    private float _bossPointerValue;
+    private float _bossSpeed;
+    private int _bossDirection = 1; // +1 = toward max, -1 = toward min
+    private int _roundIndex;
+    private float _survivalTimer;
+    private float _currentRoundDuration;
+
+    private bool _isContesting;
+    private bool _frozenPauseActive;
+    private float _frozenPauseTimer;
+    private bool _wasFrozenLastFrame;
+
+    public bool bossActive { get; private set; }
 
     /// <summary>True when the player is successfully opposing the boss pointer.</summary>
     public bool IsContesting => _isContesting;
 
     /// <summary>Current boss pointer direction (+1 or -1).</summary>
-    public int BossDirection => bossPointerDirection;
+    public int BossDirection => _bossDirection;
 
-    /// <summary>Event fired when contesting state changes. True = player is blocking the boss.</summary>
+    /// <summary>Event fired when contesting state changes.</summary>
     public event System.Action<bool> OnContestingChanged;
 
-    private Renderer tileRenderer;
-    private TimeScaleMeter _meter;
-    private Dictionary<GameObject, Vector3> originalPositions = new Dictionary<GameObject, Vector3>();
-    private List<GameObject> safeTiles = new List<GameObject>();
-    private List<GameObject> dangerTiles = new List<GameObject>();
-
     // Tutorial glow
-    private static GameObject _bossPointerGlow;
-    internal static bool _showPointerGlow = false;
-
-    /// <summary>Returns the current list of safe tiles for external queries.</summary>
-    public List<GameObject> GetSafeTiles() => safeTiles;
+    internal static bool _showPointerGlow;
 
     /// <summary>Shows or hides the tutorial glow ring around the boss pointer.</summary>
     public static void SetPointerGlowVisible(bool visible) => _showPointerGlow = visible;
 
+    private TimeScaleMeter _meter;
+
     void Awake()
     {
         Instance = this;
-
-        foreach (GameObject tile in allTiles)
-            if (tile != null)
-                originalPositions[tile] = tile.transform.position;
     }
 
     void Start()
@@ -83,93 +96,55 @@ public class BossBFight : MonoBehaviour
     {
         if (!bossActive) return;
 
-        survivalTimer += Time.deltaTime;
+        _survivalTimer += Time.deltaTime;
+
+        // Check win
+        if (_survivalTimer >= survivalTime)
+        {
+            WinBossFight();
+            return;
+        }
+
+        UpdateFrozenPause();
         UpdateBossPointer();
         CheckBossPointerKill();
     }
 
-    void UpdateBossPointer()
-    {
-        if (TimeScaleLogic.Instance == null) return;
-        if (TimeState.Instance == null) return;
+    // ── Public API ──────────────────────────────────────────────────────
 
-        float minV = TimeScaleLogic.Instance.minValue;
-        float maxV = TimeScaleLogic.Instance.maxValue;
-
-        bool playerForward = TimeState.Instance.currentState == TimeState.State.Forward;
-        bool playerReverse = TimeState.Instance.currentState == TimeState.State.Reverse;
-        bool bossGoingForward = bossPointerDirection == 1;
-        bool bossGoingReverse = bossPointerDirection == -1;
-
-        bool contesting = (playerReverse && bossGoingForward) ||
-                          (playerForward && bossGoingReverse);
-
-        bool sameDirection = (playerForward && bossGoingForward) ||
-                             (playerReverse && bossGoingReverse);
-
-        // Fire event on contesting state change
-        if (contesting != _isContesting)
-        {
-            _isContesting = contesting;
-            OnContestingChanged?.Invoke(_isContesting);
-        }
-
-        if (contesting)
-        {
-            // Player fully neutralizes the boss — no movement
-        }
-        else
-        {
-            float speedMod = sameDirection ? sameDirectionMultiplier : 1f;
-            bossPointerValue += bossPointerDirection * bossPointerSpeed * speedMod * Time.deltaTime;
-            bossPointerValue = Mathf.Clamp(bossPointerValue, minV, maxV);
-        }
-
-        if (_meter != null)
-            _meter.SetBossPointer(bossPointerValue, minV, maxV, _isContesting);
-    }
-
-    void CheckBossPointerKill()
-    {
-        if (TimeScaleLogic.Instance == null) return;
-
-        float minV = TimeScaleLogic.Instance.minValue;
-        float maxV = TimeScaleLogic.Instance.maxValue;
-
-        if (bossPointerValue >= maxV || bossPointerValue <= minV)
-            LoseBossFight();
-    }
-
+    /// <summary>Starts the boss fight.</summary>
     public void StartBossFight()
     {
         if (bossActive) return;
         bossActive = true;
-        survivalTimer = 0f;
-        attackCount = 0;
-        bossPointerValue = 0f;
-        bossPointerSpeed = bossPointerStartSpeed;
-        bossPointerDirection = 1;
+        _survivalTimer = 0f;
+        _roundIndex = 0;
+        _bossPointerValue = 0f;
+        _bossSpeed = bossStartSpeed;
+        _bossDirection = Random.value > 0.5f ? 1 : -1;
+        _currentRoundDuration = roundDuration;
+        _frozenPauseActive = false;
+        _frozenPauseTimer = 0f;
+        _wasFrozenLastFrame = false;
+        _isContesting = false;
 
         if (HUDController.Instance != null)
             HUDController.Instance.SetBossObjective(0, 1);
 
         SoundManager.Instance?.PlayBossMusic();
 
-        StartCoroutine(RunBossFight());
+        StartCoroutine(RunRounds());
     }
 
+    /// <summary>Stops the boss fight and resets state.</summary>
     public void StopBossFight()
     {
         StopAllCoroutines();
         bossActive = false;
-        survivalTimer = 0f;
-        attackCount = 0;
-        bossPointerValue = 0f;
-        bossPointerSpeed = bossPointerStartSpeed;
-
-        ResetArena();
-        safeTiles.Clear();
-        dangerTiles.Clear();
+        _survivalTimer = 0f;
+        _bossPointerValue = 0f;
+        _bossSpeed = bossStartSpeed;
+        _frozenPauseActive = false;
 
         if (TimeScaleLogic.Instance != null)
             TimeScaleLogic.Instance.ResetMeter();
@@ -180,200 +155,154 @@ public class BossBFight : MonoBehaviour
         SoundManager.Instance?.PlayGameMusic();
     }
 
-    IEnumerator RunBossFight()
+    // ── Core loop ───────────────────────────────────────────────────────
+
+    /// <summary>Coroutine that changes boss direction every round.</summary>
+    private IEnumerator RunRounds()
     {
-        float nextAttackTime = tileAttackInterval;
-
-        while (survivalTimer < survivalTime)
+        while (bossActive)
         {
-            if (HUDController.Instance != null)
-                HUDController.Instance.SetBossObjective(0, 1);
+            yield return new WaitForSeconds(_currentRoundDuration);
 
-            if (survivalTimer >= nextAttackTime)
-            {
-                nextAttackTime += tileAttackInterval;
-                yield return StartCoroutine(TileAttack());
-            }
+            if (!bossActive) yield break;
 
-            yield return null;
-        }
+            // New round: flip direction, increase speed, shorten round
+            _roundIndex++;
+            _bossDirection *= -1;
+            _bossSpeed += bossSpeedIncrease;
+            _currentRoundDuration = Mathf.Max(minRoundDuration, _currentRoundDuration - roundDurationShrink);
 
-        WinBossFight();
-    }
-
-    IEnumerator TileAttack()
-    {
-        attackCount++;
-
-        bossPointerDirection *= -1;
-        bossPointerSpeed += bossPointerSpeedIncrease;
-
-        safeTiles.Clear();
-        dangerTiles.Clear();
-
-        List<GameObject> activeTiles = new List<GameObject>();
-        foreach (GameObject tile in allTiles)
-            if (tile != null && tile.activeSelf)
-                activeTiles.Add(tile);
-
-        Shuffle(activeTiles);
-
-        List<GameObject> chosenSafeTiles = new List<GameObject>();
-
-        for (int p = 0; p < safePairsCount; p++)
-        {
-            if (activeTiles.Count == 0) break;
-
-            GameObject anchor = activeTiles[0];
-            activeTiles.RemoveAt(0);
-            chosenSafeTiles.Add(anchor);
-
-            GameObject neighbor = null;
-            float closestDist = float.MaxValue;
-
-            foreach (GameObject candidate in activeTiles)
-            {
-                float dist = Vector3.Distance(anchor.transform.position, candidate.transform.position);
-                if (dist < closestDist)
-                {
-                    closestDist = dist;
-                    neighbor = candidate;
-                }
-            }
-
-            if (neighbor != null)
-            {
-                chosenSafeTiles.Add(neighbor);
-                activeTiles.Remove(neighbor);
-            }
-        }
-
-        foreach (GameObject tile in allTiles)
-        {
-            if (tile == null || !tile.activeSelf) continue;
-            if (chosenSafeTiles.Contains(tile))
-                safeTiles.Add(tile);
-            else
-                dangerTiles.Add(tile);
-        }
-
-        foreach (GameObject tile in safeTiles)
-        {
-            tileRenderer = tile.GetComponent<Renderer>();
-            if (tileRenderer != null)
-                tileRenderer.materials[1].SetColor("_EmissionColor", safeColor * 4);
-        }
-
-        yield return new WaitForSeconds(glowDuration);
-
-        yield return StartCoroutine(BlinkTiles(dangerTiles));
-
-        foreach (GameObject tile in dangerTiles)
-        {
-            StartCoroutine(DropTile(tile));
-            yield return new WaitForSeconds(fallDelay);
-        }
-
-        yield return new WaitForSeconds(tileResetDelay);
-        ResetArena();
-    }
-
-    IEnumerator BlinkTiles(List<GameObject> tiles)
-    {
-        float elapsed = 0f;
-        bool colorToggle = false;
-
-        while (elapsed < blinkDuration)
-        {
-            foreach (GameObject tile in tiles)
-            {
-                tileRenderer = tile.GetComponent<Renderer>();
-                if (tileRenderer != null)
-                    tileRenderer.materials[1].SetColor("_EmissionColor",
-                        colorToggle ? dangerColor : defaultColor * 3);
-            }
-            colorToggle = !colorToggle;
-            elapsed += 0.3f;
-            yield return new WaitForSeconds(0.3f);
-        }
-
-        foreach (GameObject tile in tiles)
-        {
-            tileRenderer = tile.GetComponent<Renderer>();
-            if (tileRenderer != null)
-                tileRenderer.materials[1].SetColor("_EmissionColor", dangerColor * 3);
+            Debug.Log($"[BossB] Round {_roundIndex}: boss now pushing {(_bossDirection > 0 ? "FORWARD" : "REVERSE")}, speed={_bossSpeed:F1}");
         }
     }
 
-    IEnumerator DropTile(GameObject tile)
+    /// <summary>Handles the frozen-time pause mechanic.</summary>
+    private void UpdateFrozenPause()
     {
-        if (tile == null) yield break;
+        if (TimeState.Instance == null) return;
 
-        // Shake before falling to warn the player
-        float shakeTime = 0.9f;
-        float shakeElapsed = 0f;
-        Vector3 originalPos = tile.transform.position;
-        float shakeIntensity = 0.05f;
-        float shakeFrequency = 9f;
+        bool isFrozen = TimeState.Instance.currentState == TimeState.State.Frozen;
 
-        while (shakeElapsed < shakeTime)
+        // Detect transition INTO frozen state → start pause
+        if (isFrozen && !_wasFrozenLastFrame)
         {
-            shakeElapsed += Time.deltaTime;
-            float t = shakeElapsed / shakeTime;
-            float ramp = t * t;
-            float currentIntensity = shakeIntensity * (0.3f + ramp * 0.7f);
-            float wave = Mathf.Sin(shakeElapsed * shakeFrequency);
-            Vector3 offset = new Vector3(
-                wave * currentIntensity,
-                Mathf.Sin(shakeElapsed * shakeFrequency * 0.7f) * currentIntensity * 0.4f,
-                Mathf.Cos(shakeElapsed * shakeFrequency * 0.9f) * currentIntensity
-            );
-            tile.transform.position = originalPos + offset;
-            yield return null;
-        }
-        tile.transform.position = originalPos;
-
-        float elapsed = 0f;
-        float dropTime = 0.5f;
-        Vector3 startPos = originalPos;
-        Vector3 endPos = startPos + Vector3.down * 10f;
-
-        while (elapsed < dropTime)
-        {
-            elapsed += Time.deltaTime;
-            tile.transform.position = Vector3.Lerp(startPos, endPos, elapsed / dropTime);
-            yield return null;
+            _frozenPauseActive = true;
+            _frozenPauseTimer = frozenPauseDuration;
         }
 
-        tile.SetActive(false);
-    }
+        _wasFrozenLastFrame = isFrozen;
 
-    void ResetArena()
-    {
-        foreach (GameObject tile in allTiles)
+        // Tick down the frozen pause
+        if (_frozenPauseActive)
         {
-            if (tile == null) continue;
-            tile.SetActive(true);
-            tile.transform.position = originalPositions[tile];
-
-            tileRenderer = tile.GetComponent<Renderer>();
-            if (tileRenderer != null)
-                tileRenderer.materials[1].SetColor("_EmissionColor", defaultColor * 2);
+            _frozenPauseTimer -= Time.deltaTime;
+            if (_frozenPauseTimer <= 0f)
+                _frozenPauseActive = false;
         }
     }
 
-    void LoseBossFight()
+    /// <summary>Moves the boss pointer based on player's time state.</summary>
+    private void UpdateBossPointer()
+    {
+        if (TimeScaleLogic.Instance == null) return;
+        if (TimeState.Instance == null) return;
+
+        float minV = TimeScaleLogic.Instance.minValue;
+        float maxV = TimeScaleLogic.Instance.maxValue;
+
+        // During frozen pause, both pointers are frozen — no movement
+        if (_frozenPauseActive)
+        {
+            UpdateMeter(minV, maxV);
+            return;
+        }
+
+        bool playerForward = TimeState.Instance.currentState == TimeState.State.Forward;
+        bool playerReverse = TimeState.Instance.currentState == TimeState.State.Reverse;
+        bool playerFrozen  = TimeState.Instance.currentState == TimeState.State.Frozen;
+        bool bossGoingForward = _bossDirection > 0;
+
+        // Determine contestation: player opposes boss direction
+        bool contesting = (playerReverse && bossGoingForward) ||
+                          (playerForward && !bossGoingForward);
+
+        bool sameDirection = (playerForward && bossGoingForward) ||
+                             (playerReverse && !bossGoingForward);
+
+        // Fire event on contesting state change
+        if (contesting != _isContesting)
+        {
+            _isContesting = contesting;
+            OnContestingChanged?.Invoke(_isContesting);
+        }
+
+        // Move boss pointer
+        if (contesting)
+        {
+            // Player is opposing — boss is slowed or stopped
+            float slowedSpeed = _bossSpeed * contestSlowFactor;
+            _bossPointerValue += _bossDirection * slowedSpeed * Time.deltaTime;
+        }
+        else if (playerFrozen && !_frozenPauseActive)
+        {
+            // Frozen but pause expired — boss ignores frozen and moves normally
+            _bossPointerValue += _bossDirection * _bossSpeed * Time.deltaTime;
+        }
+        else if (sameDirection)
+        {
+            // Player going same way as boss — boss moves faster
+            _bossPointerValue += _bossDirection * _bossSpeed * sameDirectionMultiplier * Time.deltaTime;
+        }
+        else
+        {
+            // Normal movement
+            _bossPointerValue += _bossDirection * _bossSpeed * Time.deltaTime;
+        }
+
+        _bossPointerValue = Mathf.Clamp(_bossPointerValue, minV, maxV);
+
+        UpdateMeter(minV, maxV);
+    }
+
+    /// <summary>Updates the meter display.</summary>
+    private void UpdateMeter(float minV, float maxV)
+    {
+        if (_meter != null)
+            _meter.SetBossPointer(_bossPointerValue, minV, maxV, _isContesting);
+    }
+
+    /// <summary>Checks if the boss pointer reached the edges.</summary>
+    private void CheckBossPointerKill()
+    {
+        if (TimeScaleLogic.Instance == null) return;
+
+        float minV = TimeScaleLogic.Instance.minValue;
+        float maxV = TimeScaleLogic.Instance.maxValue;
+
+        if (_bossPointerValue >= maxV || _bossPointerValue <= minV)
+            LoseBossFight();
+    }
+
+    // ── Outcomes ────────────────────────────────────────────────────────
+
+    private void LoseBossFight()
     {
         StopBossFight();
-
-        if (BossPopup.Instance != null)
-            BossPopup.Instance.ShowLose();
-
         SoundManager.Instance?.PlayLose();
-        FindObjectOfType<FallDetection>()?.Respawn();
+
+        GameOverScreenController gosc = FindObjectOfType<GameOverScreenController>(true);
+        if (gosc != null)
+        {
+            Time.timeScale = 0f;
+            gosc.Show("BEATEN BY TIME");
+        }
+        else
+        {
+            FindObjectOfType<FallDetection>()?.Respawn();
+        }
     }
 
-    void WinBossFight()
+    private void WinBossFight()
     {
         bossActive = false;
 
@@ -383,22 +312,12 @@ public class BossBFight : MonoBehaviour
         SoundManager.Instance?.PlayWin();
         Time.timeScale = 0f;
 
+        float elapsed = Time.realtimeSinceStartup - MainMenuController.GameplayStartRealtime;
         WinScreenController winScreen = FindObjectOfType<WinScreenController>(true);
         if (winScreen != null)
         {
             winScreen.gameObject.SetActive(true);
-            winScreen.Show("THE GARDEN", 0f, 1, false, true, true, true);
-        }
-    }
-
-    void Shuffle<T>(List<T> list)
-    {
-        for (int i = list.Count - 1; i > 0; i--)
-        {
-            int j = Random.Range(0, i + 1);
-            T temp = list[i];
-            list[i] = list[j];
-            list[j] = temp;
+            winScreen.Show("THE GARDEN", elapsed, 1, false, true, true, true);
         }
     }
 }

@@ -48,6 +48,19 @@ public class UIStickCursor : MonoBehaviour
     /// Used by menus that manage their own D-pad navigation.</summary>
     public static bool PreserveSelection { get; set; }
 
+    /// <summary>True when the mouse is the active input mode.</summary>
+    public static bool IsMouseMode { get; set; }
+
+    /// <summary>Frames remaining to ignore mouse position changes (e.g. after resolution switch).</summary>
+    private static int _ignoreMouseFrames;
+
+    /// <summary>Call after a resolution or display-mode change to prevent the cursor
+    /// from snapping to center when Unity resets Input.mousePosition.</summary>
+    public static void SuppressMouseSwitch(int frames = 3)
+    {
+        _ignoreMouseFrames = frames;
+    }
+
     // ── Private ──────────────────────────────────────────────────────────
     private RectTransform   _root;
     private Image           _coreImg;
@@ -78,9 +91,6 @@ public class UIStickCursor : MonoBehaviour
     // Mouse tracking
     private Vector2         _lastMouseScreenPos;
     private float           _lastMouseMoveTime = -100f;
-
-    /// <summary>True when the mouse is the active cursor input.</summary>
-    public static bool IsMouseMode { get; private set; }
 
     // ── Lifecycle ────────────────────────────────────────────────────────
 
@@ -227,7 +237,7 @@ public class UIStickCursor : MonoBehaviour
                               Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.DownArrow) ||
                               Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.RightArrow);
 
-        if (!keyboardMoving && !UIGamepadNavigator.SuppressInput)
+        if (!keyboardMoving)
         {
             float h = Input.GetAxisRaw("Horizontal");
             float v = Input.GetAxisRaw("Vertical");
@@ -245,7 +255,18 @@ public class UIStickCursor : MonoBehaviour
 
         // ── Read mouse ───────────────────────────────────────────────────
         Vector2 mouseScreen = (Vector2)Input.mousePosition;
-        bool mouseMoved = (mouseScreen - _lastMouseScreenPos).sqrMagnitude > 4f;
+        bool mouseMoved;
+        if (_ignoreMouseFrames > 0)
+        {
+            // After a resolution change, Input.mousePosition jumps — ignore it
+            _ignoreMouseFrames--;
+            mouseMoved = false;
+            _lastMouseScreenPos = mouseScreen;
+        }
+        else
+        {
+            mouseMoved = (mouseScreen - _lastMouseScreenPos).sqrMagnitude > 4f;
+        }
         _lastMouseScreenPos = mouseScreen;
 
         // ── Mode switching: stick vs mouse vs D-pad ──────────────────────

@@ -18,7 +18,7 @@ public class PlayerMovement : MonoBehaviour
     private float prevH = 0f;
     private float prevV = 0f;
 
-    private float inputBufferTime = 0.8f;
+    private const float INPUT_BUFFER_TIME = 0.15f;
     private float inputBufferTimer = 0f;
     private Vector3 bufferedInput = Vector3.zero;
 
@@ -41,24 +41,29 @@ public class PlayerMovement : MonoBehaviour
         // ── Read raw input as 2D intent ─────────────────────────────────
         Vector2 rawIntent = Vector2.zero;
 
+        // Read current axis values (used for both keyboard sync and stick detection)
+        float h = Input.GetAxisRaw("Horizontal");
+        float v = Input.GetAxisRaw("Vertical");
+
         if      (Input.GetKeyDown(KeyCode.UpArrow)    || Input.GetKeyDown(KeyCode.W)) rawIntent = Vector2.up;
         else if (Input.GetKeyDown(KeyCode.DownArrow)   || Input.GetKeyDown(KeyCode.S)) rawIntent = Vector2.down;
         else if (Input.GetKeyDown(KeyCode.LeftArrow)   || Input.GetKeyDown(KeyCode.A)) rawIntent = Vector2.left;
         else if (Input.GetKeyDown(KeyCode.RightArrow)  || Input.GetKeyDown(KeyCode.D)) rawIntent = Vector2.right;
         else
         {
-            float h = Input.GetAxis("Horizontal");
-            float v = Input.GetAxis("Vertical");
+            // Analog stick threshold crossing (controller only path in practice)
             float threshold = AxisThreshold;
 
             if      (v >  threshold && prevV <=  threshold) rawIntent = Vector2.up;
             else if (v < -threshold && prevV >= -threshold) rawIntent = Vector2.down;
             else if (h < -threshold && prevH >= -threshold) rawIntent = Vector2.left;
             else if (h >  threshold && prevH <=  threshold) rawIntent = Vector2.right;
-
-            prevH = h;
-            prevV = v;
         }
+
+        // Always sync axis tracking to prevent the analog threshold-crossing
+        // from re-firing after a GetKeyDown already consumed the input.
+        prevH = h;
+        prevV = v;
 
         // ── Resolve intent relative to gameplay camera ──────────────────
         if (rawIntent != Vector2.zero)
@@ -69,7 +74,7 @@ public class PlayerMovement : MonoBehaviour
         if (input != Vector3.zero)
         {
             bufferedInput = input;
-            inputBufferTimer = inputBufferTime;
+            inputBufferTimer = INPUT_BUFFER_TIME;
         }
 
         if (inputBufferTimer > 0f)

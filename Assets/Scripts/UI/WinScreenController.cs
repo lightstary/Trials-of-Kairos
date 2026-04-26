@@ -94,6 +94,9 @@ public class WinScreenController : MonoBehaviour
         if (nextTrialButton != null)
             nextTrialButton.gameObject.SetActive(!string.IsNullOrEmpty(nextScene));
 
+        // Re-layout buttons after visibility change
+        LayoutButtons();
+
         // Session-only best time — check if this is a new record
         string key = BestTimeTracker.KeyForScene(SceneManager.GetActiveScene().name);
         float previousBest = -1f;
@@ -124,6 +127,9 @@ public class WinScreenController : MonoBehaviour
 
         if (nextTrialButton != null)
             nextTrialButton.gameObject.SetActive(!string.IsNullOrEmpty(GetNextTrialScene()));
+
+        // Re-layout buttons after visibility change
+        LayoutButtons();
 
         string key = BestTimeTracker.KeyForScene(SceneManager.GetActiveScene().name);
         if (key != null) BestTimeTracker.MarkComplete(key);
@@ -187,10 +193,6 @@ public class WinScreenController : MonoBehaviour
         retryRT.anchorMax = new Vector2(0.5f, 0f);
         retryRT.pivot = new Vector2(0.5f, 0f);
         retryRT.sizeDelta = new Vector2(190f, 50f);
-        // Position depends on whether Next Trial is visible (3 vs 2 buttons)
-        bool hasNextTrial = !string.IsNullOrEmpty(GetNextTrialScene());
-        float retryX = hasNextTrial ? -230f : -120f;
-        retryRT.anchoredPosition = new Vector2(retryX, 50f);
 
         Image retryImg = retryGO.AddComponent<Image>();
         retryImg.color = BTN_BG;
@@ -222,6 +224,47 @@ public class WinScreenController : MonoBehaviour
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.raycastTarget = false;
         CinzelFontHelper.Apply(tmp, true);
+
+        // Position all buttons evenly centered
+        LayoutButtons();
+    }
+
+    /// <summary>
+    /// Repositions Retry, Next Trial, and Trial Selection buttons so they
+    /// are evenly spaced and centered horizontally in the panel.
+    /// </summary>
+    private void LayoutButtons()
+    {
+        const float BTN_WIDTH = 190f;
+        const float BTN_SPACING = 30f;
+        const float BTN_Y = 50f;
+
+        // Gather active buttons in display order
+        var activeButtons = new System.Collections.Generic.List<RectTransform>();
+
+        if (_retryButton != null)
+            activeButtons.Add(_retryButton.GetComponent<RectTransform>());
+        if (nextTrialButton != null && nextTrialButton.gameObject.activeSelf)
+            activeButtons.Add(nextTrialButton.GetComponent<RectTransform>());
+        if (returnToHubButton != null)
+            activeButtons.Add(returnToHubButton.GetComponent<RectTransform>());
+
+        int count = activeButtons.Count;
+        if (count == 0) return;
+
+        // Total width of all buttons + spacing between them
+        float totalWidth = count * BTN_WIDTH + (count - 1) * BTN_SPACING;
+        float startX = -totalWidth * 0.5f + BTN_WIDTH * 0.5f;
+
+        for (int i = 0; i < count; i++)
+        {
+            RectTransform rt = activeButtons[i];
+            rt.anchorMin = new Vector2(0.5f, 0f);
+            rt.anchorMax = new Vector2(0.5f, 0f);
+            rt.pivot = new Vector2(0.5f, 0f);
+            rt.sizeDelta = new Vector2(BTN_WIDTH, 50f);
+            rt.anchoredPosition = new Vector2(startX + i * (BTN_WIDTH + BTN_SPACING), BTN_Y);
+        }
     }
 
     /// <summary>Selects a button so the Xbox controller can navigate the win screen.</summary>
@@ -465,6 +508,7 @@ public class WinScreenController : MonoBehaviour
     {
         Debug.Log("[WinScreen] RetryTrial — reloading current scene.");
         Time.timeScale = 1f;
+        MainMenuController.RequestRestartTrialOnLoad();
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 

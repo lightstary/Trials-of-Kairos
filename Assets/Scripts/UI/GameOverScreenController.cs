@@ -5,177 +5,431 @@ using UnityEngine.SceneManagement;
 using TMPro;
 
 /// <summary>
-/// Game Over screen — fracture animation, red vignette, Chronos quote.
+/// Game Over screen — mirrors the WinScreen layout with a red/danger theme.
+/// Builds its own UI at runtime under this RectTransform for consistent layout.
 /// </summary>
 public class GameOverScreenController : MonoBehaviour
 {
-    [Header("Panel")]
-    [SerializeField] private GameObject      gameOverPanel;
-    [SerializeField] private CanvasGroup     canvasGroup;
-
-    [Header("Title")]
-    [SerializeField] private TextMeshProUGUI titleLabel;
-    [SerializeField] private TextMeshProUGUI subtitleLabel;
-    [SerializeField] private RectTransform   titleRect;
-
-    [Header("Quote")]
-    [SerializeField] private TextMeshProUGUI quoteLabel;
-    [SerializeField] private TextMeshProUGUI quoteAttribution;
-
-    [Header("Buttons")]
-    [SerializeField] private Button retryButton;
-    [SerializeField] private Button returnToHubButton;
-
-    [Header("Visual")]
-    [SerializeField] private Image fractureOverlay;
-    [SerializeField] private Image redVignette;
-
     [Header("Config")]
-    #pragma warning disable CS0414 // Reserved for Inspector configuration
-    [SerializeField] private string hubSceneName       = "HubScene";
-    #pragma warning restore CS0414
-    [SerializeField] private float  fractureDuration   = 0.8f;
-    [SerializeField] private float  titleShakeAmount   = 8f;
-    [SerializeField] private float  titleShakeDuration = 0.1f;
-    [SerializeField] private float  quoteDelay         = 0.6f;
+    [SerializeField] private float titleShakeAmount   = 8f;
+    [SerializeField] private float titleShakeDuration = 0.12f;
+    [SerializeField] private float quoteDelay         = 0.6f;
 
+    // ── Quotes ──────────────────────────────────────────────────────
     private static readonly string[] QUOTES = {
-        "The hourglass that falters shall be\nswallowed by the void between seconds.",
-        "Time does not mourn those\nwho fail to hold its weight.",
-        "You crumble as all mortals do—\nbeneath the gaze of eternity.",
-        "The sands care nothing\nfor your intentions.",
-        "Every second you wasted\nwas a gift I shall not repeat."
+        "There was a version of you that succeeded.\nYou are not it.",
+        "This timeline was permitted.\nIt is now erased.",
+        "You reached an ending that should not exist.",
+        "I allowed this outcome once.\nI will not allow it again.",
+        "You did not run out of time.\nYou misused it.",
+        "This path collapses with you.",
+        "You mistake repetition for progress.",
+        "Every attempt leaves less of you behind.",
+        "I do not punish failure. I remove it.",
+        "You were close. That is irrelevant.",
+        "What you call effort, I call delay.",
+        "You are not fighting me.\nYou are failing yourself.",
+        "I have seen you succeed.\nThis is not that version.",
+        "You insist on becoming\nthe outcome that ends here.",
+        "I do not wait. I conclude.",
+        "This was avoidable.\nYou proved it inevitable.",
+        "You are arriving later each time.",
+        "The future is narrowing around you.",
+        "There are fewer versions of you left.",
+        "You are being edited.",
+        "This moment will not remember you."
     };
 
-    private const string TITLE    = "TEMPORAL  FAILURE";
-    private const string SUBTITLE = "CHRONOS RECLAIMS YOU";
+    private const string TITLE = "TEMPORAL  FAILURE";
 
-    void Start()
-    {
-        if (retryButton       != null) retryButton.onClick.AddListener(RetryTrial);
-        if (returnToHubButton != null) returnToHubButton.onClick.AddListener(ReturnToHub);
-        if (gameOverPanel     != null) gameOverPanel.SetActive(false);
-    }
+    // ── Theme ───────────────────────────────────────────────────────
+    private static readonly Color PANEL_BG     = new Color(0.059f, 0.102f, 0.188f, 0.97f);
+    private static readonly Color TITLE_COL    = new Color(0.85f, 0.20f, 0.15f, 1f);
+    private static readonly Color SUBTITLE_COL = new Color(0.91f, 0.918f, 0.965f, 0.7f);
+    // Quote + attrib: golden amber (matching mockup)
+    private static readonly Color QUOTE_COL    = new Color(0.92f, 0.75f, 0.35f, 0.9f);
+    private static readonly Color ATTRIB_COL   = new Color(0.85f, 0.65f, 0.30f, 0.85f);
+    // Buttons
+    private static readonly Color RETRY_BG     = new Color(0.85f, 0.20f, 0.15f, 1f);
+    private static readonly Color RETRY_HOVER  = new Color(1f, 0.35f, 0.25f, 1f);
+    private static readonly Color RETRY_PRESS  = new Color(0.6f, 0.12f, 0.08f, 1f);
+    private static readonly Color RETURN_BG    = new Color(0.08f, 0.12f, 0.22f, 1f);
+    private static readonly Color BTN_TEXT     = new Color(0.91f, 0.918f, 0.965f, 1f);
+    // Overlay
+    private static readonly Color OVERLAY_COL  = new Color(0.7f, 0.05f, 0.05f, 0f);
+
+    // ── Layout ──────────────────────────────────────────────────────
+    private const float PANEL_W = 700f;
+    private const float PANEL_H = 500f;
+    private const float BTN_W   = 190f;
+    private const float BTN_H   = 50f;
+    private const float BTN_Y   = 50f;
+    private const float BTN_GAP = 30f;
+
+    // ── Runtime refs ────────────────────────────────────────────────
+    private GameObject      _panel;
+    private CanvasGroup     _panelCG;
+    private RectTransform   _titleRT;
+    private TextMeshProUGUI _titleTMP;
+    private TextMeshProUGUI _subtitleTMP;
+    private TextMeshProUGUI _quoteTMP;
+    private TextMeshProUGUI _attribTMP;
+    private Image           _overlay;
+    private bool            _built;
+
+    /// <summary>True while the game over screen is visible.</summary>
+    public static bool IsOpen { get; private set; }
 
     /// <summary>Shows the game over screen.</summary>
     public void Show(string customSubtitle = null)
     {
-        if (gameOverPanel != null) gameOverPanel.SetActive(true);
+        gameObject.SetActive(true);
+        IsOpen = true;
+        EnsureUI();
+        HideGameplayUI();
+
+        _panel.SetActive(true);
         StartCoroutine(Animate(customSubtitle));
     }
 
+    // ================================================================
+    //  UI CONSTRUCTION
+    // ================================================================
+
+    private void EnsureUI()
+    {
+        if (_built) return;
+        _built = true;
+
+        // Deactivate old scene-placed children
+        foreach (Transform child in transform)
+            child.gameObject.SetActive(false);
+
+        // Ensure raycasts pass through to buttons
+        CanvasGroup oldCG = GetComponent<CanvasGroup>();
+        if (oldCG != null) { oldCG.alpha = 1f; oldCG.blocksRaycasts = true; oldCG.interactable = true; }
+
+        Transform root = transform;
+
+        // Full-screen red glow overlay
+        GameObject overlayGO = MakeRect("LossOverlay", root,
+            Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+        _overlay = overlayGO.AddComponent<Image>();
+        _overlay.color = OVERLAY_COL;
+        _overlay.raycastTarget = false;
+
+        // Panel — 700x500 centered
+        _panel = MakeRect("LossPanel", root,
+            new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+            Vector2.zero, Vector2.zero);
+        _panel.GetComponent<RectTransform>().sizeDelta = new Vector2(PANEL_W, PANEL_H);
+
+        Image bg = _panel.AddComponent<Image>();
+        bg.color = PANEL_BG;
+        bg.raycastTarget = true;
+
+        _panelCG = _panel.AddComponent<CanvasGroup>();
+        _panelCG.alpha = 0f;
+
+        // Title — single line, 42pt
+        _titleTMP = MakeLabel("LossTitle", _panel.transform,
+            new Vector2(0f, 1f), new Vector2(1f, 1f),
+            new Vector2(20f, -80f), new Vector2(-20f, -20f),
+            42f, true, TITLE_COL, TextAlignmentOptions.Center);
+        _titleTMP.characterSpacing = 6f;
+        _titleTMP.enableWordWrapping = false;
+        _titleTMP.overflowMode = TextOverflowModes.Overflow;
+        _titleRT = _titleTMP.GetComponent<RectTransform>();
+
+        // Subtitle — below title
+        _subtitleTMP = MakeLabel("LossSubtitle", _panel.transform,
+            new Vector2(0f, 1f), new Vector2(1f, 1f),
+            new Vector2(20f, -120f), new Vector2(-20f, -88f),
+            20f, false, SUBTITLE_COL, TextAlignmentOptions.Center);
+        _subtitleTMP.characterSpacing = 3f;
+
+        // ── Quote block container ──
+        // Raised up snug under the subtitle, centered in the space between
+        // subtitle and buttons so there's no awkward gap.
+        GameObject quoteBlock = MakeRect("QuoteBlock", _panel.transform,
+            new Vector2(0.1f, 0.24f), new Vector2(0.9f, 0.72f),
+            Vector2.zero, Vector2.zero);
+
+        // Quote text — golden amber, bold italic, centered vertically
+        _quoteTMP = MakeLabel("LossQuote", quoteBlock.transform,
+            new Vector2(0f, 0.35f), new Vector2(1f, 1f),
+            new Vector2(10f, 0f), new Vector2(-10f, 0f),
+            19f, true, QUOTE_COL, TextAlignmentOptions.Center);
+        _quoteTMP.fontStyle = FontStyles.Bold | FontStyles.Italic;
+
+        // Attribution — golden, right-aligned, tight under quote
+        _attribTMP = MakeLabel("LossAttrib", quoteBlock.transform,
+            new Vector2(0f, 0.15f), new Vector2(1f, 0.35f),
+            new Vector2(10f, 0f), new Vector2(-10f, 0f),
+            18f, true, ATTRIB_COL, TextAlignmentOptions.TopRight);
+
+        // Buttons
+        float totalW = BTN_W * 2f + BTN_GAP;
+        float retryX = -totalW * 0.5f + BTN_W * 0.5f;
+        float returnX = retryX + BTN_W + BTN_GAP;
+
+        Button retryBtn = MakeButton("RetryBtn", _panel.transform,
+            retryX, BTN_Y, "RESTART LEVEL", RETRY_BG, BTN_TEXT,
+            RETRY_HOVER, RETRY_PRESS);
+        retryBtn.onClick.AddListener(RetryTrial);
+
+        Button returnBtn = MakeButton("ReturnBtn", _panel.transform,
+            returnX, BTN_Y, "TRIAL SELECTION", RETURN_BG, BTN_TEXT,
+            RETRY_HOVER, RETRY_PRESS);
+        returnBtn.onClick.AddListener(ReturnToHub);
+
+        _panel.SetActive(false);
+    }
+
+    private Button MakeButton(string name, Transform parent, float x, float y,
+        string label, Color bgColor, Color textColor,
+        Color hoverColor, Color pressColor)
+    {
+        GameObject go = MakeRect(name, parent,
+            new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+            Vector2.zero, Vector2.zero);
+        RectTransform rt = go.GetComponent<RectTransform>();
+        rt.sizeDelta        = new Vector2(BTN_W, BTN_H);
+        rt.pivot            = new Vector2(0.5f, 0f);
+        rt.anchoredPosition = new Vector2(x, y);
+
+        Image img = go.AddComponent<Image>();
+        img.color = bgColor;
+
+        Button btn = go.AddComponent<Button>();
+        btn.targetGraphic = img;
+        ColorBlock cb = ColorBlock.defaultColorBlock;
+        cb.normalColor      = Color.white;
+        cb.highlightedColor = hoverColor;
+        cb.selectedColor    = hoverColor;
+        cb.pressedColor     = pressColor;
+        cb.fadeDuration     = 0.05f;
+        btn.colors = cb;
+
+        TextMeshProUGUI tmp = MakeLabel("Label", go.transform,
+            Vector2.zero, Vector2.one,
+            new Vector2(4f, 2f), new Vector2(-4f, -2f),
+            18f, true, textColor, TextAlignmentOptions.Center);
+        tmp.text = label;
+
+        return btn;
+    }
+
+    // ================================================================
+    //  ANIMATION
+    // ================================================================
+
     private IEnumerator Animate(string subtitle)
     {
-        if (canvasGroup      != null) canvasGroup.alpha = 0f;
-        if (quoteLabel       != null) quoteLabel.alpha  = 0f;
-        if (quoteAttribution != null) quoteAttribution.alpha = 0f;
+        _panelCG.alpha   = 0f;
+        _quoteTMP.alpha  = 0f;
+        _attribTMP.alpha = 0f;
 
-        if (titleLabel    != null) titleLabel.text    = TITLE;
-        if (subtitleLabel != null) subtitleLabel.text = subtitle ?? SUBTITLE;
+        _titleTMP.text    = TITLE;
+        _subtitleTMP.text = subtitle ?? "THE TIMELINE HAS COLLAPSED";
 
         string q = QUOTES[Random.Range(0, QUOTES.Length)];
-        if (quoteLabel       != null) quoteLabel.text       = $"\"{q}\"";
-        if (quoteAttribution != null) quoteAttribution.text = "\u2014 Chronos";
+        _quoteTMP.text  = $"\u201C{q}\u201D";
+        _attribTMP.text = "\u2014CHRONOS";
 
+        // Red fracture transition
         if (ScreenTransitionManager.Instance != null)
             ScreenTransitionManager.Instance.RedFracture();
 
-        StartCoroutine(AnimateFracture());
-        if (redVignette != null) StartCoroutine(AnimateVignette());
+        StartCoroutine(AnimateOverlay());
 
         // Fade in panel
-        float elapsed = 0f, dur = 0.4f;
+        float elapsed = 0f;
+        float dur = 0.5f;
         while (elapsed < dur)
         {
             elapsed += Time.unscaledDeltaTime;
-            if (canvasGroup != null) canvasGroup.alpha = Mathf.Clamp01(elapsed / dur);
+            _panelCG.alpha = Mathf.Clamp01(elapsed / dur);
             yield return null;
         }
-        if (canvasGroup != null) canvasGroup.alpha = 1f;
+        _panelCG.alpha = 1f;
 
-        if (titleRect != null) yield return ShakeTitle();
+        // Shake title
+        if (_titleRT != null)
+        {
+            Vector2 orig = _titleRT.anchoredPosition;
+            elapsed = 0f;
+            while (elapsed < titleShakeDuration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                _titleRT.anchoredPosition = orig + new Vector2(
+                    Random.Range(-titleShakeAmount, titleShakeAmount),
+                    Random.Range(-titleShakeAmount * 0.5f, titleShakeAmount * 0.5f));
+                yield return null;
+            }
+            _titleRT.anchoredPosition = orig;
+        }
 
+        // Quote + attribution reveal
         yield return new WaitForSecondsRealtime(quoteDelay);
 
-        elapsed = 0f; dur = 0.6f;
+        elapsed = 0f;
+        dur = 0.8f;
         while (elapsed < dur)
         {
             elapsed += Time.unscaledDeltaTime;
             float t = Mathf.Clamp01(elapsed / dur);
-            if (quoteLabel       != null) quoteLabel.alpha       = t;
-            if (quoteAttribution != null) quoteAttribution.alpha = t;
+            _quoteTMP.alpha  = t;
+            _attribTMP.alpha = t;
             yield return null;
         }
-    }
 
-    private IEnumerator AnimateFracture()
-    {
-        if (fractureOverlay == null) yield break;
-        fractureOverlay.gameObject.SetActive(true);
-        RectTransform r = fractureOverlay.GetComponent<RectTransform>();
-        float elapsed = 0f;
-        while (elapsed < fractureDuration)
+        // Select retry button for controller navigation
+        if (UnityEngine.EventSystems.EventSystem.current != null)
         {
-            elapsed += Time.unscaledDeltaTime;
-            float t = Mathf.Clamp01(elapsed / fractureDuration);
-            if (r != null) r.localScale = Vector3.one * Mathf.Lerp(0.3f, 1.2f, EaseOutQuart(t));
-            Color c = fractureOverlay.color; c.a = t * 0.6f; fractureOverlay.color = c;
-            yield return null;
+            Button retryBtn = _panel.GetComponentInChildren<Button>();
+            if (retryBtn != null)
+                UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(retryBtn.gameObject);
         }
     }
 
-    private IEnumerator AnimateVignette()
+    /// <summary>Red overlay pulse.</summary>
+    private IEnumerator AnimateOverlay()
     {
-        Color danger = TimeStateUIManager.Instance != null
-            ? TimeStateUIManager.Instance.dangerColor : Color.red;
+        if (_overlay == null) yield break;
 
-        // Initial fade in
-        float elapsed = 0f, dur = 0.5f;
+        Color c = OVERLAY_COL;
+
+        float elapsed = 0f;
+        float dur = 0.5f;
         while (elapsed < dur)
         {
             elapsed += Time.unscaledDeltaTime;
-            danger.a = Mathf.Clamp01(elapsed / dur) * 0.35f;
-            if (redVignette != null) redVignette.color = danger;
+            c.a = Mathf.Clamp01(elapsed / dur) * 0.25f;
+            _overlay.color = c;
             yield return null;
         }
 
-        // Continuous pulsing vignette
-        while (redVignette != null && redVignette.gameObject.activeInHierarchy)
+        while (_overlay != null && _overlay.gameObject.activeInHierarchy)
         {
-            float pulse = Mathf.Sin(Time.unscaledTime * 3f) * 0.12f + 0.30f;
-            danger.a = pulse;
-            redVignette.color = danger;
+            float pulse = Mathf.Sin(Time.unscaledTime * 2.5f) * 0.06f + 0.18f;
+            c.a = pulse;
+            _overlay.color = c;
             yield return null;
         }
     }
 
-    private IEnumerator ShakeTitle()
+    // ================================================================
+    //  HIDE GAMEPLAY UI
+    // ================================================================
+
+    /// <summary>Forcefully hides ALL gameplay UI so nothing bleeds through.</summary>
+    private void HideGameplayUI()
     {
-        Vector2 orig = titleRect.anchoredPosition;
-        float elapsed = 0f;
-        while (elapsed < titleShakeDuration)
+        HUDController hud = HUDController.Instance;
+        if (hud != null)
         {
-            elapsed += Time.unscaledDeltaTime;
-            titleRect.anchoredPosition = orig + new Vector2(
-                Random.Range(-titleShakeAmount, titleShakeAmount),
-                Random.Range(-titleShakeAmount * 0.5f, titleShakeAmount * 0.5f));
-            yield return null;
+            hud.DismissCenterFlash();
+
+            TextMeshProUGUI flashLabel = null;
+            var field = typeof(HUDController).GetField("_centerFlashLabel",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (field != null)
+                flashLabel = field.GetValue(hud) as TextMeshProUGUI;
+            if (flashLabel != null)
+                Destroy(flashLabel.gameObject);
+
+            hud.StopAllCoroutines();
+            hud.gameObject.SetActive(false);
         }
-        titleRect.anchoredPosition = orig;
+
+        BossFailUI failUI = FindObjectOfType<BossFailUI>(true);
+        if (failUI != null) failUI.gameObject.SetActive(false);
+
+        TimeScaleMeter meter = FindObjectOfType<TimeScaleMeter>(true);
+        if (meter != null) meter.gameObject.SetActive(false);
+
+        BossPopup popup = FindObjectOfType<BossPopup>(true);
+        if (popup != null) popup.gameObject.SetActive(false);
     }
 
+    // ================================================================
+    //  BUTTONS
+    // ================================================================
+
+    /// <summary>Restarts the current level with a cosmic fade.</summary>
     private void RetryTrial()
     {
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        IsOpen = false;
+        MainMenuController.RequestRestartTrialOnLoad();
+        string scene = SceneManager.GetActiveScene().name;
+
+        if (ScreenTransitionManager.Instance != null)
+        {
+            ScreenTransitionManager.Instance.CosmicFadeOut(0.6f, () =>
+            {
+                Time.timeScale = 1f;
+                SceneManager.LoadScene(scene);
+            });
+        }
+        else
+        {
+            Time.timeScale = 1f;
+            SceneManager.LoadScene(scene);
+        }
     }
 
+    /// <summary>Returns to trial selection with a cosmic fade.</summary>
     private void ReturnToHub()
     {
-        Time.timeScale = 1f;
+        IsOpen = false;
         MainMenuController.RequestTrialSelectOnLoad();
-        SceneManager.LoadScene("MainScene");
+
+        if (ScreenTransitionManager.Instance != null)
+        {
+            ScreenTransitionManager.Instance.CosmicFadeOut(0.6f, () =>
+            {
+                Time.timeScale = 1f;
+                SceneManager.LoadScene("MainScene");
+            });
+        }
+        else
+        {
+            Time.timeScale = 1f;
+            SceneManager.LoadScene("MainScene");
+        }
     }
 
-    private static float EaseOutQuart(float t) => 1f - Mathf.Pow(1f - t, 4f);
+    // ================================================================
+    //  HELPERS
+    // ================================================================
+
+    private static GameObject MakeRect(string name, Transform parent,
+        Vector2 anchorMin, Vector2 anchorMax, Vector2 offMin, Vector2 offMax)
+    {
+        GameObject go = new GameObject(name);
+        go.transform.SetParent(parent, false);
+        RectTransform rt = go.AddComponent<RectTransform>();
+        rt.anchorMin = anchorMin;
+        rt.anchorMax = anchorMax;
+        rt.offsetMin = offMin;
+        rt.offsetMax = offMax;
+        return go;
+    }
+
+    private static TextMeshProUGUI MakeLabel(string name, Transform parent,
+        Vector2 anchorMin, Vector2 anchorMax, Vector2 offMin, Vector2 offMax,
+        float fontSize, bool bold, Color color, TextAlignmentOptions align)
+    {
+        GameObject go = MakeRect(name, parent, anchorMin, anchorMax, offMin, offMax);
+        TextMeshProUGUI tmp = go.AddComponent<TextMeshProUGUI>();
+        tmp.fontSize          = fontSize;
+        tmp.fontStyle         = bold ? FontStyles.Bold : FontStyles.Normal;
+        tmp.color             = color;
+        tmp.alignment         = align;
+        tmp.raycastTarget     = false;
+        tmp.enableWordWrapping = true;
+        CinzelFontHelper.Apply(tmp, bold);
+        return tmp;
+    }
 }

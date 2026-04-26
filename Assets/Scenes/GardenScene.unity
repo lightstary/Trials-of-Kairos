@@ -403,6 +403,7 @@ GameObject:
   - component: {fileID: 29467793}
   - component: {fileID: 29467792}
   - component: {fileID: 29467791}
+  - component: {fileID: 29467794}
   m_Layer: 0
   m_Name: Tile (27)
   m_TagString: Tile
@@ -496,6 +497,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 29467789}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &29467794
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 29467789}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec3d004cb65c98c46bd3e6abcfa7bfdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &36442268
 GameObject:
   m_ObjectHideFlags: 0
@@ -737,6 +750,7 @@ GameObject:
   - component: {fileID: 47420031}
   - component: {fileID: 47420030}
   - component: {fileID: 47420029}
+  - component: {fileID: 47420032}
   m_Layer: 0
   m_Name: Tile (36)
   m_TagString: Tile
@@ -830,6 +844,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 47420027}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &47420032
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 47420027}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec3d004cb65c98c46bd3e6abcfa7bfdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &47637751
 GameObject:
   m_ObjectHideFlags: 0
@@ -5361,6 +5387,7 @@ GameObject:
   - component: {fileID: 290020233}
   - component: {fileID: 290020232}
   - component: {fileID: 290020231}
+  - component: {fileID: 290020234}
   m_Layer: 0
   m_Name: Tile (31)
   m_TagString: Tile
@@ -5454,6 +5481,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 290020229}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &290020234
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 290020229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec3d004cb65c98c46bd3e6abcfa7bfdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &291625621
 GameObject:
   m_ObjectHideFlags: 0
@@ -5833,87 +5872,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88d0c2256e8548e42887d84e4e754fed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  allTiles:
-  - {fileID: 674816660}
-  - {fileID: 534551689}
-  - {fileID: 1490745773}
-  - {fileID: 258537923}
-  - {fileID: 492602564}
-  - {fileID: 784150416}
-  - {fileID: 1627839591}
-  - {fileID: 1038477412}
-  - {fileID: 997262463}
-  - {fileID: 413854684}
-  - {fileID: 203031715}
-  - {fileID: 1927190924}
-  - {fileID: 1272775842}
-  - {fileID: 460454582}
-  - {fileID: 2024849757}
-  - {fileID: 1921607275}
-  - {fileID: 1790396779}
-  - {fileID: 1766940283}
-  - {fileID: 757392109}
-  - {fileID: 939787330}
-  - {fileID: 1507542997}
-  - {fileID: 1114691642}
-  - {fileID: 626396283}
-  - {fileID: 545797834}
-  - {fileID: 1602787078}
-  - {fileID: 357454314}
-  - {fileID: 254893397}
-  - {fileID: 2135950840}
-  - {fileID: 789360669}
-  - {fileID: 971272225}
-  - {fileID: 2128731665}
-  - {fileID: 1064172600}
-  - {fileID: 695726393}
-  - {fileID: 328899343}
-  - {fileID: 92838076}
-  - {fileID: 2020461627}
-  - {fileID: 2099838954}
-  - {fileID: 1945943829}
-  - {fileID: 1296436169}
-  - {fileID: 77609992}
-  - {fileID: 2138973316}
-  - {fileID: 1217315165}
-  - {fileID: 581791821}
-  - {fileID: 1651718865}
-  - {fileID: 1985491939}
-  - {fileID: 736633897}
-  - {fileID: 811472922}
-  - {fileID: 1496948945}
-  - {fileID: 1687629656}
-  - {fileID: 407928767}
-  - {fileID: 1277470017}
-  - {fileID: 592697371}
-  - {fileID: 641421333}
-  - {fileID: 360200969}
-  - {fileID: 1482095041}
-  - {fileID: 618934584}
-  - {fileID: 2109327658}
-  - {fileID: 1244719720}
-  - {fileID: 354237031}
-  - {fileID: 723403606}
-  - {fileID: 1193149440}
-  - {fileID: 1307725852}
-  - {fileID: 343230723}
-  - {fileID: 1282675478}
-  - {fileID: 1501193097}
-  - {fileID: 2121594180}
   survivalTime: 30
-  tileAttackInterval: 6
-  bossPointerStartSpeed: 0.5
-  bossPointerSpeedIncrease: 0.4
+  roundDuration: 4
+  minRoundDuration: 2
+  roundDurationShrink: 0.3
+  bossStartSpeed: 1.8
+  bossSpeedIncrease: 0.35
   sameDirectionMultiplier: 1.6
-  safePairsCount: 2
-  glowDuration: 3
-  blinkDuration: 2
-  fallDelay: 0.3
-  tileResetDelay: 3
-  safeColor: {r: 0, g: 1, b: 0.3, a: 1}
-  dangerColor: {r: 1, g: 0.2, b: 0, a: 1}
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
-  bossActive: 0
+  contestSlowFactor: 0
+  frozenPauseDuration: 1.5
 --- !u!4 &298007238
 Transform:
   m_ObjectHideFlags: 0
@@ -8647,6 +8614,7 @@ GameObject:
   - component: {fileID: 415288507}
   - component: {fileID: 415288506}
   - component: {fileID: 415288505}
+  - component: {fileID: 415288508}
   m_Layer: 0
   m_Name: Tile (23)
   m_TagString: Tile
@@ -8740,6 +8708,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 415288503}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &415288508
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 415288503}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec3d004cb65c98c46bd3e6abcfa7bfdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &417731872
 GameObject:
   m_ObjectHideFlags: 0
@@ -9334,6 +9314,8 @@ MonoBehaviour:
   cosmicMid: {r: 0.059, g: 0.102, b: 0.188, a: 1}
   starfieldWhite: {r: 0.91, g: 0.918, b: 0.965, a: 1}
   vignetteOverlay: {fileID: 1737917980}
+  overlayAlpha: 0.045
+  transitionDuration: 1.2
 --- !u!114 &427237474
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9388,6 +9370,7 @@ MonoBehaviour:
   continueButton: {fileID: 0}
   trialSelectButton: {fileID: 1069406062}
   controlsButton: {fileID: 940813783}
+  optionsButton: {fileID: 0}
   quitButton: {fileID: 1837420775}
   buttonGroups:
   - {fileID: 1943002613}
@@ -12963,6 +12946,7 @@ GameObject:
   - component: {fileID: 604355769}
   - component: {fileID: 604355768}
   - component: {fileID: 604355767}
+  - component: {fileID: 604355770}
   m_Layer: 0
   m_Name: Tile (32)
   m_TagString: Tile
@@ -13056,6 +13040,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 604355765}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &604355770
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 604355765}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec3d004cb65c98c46bd3e6abcfa7bfdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &611519424
 GameObject:
   m_ObjectHideFlags: 0
@@ -17785,6 +17781,7 @@ GameObject:
   - component: {fileID: 877935983}
   - component: {fileID: 877935982}
   - component: {fileID: 877935981}
+  - component: {fileID: 877935984}
   m_Layer: 0
   m_Name: Tile (30)
   m_TagString: Tile
@@ -17878,6 +17875,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 877935979}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &877935984
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 877935979}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec3d004cb65c98c46bd3e6abcfa7bfdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &879960722
 GameObject:
   m_ObjectHideFlags: 0
@@ -18082,6 +18091,7 @@ GameObject:
   - component: {fileID: 896738340}
   - component: {fileID: 896738339}
   - component: {fileID: 896738338}
+  - component: {fileID: 896738341}
   m_Layer: 0
   m_Name: Tile (20)
   m_TagString: Tile
@@ -18175,6 +18185,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 896738336}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &896738341
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 896738336}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec3d004cb65c98c46bd3e6abcfa7bfdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &908451079
 GameObject:
   m_ObjectHideFlags: 0
@@ -18500,6 +18522,7 @@ GameObject:
   - component: {fileID: 927784265}
   - component: {fileID: 927784264}
   - component: {fileID: 927784263}
+  - component: {fileID: 927784266}
   m_Layer: 0
   m_Name: Tile (24)
   m_TagString: Tile
@@ -18593,6 +18616,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 927784261}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &927784266
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 927784261}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec3d004cb65c98c46bd3e6abcfa7bfdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &939787330
 GameObject:
   m_ObjectHideFlags: 0
@@ -19155,6 +19190,7 @@ GameObject:
   - component: {fileID: 979083731}
   - component: {fileID: 979083730}
   - component: {fileID: 979083729}
+  - component: {fileID: 979083732}
   m_Layer: 0
   m_Name: Tile (33)
   m_TagString: Tile
@@ -19248,6 +19284,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 979083727}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &979083732
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 979083727}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec3d004cb65c98c46bd3e6abcfa7bfdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &997262463
 GameObject:
   m_ObjectHideFlags: 0
@@ -19418,19 +19466,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6ee9e7f42ac2f6b4a95078f9ad34308b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gameOverPanel: {fileID: 275350819}
-  canvasGroup: {fileID: 998919383}
-  titleLabel: {fileID: 1998227107}
-  subtitleLabel: {fileID: 1204286508}
-  titleRect: {fileID: 1998227106}
-  quoteLabel: {fileID: 1115049729}
-  quoteAttribution: {fileID: 434100602}
-  retryButton: {fileID: 89565046}
-  returnToHubButton: {fileID: 1581295180}
-  fractureOverlay: {fileID: 1620586601}
-  redVignette: {fileID: 403107580}
-  hubSceneName: HubScene
-  fractureDuration: 0.8
   titleShakeAmount: 8
   titleShakeDuration: 0.1
   quoteDelay: 0.6
@@ -22685,6 +22720,7 @@ GameObject:
   - component: {fileID: 1170172281}
   - component: {fileID: 1170172280}
   - component: {fileID: 1170172279}
+  - component: {fileID: 1170172282}
   m_Layer: 0
   m_Name: Tile (17)
   m_TagString: Tile
@@ -22778,6 +22814,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1170172277}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1170172282
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1170172277}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec3d004cb65c98c46bd3e6abcfa7bfdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1187632187
 GameObject:
   m_ObjectHideFlags: 0
@@ -22790,6 +22838,7 @@ GameObject:
   - component: {fileID: 1187632191}
   - component: {fileID: 1187632190}
   - component: {fileID: 1187632189}
+  - component: {fileID: 1187632192}
   m_Layer: 0
   m_Name: Tile (22)
   m_TagString: Tile
@@ -22883,6 +22932,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1187632187}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1187632192
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1187632187}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec3d004cb65c98c46bd3e6abcfa7bfdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1192981293
 GameObject:
   m_ObjectHideFlags: 0
@@ -23260,6 +23321,7 @@ GameObject:
   - component: {fileID: 1207123790}
   - component: {fileID: 1207123789}
   - component: {fileID: 1207123788}
+  - component: {fileID: 1207123791}
   m_Layer: 0
   m_Name: Tile (19)
   m_TagString: Tile
@@ -23353,6 +23415,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1207123786}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1207123791
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1207123786}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec3d004cb65c98c46bd3e6abcfa7bfdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1209841367
 GameObject:
   m_ObjectHideFlags: 0
@@ -23783,6 +23857,50 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1217315165}
   m_Mesh: {fileID: -2269245349382216059, guid: 085e56dd87e185242a1861e04adf6826, type: 3}
+--- !u!1 &1218340003
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1218340006}
+  - component: {fileID: 1218340004}
+  m_Layer: 0
+  m_Name: DeathTileTutorialTrigger
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1218340004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1218340003}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6fe6f4be4ba8b4e4c891504723836db9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &1218340006
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1218340003}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 3, y: 1, z: 15}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1226521815
 GameObject:
   m_ObjectHideFlags: 0
@@ -23795,6 +23913,7 @@ GameObject:
   - component: {fileID: 1226521819}
   - component: {fileID: 1226521818}
   - component: {fileID: 1226521817}
+  - component: {fileID: 1226521820}
   m_Layer: 0
   m_Name: Tile (18)
   m_TagString: Tile
@@ -23888,6 +24007,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1226521815}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1226521820
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1226521815}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec3d004cb65c98c46bd3e6abcfa7bfdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1230865114
 GameObject:
   m_ObjectHideFlags: 0
@@ -26441,6 +26572,7 @@ GameObject:
   - component: {fileID: 1311909334}
   - component: {fileID: 1311909333}
   - component: {fileID: 1311909332}
+  - component: {fileID: 1311909335}
   m_Layer: 0
   m_Name: Tile (37)
   m_TagString: Tile
@@ -26534,6 +26666,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1311909330}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1311909335
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1311909330}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec3d004cb65c98c46bd3e6abcfa7bfdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1320378704
 GameObject:
   m_ObjectHideFlags: 0
@@ -27194,6 +27338,7 @@ GameObject:
   - component: {fileID: 1395448510}
   - component: {fileID: 1395448509}
   - component: {fileID: 1395448508}
+  - component: {fileID: 1395448511}
   m_Layer: 0
   m_Name: Tile (35)
   m_TagString: Tile
@@ -27287,6 +27432,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1395448506}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1395448511
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1395448506}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec3d004cb65c98c46bd3e6abcfa7bfdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1399236599
 GameObject:
   m_ObjectHideFlags: 0
@@ -27299,6 +27456,7 @@ GameObject:
   - component: {fileID: 1399236603}
   - component: {fileID: 1399236602}
   - component: {fileID: 1399236601}
+  - component: {fileID: 1399236604}
   m_Layer: 0
   m_Name: Tile (29)
   m_TagString: Tile
@@ -27392,6 +27550,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1399236599}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1399236604
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1399236599}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec3d004cb65c98c46bd3e6abcfa7bfdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1412723255
 GameObject:
   m_ObjectHideFlags: 0
@@ -27703,6 +27873,7 @@ GameObject:
   - component: {fileID: 1445890094}
   - component: {fileID: 1445890093}
   - component: {fileID: 1445890092}
+  - component: {fileID: 1445890095}
   m_Layer: 0
   m_Name: Tile (25)
   m_TagString: Tile
@@ -27796,6 +27967,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1445890090}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1445890095
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1445890090}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec3d004cb65c98c46bd3e6abcfa7bfdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1446992774
 GameObject:
   m_ObjectHideFlags: 0
@@ -28993,6 +29176,7 @@ GameObject:
   - component: {fileID: 1510951230}
   - component: {fileID: 1510951229}
   - component: {fileID: 1510951228}
+  - component: {fileID: 1510951231}
   m_Layer: 0
   m_Name: Tile (28)
   m_TagString: Tile
@@ -29086,6 +29270,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1510951226}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1510951231
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1510951226}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec3d004cb65c98c46bd3e6abcfa7bfdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1515371518
 GameObject:
   m_ObjectHideFlags: 0
@@ -31951,6 +32147,7 @@ GameObject:
   - component: {fileID: 1678011156}
   - component: {fileID: 1678011155}
   - component: {fileID: 1678011154}
+  - component: {fileID: 1678011157}
   m_Layer: 0
   m_Name: Tile (21)
   m_TagString: Tile
@@ -32044,6 +32241,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1678011152}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1678011157
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1678011152}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec3d004cb65c98c46bd3e6abcfa7bfdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1687629656
 GameObject:
   m_ObjectHideFlags: 0
@@ -32362,6 +32571,7 @@ GameObject:
   - component: {fileID: 1704461343}
   - component: {fileID: 1704461342}
   - component: {fileID: 1704461341}
+  - component: {fileID: 1704461344}
   m_Layer: 0
   m_Name: Tile (34)
   m_TagString: Tile
@@ -32455,6 +32665,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1704461339}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1704461344
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1704461339}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec3d004cb65c98c46bd3e6abcfa7bfdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1708066960
 GameObject:
   m_ObjectHideFlags: 0
@@ -33525,16 +33747,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa7dba6e9233e004ca8087f4380c876a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forwardColor: {r: 0.9056604, g: 0.70652026, b: 0.47419012, a: 1}
-  frozenColor: {r: 0.5771182, g: 0.67703456, b: 0.9339623, a: 1}
-  reverseColor: {r: 0.7029036, g: 0.4405482, b: 0.9433962, a: 1}
-  forwardAmbient: {r: 0.18, g: 0.14, b: 0.08, a: 1}
-  frozenAmbient: {r: 0.08, g: 0.12, b: 0.22, a: 1}
-  reverseAmbient: {r: 0.14, g: 0.06, b: 0.2, a: 1}
-  forwardFog: {r: 0.12, g: 0.1, b: 0.06, a: 1}
-  frozenFog: {r: 0.06, g: 0.09, b: 0.18, a: 1}
-  reverseFog: {r: 0.1, g: 0.04, b: 0.14, a: 1}
-  transitionSpeed: 3
+  forwardColor: {r: 0.07, g: 0.06, b: 0.04, a: 1}
+  frozenColor: {r: 0.04, g: 0.06, b: 0.1, a: 1}
+  reverseColor: {r: 0.06, g: 0.03, b: 0.08, a: 1}
+  forwardAmbient: {r: 0.12, g: 0.1, b: 0.06, a: 1}
+  frozenAmbient: {r: 0.06, g: 0.08, b: 0.14, a: 1}
+  reverseAmbient: {r: 0.1, g: 0.05, b: 0.13, a: 1}
+  forwardFog: {r: 0.08, g: 0.07, b: 0.04, a: 1}
+  frozenFog: {r: 0.04, g: 0.06, b: 0.12, a: 1}
+  reverseFog: {r: 0.07, g: 0.03, b: 0.09, a: 1}
+  transitionDuration: 1.2
 --- !u!45 &1759268772
 Skybox:
   m_ObjectHideFlags: 0
@@ -33561,8 +33783,6 @@ MonoBehaviour:
   followSpeed: 10
   rotationSmoothSpeed: 12
   lookOffset: {x: 0, y: 1, z: 0}
-  mouseSensitivity: 2
-  stickSensitivity: 120
   pitchMin: 5
   pitchMax: 60
   startYaw: 0
@@ -35563,6 +35783,7 @@ GameObject:
   - component: {fileID: 1916116044}
   - component: {fileID: 1916116043}
   - component: {fileID: 1916116042}
+  - component: {fileID: 1916116045}
   m_Layer: 0
   m_Name: Tile (26)
   m_TagString: Tile
@@ -35656,6 +35877,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1916116040}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1916116045
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1916116040}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec3d004cb65c98c46bd3e6abcfa7bfdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1916753060
 GameObject:
   m_ObjectHideFlags: 0
@@ -38063,6 +38296,7 @@ MonoBehaviour:
   restartButton: {fileID: 1725682025}
   howToPlayButton: {fileID: 0}
   controlsButton: {fileID: 512370459}
+  optionsButton: {fileID: 0}
   settingsButton: {fileID: 680645035}
   returnToHubButton: {fileID: 291625623}
   mainMenuButton: {fileID: 0}
@@ -39890,3 +40124,4 @@ SceneRoots:
   - {fileID: 1086578335}
   - {fileID: 1211942413}
   - {fileID: 298007238}
+  - {fileID: 1218340006}
