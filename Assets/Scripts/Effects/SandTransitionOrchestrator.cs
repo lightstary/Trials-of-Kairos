@@ -33,28 +33,111 @@ public class SandTransitionOrchestrator : MonoBehaviour
     private const float UI_STAGGER            = 0.12f;
     private const float OBJECT_SHRINK_DUR     = 0.5f;
 
+    // Names of panels that cover the full screen (menus, selection screens).
+    // When one of these is active, only dissolve that panel — skip 3D.
+    private static readonly string[] FULLSCREEN_PANELS =
+    {
+        "TrialSelectScreen", "MainMenu"
+    };
+
     /// <summary>
-    /// Runs the full dissolve sequence. Auto-detects UI vs 3D context.
-    /// Checks for active UI panels first (TrialSelectScreen, MainMenu).
-    /// If none found, falls through to 3D scene object dissolve.
+    /// Runs the full dissolve sequence.
+    /// If a full-screen UI panel is active (trial select, main menu), dissolve
+    /// just that panel. Otherwise dissolve the HUD and 3D scene objects.
     /// </summary>
     public IEnumerator RunDissolve()
     {
-        // Check for active UI panels first
-        RectTransform uiPanel = FindActiveUIPanel();
-        if (uiPanel != null)
-        {
-            yield return DissolveUIPanel(uiPanel);
-            yield break;
-        }
+        RectTransform fullscreenPanel = FindFullscreenPanel();
 
-        // No active UI panel → dissolve 3D scene objects
-        yield return DissolveSceneObjects();
+        if (fullscreenPanel != null)
+        {
+            // Menu/selection screen covers the view — dissolve it, skip 3D
+            yield return DissolveUIPanel(fullscreenPanel);
+        }
+        else
+        {
+            // Gameplay — dissolve HUD, then 3D world
+            yield return DissolveHUD();
+            yield return DissolveSceneObjects();
+        }
     }
 
     // ════════════════════════════════════════════════════════════════════
     //  UI DISSOLVE
     // ════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Looks for a known full-screen UI panel that's active and visible.
+    /// Returns null if none found (we're in gameplay, not a menu).
+    /// </summary>
+    private RectTransform FindFullscreenPanel()
+    {
+        Canvas[] canvases = FindObjectsOfType<Canvas>();
+        foreach (Canvas canvas in canvases)
+        {
+            if (canvas.renderMode != RenderMode.ScreenSpaceOverlay) continue;
+            foreach (string panelName in FULLSCREEN_PANELS)
+            {
+                Transform panel = canvas.transform.Find(panelName);
+                if (panel == null || !panel.gameObject.activeSelf) continue;
+
+                Graphic[] graphics = panel.GetComponentsInChildren<Graphic>(false);
+                if (graphics.Length > 0)
+                    return panel as RectTransform;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Dissolves HUD elements (time scale bar, objective text, etc.)
+    /// that sit under overlay canvases during gameplay.
+    /// </summary>
+    private IEnumerator DissolveHUD()
+    {
+        Canvas[] canvases = FindObjectsOfType<Canvas>();
+        List<RectTransform> hudPanels = new List<RectTransform>();
+
+        foreach (Canvas canvas in canvases)
+        {
+            if (canvas.renderMode != RenderMode.ScreenSpaceOverlay) continue;
+            for (int i = 0; i < canvas.transform.childCount; i++)
+            {
+                Transform child = canvas.transform.GetChild(i);
+                if (!child.gameObject.activeSelf) continue;
+
+                RectTransform rt = child as RectTransform;
+                if (rt == null) continue;
+
+                // Skip overlays, pause menu, and grain containers
+                if (child.name == "FadeOverlay" || child.name == "FlashOverlay"
+                    || child.name == "ShimmerWipeOverlay" || child.name == "PauseMenu"
+                    || child.name.StartsWith("~"))
+                    continue;
+
+                // Skip known full-screen panels (handled separately)
+                bool isFullscreen = false;
+                foreach (string name in FULLSCREEN_PANELS)
+                {
+                    if (child.name == name) { isFullscreen = true; break; }
+                }
+                if (isFullscreen) continue;
+
+                Graphic[] graphics = rt.GetComponentsInChildren<Graphic>(false);
+                if (graphics.Length > 0)
+                    hudPanels.Add(rt);
+            }
+        }
+
+        if (hudPanels.Count == 0) yield break;
+
+        List<Coroutine> routines = new List<Coroutine>();
+        foreach (RectTransform panel in hudPanels)
+            routines.Add(StartCoroutine(DissolveUIPanel(panel)));
+
+        foreach (Coroutine c in routines)
+            yield return c;
+    }
 
     /// <summary>
     /// Dissolves all visible elements within a UI panel into sand grains.
@@ -275,11 +358,6 @@ public class SandTransitionOrchestrator : MonoBehaviour
         yield return DissolveGroupWave("Decorations", waveOrigin, 0.03f);
         yield return new WaitForSecondsRealtime(0.3f);
 
-        // ── HUD elements ──
-        RectTransform hud = FindUIElement("HUD");
-        if (hud != null)
-            yield return DissolveUIPanel(hud);
-
         // ── Remaining root objects (goal tiles, managers, etc.) ──
         DissolveRemainingVisible();
 
@@ -382,54 +460,6 @@ public class SandTransitionOrchestrator : MonoBehaviour
     // ════════════════════════════════════════════════════════════════════
     //  HELPERS
     // ════════════════════════════════════════════════════════════════════
-
-    /// <summary>
-    /// Finds the currently active UI panel (TrialSelectScreen, MainMenu).
-    /// Returns null if no recognizable UI panel is active (3D level context).
-    /// Excludes PauseMenu since it's always closed before a transition starts.
-    /// Also verifies the panel has at least one active visible child so we
-    /// don't accidentally match an empty panel.
-    /// </summary>
-    private RectTransform FindActiveUIPanel()
-    {
-        string[] panelNames = { "TrialSelectScreen", "MainMenu" };
-        Canvas[] canvases = FindObjectsOfType<Canvas>();
-
-        foreach (Canvas canvas in canvases)
-        {
-            if (canvas.renderMode != RenderMode.ScreenSpaceOverlay) continue;
-
-            foreach (string panelName in panelNames)
-            {
-                Transform panel = canvas.transform.Find(panelName);
-                if (panel == null || !panel.gameObject.activeSelf) continue;
-
-                // Verify the panel has at least one active Graphic child
-                Graphic[] graphics = panel.GetComponentsInChildren<Graphic>(false);
-                if (graphics.Length > 0)
-                    return panel as RectTransform;
-            }
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Finds a UI element by name under any overlay canvas.
-    /// Returns null if not found or inactive.
-    /// </summary>
-    private RectTransform FindUIElement(string elementName)
-    {
-        Canvas[] canvases = FindObjectsOfType<Canvas>();
-        foreach (Canvas canvas in canvases)
-        {
-            if (canvas.renderMode != RenderMode.ScreenSpaceOverlay) continue;
-            Transform element = canvas.transform.Find(elementName);
-            if (element != null && element.gameObject.activeSelf)
-                return element as RectTransform;
-        }
-        return null;
-    }
 
     /// <summary>
     /// Collects all dissolvable UI elements under a panel.

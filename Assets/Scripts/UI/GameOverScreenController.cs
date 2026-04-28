@@ -380,7 +380,7 @@ public class GameOverScreenController : MonoBehaviour
     //  BUTTONS
     // ================================================================
 
-    /// <summary>Restarts the current level with a smooth exit + cosmic fade.</summary>
+    /// <summary>Restarts the current level with dissolve + shimmer transition.</summary>
     private void RetryTrial()
     {
         IsOpen = false;
@@ -389,11 +389,14 @@ public class GameOverScreenController : MonoBehaviour
         StartCoroutine(ExitThenTransition(() =>
         {
             Time.timeScale = 1f;
-            SceneManager.LoadScene(scene);
+            if (ScreenTransitionManager.Instance != null)
+                ScreenTransitionManager.Instance.FadeToScene(scene);
+            else
+                SceneManager.LoadScene(scene);
         }));
     }
 
-    /// <summary>Returns to trial selection with a smooth exit + cosmic fade.</summary>
+    /// <summary>Returns to trial selection with dissolve + shimmer transition.</summary>
     private void ReturnToHub()
     {
         IsOpen = false;
@@ -401,7 +404,10 @@ public class GameOverScreenController : MonoBehaviour
         StartCoroutine(ExitThenTransition(() =>
         {
             Time.timeScale = 1f;
-            SceneManager.LoadScene("MainScene");
+            if (ScreenTransitionManager.Instance != null)
+                ScreenTransitionManager.Instance.FadeToScene("MainScene");
+            else
+                SceneManager.LoadScene("MainScene");
         }));
     }
 
@@ -410,7 +416,6 @@ public class GameOverScreenController : MonoBehaviour
     /// <summary>Shrinks + fades the panel, then runs a cosmic fade before executing the callback.</summary>
     private IEnumerator ExitThenTransition(System.Action callback)
     {
-        // Disable buttons to prevent double-clicks
         foreach (Button btn in _panel.GetComponentsInChildren<Button>())
             btn.interactable = false;
 
@@ -422,7 +427,7 @@ public class GameOverScreenController : MonoBehaviour
         {
             elapsed += Time.unscaledDeltaTime;
             float t = Mathf.Clamp01(elapsed / EXIT_PANEL_DUR);
-            float eased = t * t * t; // ease-in
+            float eased = t * t * t;
 
             _panelCG.alpha = 1f - eased;
             panelRT.localScale = Vector3.one * Mathf.Lerp(1f, 0.92f, eased);
@@ -438,14 +443,12 @@ public class GameOverScreenController : MonoBehaviour
             yield return null;
         }
 
-        if (ScreenTransitionManager.Instance != null)
-        {
-            ScreenTransitionManager.Instance.CosmicFadeOut(0.6f, () => callback?.Invoke());
-        }
-        else
-        {
-            callback?.Invoke();
-        }
+        // Hide the game over UI so the dissolve sees the level underneath
+        if (_panel != null) _panel.SetActive(false);
+        if (_overlay != null) _overlay.gameObject.SetActive(false);
+        gameObject.SetActive(false);
+
+        callback?.Invoke();
     }
 
     // ================================================================

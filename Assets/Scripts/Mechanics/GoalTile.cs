@@ -206,7 +206,10 @@ public class GoalTile : MonoBehaviour
     {
         IsOpen = false;
         Time.timeScale = 1f;
-        SceneManager.LoadScene("HubScene");
+        if (ScreenTransitionManager.Instance != null)
+            ScreenTransitionManager.Instance.FadeToScene("HubScene");
+        else
+            SceneManager.LoadScene("HubScene");
     }
 
     private void MakeAccent(Transform parent, Vector2 aMin, Vector2 aMax, Vector2 pos, float h)

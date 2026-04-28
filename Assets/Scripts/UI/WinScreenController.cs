@@ -495,12 +495,13 @@ public class WinScreenController : MonoBehaviour
             return;
         }
 
-        // For scenes that have a MainMenuController (like Garden/Clock loaded
-        // from MainScene's framework), tell it to skip the menu.
         MainMenuController.SkipMenuOnLoad = true;
 
-        Debug.Log($"[WinScreen] SceneManager.LoadScene('{nextScene}') executing now.");
-        SceneManager.LoadScene(nextScene);
+        Debug.Log($"[WinScreen] Loading next trial: '{nextScene}'");
+        if (ScreenTransitionManager.Instance != null)
+            ScreenTransitionManager.Instance.FadeToScene(nextScene);
+        else
+            SceneManager.LoadScene(nextScene);
     }
 
     /// <summary>Reloads the current scene to retry the trial.</summary>
@@ -509,7 +510,10 @@ public class WinScreenController : MonoBehaviour
         Debug.Log("[WinScreen] RetryTrial — reloading current scene.");
         Time.timeScale = 1f;
         MainMenuController.RequestRestartTrialOnLoad();
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        if (ScreenTransitionManager.Instance != null)
+            ScreenTransitionManager.Instance.FadeToScene(SceneManager.GetActiveScene().name);
+        else
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     /// <summary>Returns to the trial selection screen (always in MainScene).</summary>
@@ -517,6 +521,9 @@ public class WinScreenController : MonoBehaviour
     {
         Time.timeScale = 1f;
         MainMenuController.RequestTrialSelectOnLoad();
-        SceneManager.LoadScene("MainScene");
+        if (ScreenTransitionManager.Instance != null)
+            ScreenTransitionManager.Instance.FadeToScene("MainScene");
+        else
+            SceneManager.LoadScene("MainScene");
     }
 }

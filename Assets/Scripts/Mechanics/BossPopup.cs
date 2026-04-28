@@ -77,6 +77,11 @@ public class BossPopup : MonoBehaviour
 
         // Load main menu or UI Daniel wants (this is for now)
         if (goToMenu)
-            UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
+        {
+            if (ScreenTransitionManager.Instance != null)
+                ScreenTransitionManager.Instance.FadeToScene("MainScene");
+            else
+                UnityEngine.SceneManagement.SceneManager.LoadScene("MainScene");
+        }
     }
 }

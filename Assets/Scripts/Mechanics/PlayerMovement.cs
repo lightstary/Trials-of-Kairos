@@ -241,6 +241,12 @@ public class PlayerMovement : MonoBehaviour
     /// <summary>Finds the closest moving tile within snap range and aligns the player to its center.</summary>
     private void SnapToNearbyMovingTile()
     {
+        // Only snap when tiles are actually moving — in Frozen state
+        // the tiles are stationary so snapping would pull the player sideways
+        if (TimeState.Instance != null
+            && TimeState.Instance.currentState == TimeState.State.Frozen)
+            return;
+
         MovingTile closest = null;
         float closestDist = float.MaxValue;
 

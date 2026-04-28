@@ -107,18 +107,17 @@ public class BossFailUI : MonoBehaviour
         _shown = false;
         IsOpen = false;
 
-        // Destroy the overlay UI
         if (_overlayGO != null)
             Destroy(_overlayGO);
 
-        // Reset the time scale meter so the fail doesn't re-trigger
         if (TimeScaleLogic.Instance != null)
             TimeScaleLogic.Instance.ResetMeter();
 
-        // Respawn at the latest checkpoint instead of reloading the entire scene
         FallDetection fd = FindObjectOfType<FallDetection>();
         if (fd != null)
             fd.Respawn();
+        else if (ScreenTransitionManager.Instance != null)
+            ScreenTransitionManager.Instance.FadeToScene(SceneManager.GetActiveScene().name);
         else
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
@@ -128,7 +127,14 @@ public class BossFailUI : MonoBehaviour
         Time.timeScale = 1f;
         _shown = false;
         IsOpen = false;
-        SceneManager.LoadScene("MainScene");
+
+        if (_overlayGO != null)
+            Destroy(_overlayGO);
+
+        if (ScreenTransitionManager.Instance != null)
+            ScreenTransitionManager.Instance.FadeToScene("MainScene");
+        else
+            SceneManager.LoadScene("MainScene");
     }
 
     private IEnumerator FadeIn(CanvasGroup cg)

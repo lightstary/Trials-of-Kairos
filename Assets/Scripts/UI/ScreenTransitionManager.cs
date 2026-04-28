@@ -168,10 +168,14 @@ public class ScreenTransitionManager : MonoBehaviour
         StartCoroutine(ShimmerTransitionRoutine(onMidpoint));
     }
 
-    /// <summary>Captures screen, loads a scene. New scene shimmer-reveals automatically.</summary>
+    /// <summary>Loads a scene with transition. Uses dissolve for cross-scene, quick fade for same-scene.</summary>
     public void FadeToScene(string sceneName, float duration = -1f)
     {
-        StartCoroutine(DissolveAndLoadScene(sceneName));
+        bool sameScene = sceneName == SceneManager.GetActiveScene().name;
+        if (sameScene)
+            StartCoroutine(CaptureAndLoadScene(sceneName));
+        else
+            StartCoroutine(DissolveAndLoadScene(sceneName));
     }
 
     /// <summary>Gold radiance burst (win effect).</summary>
@@ -430,15 +434,30 @@ public class ScreenTransitionManager : MonoBehaviour
     /// </summary>
     private IEnumerator AnimateShimmerWipe(float duration)
     {
-        if (_shimmerMat == null) yield break;
+        if (_shimmerMat == null)
+        {
+            // Shader missing — fall back to simple alpha fade on the overlay
+            if (_shimmerOverlay != null)
+            {
+                float elapsed = 0f;
+                while (elapsed < duration)
+                {
+                    elapsed += Time.unscaledDeltaTime;
+                    float t = Mathf.Clamp01(elapsed / duration);
+                    _shimmerOverlay.color = new Color(1f, 1f, 1f, 1f - t);
+                    yield return null;
+                }
+            }
+            yield break;
+        }
 
         _shimmerMat.SetFloat(PropProgress, 0f);
 
-        float elapsed = 0f;
-        while (elapsed < duration)
+        float e = 0f;
+        while (e < duration)
         {
-            elapsed += Time.unscaledDeltaTime;
-            float t = Mathf.Clamp01(elapsed / duration);
+            e += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(e / duration);
             _shimmerMat.SetFloat(PropProgress, t);
             yield return null;
         }

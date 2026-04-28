@@ -252,22 +252,16 @@ public class FallModal : MonoBehaviour
         if (_root != null) Destroy(_root);
         _root = null;
 
-        // Cosmic fade out, then execute the actual restart/checkpoint logic
-        if (ScreenTransitionManager.Instance != null)
-        {
-            ScreenTransitionManager.Instance.CosmicFadeOut(0.5f, () => callback?.Invoke());
-        }
-        else
-        {
-            callback?.Invoke();
-        }
+        // Execute the callback directly — the callback handles its own
+        // transition (FadeToScene for restart, CosmicFadeIn for checkpoint)
+        callback?.Invoke();
     }
 
     // ════════════════════════════════════════════════════════════════════
     //  DISMISS
     // ════════════════════════════════════════════════════════════════════
 
-    /// <summary>Plays exit animation, then executes the callback through a cosmic fade.</summary>
+    /// <summary>Plays exit animation, then executes the callback.</summary>
     private static void DismissAndExecute(Action callback)
     {
         if (_dismissing) return;
@@ -283,14 +277,10 @@ public class FallModal : MonoBehaviour
             }
         }
 
-        // Fallback if no FallModal component
         if (_root != null) Destroy(_root);
         _root = null;
 
-        if (ScreenTransitionManager.Instance != null)
-            ScreenTransitionManager.Instance.CosmicFadeOut(0.5f, () => callback?.Invoke());
-        else
-            callback?.Invoke();
+        callback?.Invoke();
     }
 
     // ════════════════════════════════════════════════════════════════════

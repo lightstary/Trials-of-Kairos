@@ -237,7 +237,7 @@ public class FallDetection : MonoBehaviour
             else
             {
                 Time.timeScale = 1f;
-                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+                LoadSceneWithTransition(SceneManager.GetActiveScene().name);
             }
         }
         else
@@ -255,7 +255,7 @@ public class FallDetection : MonoBehaviour
                 {
                     MainMenuController.RequestRestartTrialOnLoad();
                     Time.timeScale = 1f;
-                    SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+                    LoadSceneWithTransition(SceneManager.GetActiveScene().name);
                 }
             );
         }
@@ -566,7 +566,7 @@ public class FallDetection : MonoBehaviour
         {
             Debug.LogWarning("[FallDetection] GameOverScreenController not found. Reloading scene.");
             Time.timeScale = 1f;
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            LoadSceneWithTransition(SceneManager.GetActiveScene().name);
         }
 
         // isFalling stays true — scene reload clears it
@@ -613,7 +613,7 @@ public class FallDetection : MonoBehaviour
             {
                 MainMenuController.RequestRestartTrialOnLoad();
                 Time.timeScale = 1f;
-                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+                LoadSceneWithTransition(SceneManager.GetActiveScene().name);
             },
             title: vineTitle,
             message: vineMsg
@@ -667,7 +667,7 @@ public class FallDetection : MonoBehaviour
             {
                 MainMenuController.RequestRestartTrialOnLoad();
                 Time.timeScale = 1f;
-                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+                LoadSceneWithTransition(SceneManager.GetActiveScene().name);
             }
         );
     }
@@ -718,7 +718,7 @@ public class FallDetection : MonoBehaviour
         {
             Debug.LogWarning("[FallDetection] GameOverScreenController not found. Reloading scene.");
             Time.timeScale = 1f;
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            LoadSceneWithTransition(SceneManager.GetActiveScene().name);
         }
 
         // isFalling stays true — scene reload clears it
@@ -832,5 +832,14 @@ public class FallDetection : MonoBehaviour
         spawnRotation = Quaternion.identity;
         hasCheckpoint = true;
         Debug.Log("Spawn point updated to: " + spawnPosition);
+    }
+
+    /// <summary>Loads a scene using dissolve + shimmer if available, raw load otherwise.</summary>
+    private static void LoadSceneWithTransition(string sceneName)
+    {
+        if (ScreenTransitionManager.Instance != null)
+            ScreenTransitionManager.Instance.FadeToScene(sceneName);
+        else
+            SceneManager.LoadScene(sceneName);
     }
 }
