@@ -23,6 +23,8 @@ public class FallDetection : MonoBehaviour
         spawnRotation = transform.rotation;
         hasCheckpoint = false;
         playerMovement = GetComponent<PlayerMovement>();
+        _cachedOriginalScale = transform.localScale;
+        CacheChildTransforms();
     }
 
     void Update()
@@ -427,33 +429,99 @@ public class FallDetection : MonoBehaviour
     /// <summary>Hold time after disintegration before showing death UI, letting particles breathe.</summary>
     private const float POST_DISINTEGRATE_HOLD = 0.6f;
 
+    /// <summary>Total duration of the shrink-to-nothing dissolve.</summary>
+    private const float DISINTEGRATE_SHRINK_DUR = 0.55f;
+
     /// <summary>
-    /// Runs the sand disintegration visual: spawns particles, then hides the
-    /// player model after a short delay. No material swapping — just particles.
+    /// Runs the sand disintegration visual: spawns particles, then gradually
+    /// shrinks and fades the player model so it dissolves into the particle cloud
+    /// rather than just vanishing.
     /// </summary>
     private IEnumerator PlayDisintegration()
     {
         Vector3 effectSize = transform.lossyScale;
         SandDisintegrationEffect.Spawn(transform.position, effectSize);
 
-        // Brief delay so particles overlap with the model before it vanishes
+        // Cache the original local scale
+        Vector3 originalScale = transform.localScale;
+
+        // Brief overlap: particles play alongside the full model
         yield return new WaitForSecondsRealtime(DISINTEGRATE_HIDE_DELAY);
 
-        // Hide all renderers
+        // Gradually shrink the model into the particle cloud
         Renderer[] renderers = GetComponentsInChildren<Renderer>();
+        float elapsed = 0f;
+
+        while (elapsed < DISINTEGRATE_SHRINK_DUR)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / DISINTEGRATE_SHRINK_DUR);
+            // Ease-in: starts slow, accelerates — feels like it's being pulled apart
+            float eased = t * t;
+            float scale = Mathf.Lerp(1f, 0f, eased);
+            transform.localScale = originalScale * scale;
+            yield return null;
+        }
+
+        // Fully hidden
+        transform.localScale = Vector3.zero;
         foreach (Renderer r in renderers)
         {
             if (r != null) r.enabled = false;
         }
     }
 
-    /// <summary>Restores all player renderers to full visibility.</summary>
+    private Vector3 _cachedOriginalScale = Vector3.one;
+    private Vector3[] _cachedChildLocalPositions;
+    private Quaternion[] _cachedChildLocalRotations;
+    private Transform[] _cachedChildren;
+
+    /// <summary>Caches local transforms of direct children so root motion drift can be undone on respawn.</summary>
+    private void CacheChildTransforms()
+    {
+        int count = transform.childCount;
+        _cachedChildren = new Transform[count];
+        _cachedChildLocalPositions = new Vector3[count];
+        _cachedChildLocalRotations = new Quaternion[count];
+        for (int i = 0; i < count; i++)
+        {
+            Transform child = transform.GetChild(i);
+            _cachedChildren[i] = child;
+            _cachedChildLocalPositions[i] = child.localPosition;
+            _cachedChildLocalRotations[i] = child.localRotation;
+        }
+    }
+
+    /// <summary>Restores all player renderers, scale, child transforms, and resets the Animator to its default pose.</summary>
     private void RestorePlayerVisuals()
     {
+        transform.localScale = _cachedOriginalScale;
+
         Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
         foreach (Renderer r in renderers)
         {
             if (r != null) r.enabled = true;
+        }
+
+        // Reset the character Animator so bones return to the idle pose
+        Animator anim = GetComponentInChildren<Animator>(true);
+        if (anim != null)
+        {
+            anim.Rebind();
+            anim.Update(0f);
+        }
+
+        // Restore child local transforms to undo any root motion drift
+        if (_cachedChildren != null)
+        {
+            for (int i = 0; i < _cachedChildren.Length; i++)
+            {
+                if (_cachedChildren[i] != null)
+                {
+                    _cachedChildren[i].localPosition = _cachedChildLocalPositions[i];
+                    _cachedChildren[i].localRotation = _cachedChildLocalRotations[i];
+                }
+            }
         }
     }
 

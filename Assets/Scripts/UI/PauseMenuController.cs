@@ -380,6 +380,7 @@ public class PauseMenuController : MonoBehaviour
     {
         _isPaused = false;
         SetVisible(false);
+        EnablePauseBlur(false);
         Time.timeScale = 1f;
         MainMenuController.RequestTrialSelectOnLoad();
         // Always go to MainScene for trial selection (it has the menu + trial select UI)
@@ -414,6 +415,7 @@ public class PauseMenuController : MonoBehaviour
         Time.timeScale = 1f;
         _isPaused = false;
         SetVisible(false);
+        EnablePauseBlur(false);
 
         // Load MainScene — it auto-shows the main menu on load
         if (ScreenTransitionManager.Instance != null)

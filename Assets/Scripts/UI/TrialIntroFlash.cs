@@ -76,6 +76,13 @@ public class TrialIntroFlash : MonoBehaviour
         // Wait a frame for the canvas to be ready
         yield return null;
 
+        // Wait for the shimmer transition to finish so the level name
+        // appears only after the new scene is fully revealed.
+        while (ScreenTransitionManager.Instance == null)
+            yield return null;
+        while (ScreenTransitionManager.Instance.IsRevealing)
+            yield return null;
+
         // Find or create a canvas
         Canvas canvas = null;
         HUDController hud = HUDController.Instance;

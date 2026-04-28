@@ -5,8 +5,16 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Manages all screen fade / flash transitions.
-/// Requires two full-screen overlay Images wired in the Inspector.
+/// Manages all screen transitions using a shimmer-wipe that matches
+/// MenuShimmerController exactly: same speed (8s), same band width,
+/// same 25-degree angle, same barely-there alpha.
+///
+/// How it works:
+/// 1. Captures a screenshot of the current scene.
+/// 2. Loads the new scene (or runs a midpoint action).
+/// 3. Displays the screenshot as a full-screen RawImage overlay.
+/// 4. The ShimmerWipe shader slowly dissolves the screenshot from
+///    left to right, revealing the live new scene underneath.
 /// </summary>
 public class ScreenTransitionManager : MonoBehaviour
 {
@@ -17,47 +25,156 @@ public class ScreenTransitionManager : MonoBehaviour
     [SerializeField] private Image flashOverlay;
 
     [Header("Timing")]
+    #pragma warning disable CS0414
     [SerializeField] private float defaultFadeDuration = 0.5f;
-    #pragma warning disable CS0414 // Reserved for Inspector configuration
-    [SerializeField] private float flashDuration       = 0.15f;
+    [SerializeField] private float flashDuration = 0.15f;
     #pragma warning restore CS0414
 
     private const float FLASH_PEAK_ALPHA = 0.8f;
 
-    // Cosmic fade palette — deep indigo base with purple/blue/gold shimmer
-    private static readonly Color COSMIC_BASE   = new Color(0.08f, 0.04f, 0.18f, 1f);
-    private static readonly Color COSMIC_PURPLE = new Color(0.25f, 0.08f, 0.40f, 1f);
-    private static readonly Color COSMIC_BLUE   = new Color(0.06f, 0.10f, 0.32f, 1f);
-    private static readonly Color COSMIC_GOLD   = new Color(0.85f, 0.70f, 0.25f, 1f);
+    // ── Shimmer — matches MenuShimmerController exactly ─────────────
+    /// <summary>Same as MenuShimmerController.SWEEP_DURATION.</summary>
+    private const float SHIMMER_SWEEP_DUR = 8f;
 
-    private Color _savedFadeColor = Color.black;
+    /// <summary>Same palette as MenuShimmerController.PALETTE.</summary>
+    private static readonly Color[] SHIMMER_PALETTE = new Color[]
+    {
+        new Color(0.961f, 0.784f, 0.259f, 1f),   // Gold
+        new Color(0.353f, 0.706f, 0.941f, 1f),   // Blue
+        new Color(0.608f, 0.365f, 0.898f, 1f),   // Purple
+        new Color(0.200f, 0.780f, 0.860f, 1f),   // Teal
+    };
+
+    private static readonly int PropProgress  = Shader.PropertyToID("_Progress");
+    private static readonly int PropColor1    = Shader.PropertyToID("_ShimmerColor1");
+    private static readonly int PropColor2    = Shader.PropertyToID("_ShimmerColor2");
+
+    private int _shimmerColorIndex;
+
+    // Dynamic shimmer overlay (RawImage showing the captured old scene)
+    private RawImage _shimmerOverlay;
+    private Material _shimmerMat;
+
+    // ── Scene-load handoff ──────────────────────────────────────────
+    /// <summary>Screenshot of the old scene. Survives scene load (not attached to any GO).</summary>
+    private static Texture2D _pendingCapture;
+
+    /// <summary>Signals the next scene to auto-reveal via shimmer wipe.</summary>
+    private static bool _fadeInOnNextScene;
+
+    /// <summary>Solid dark color shown briefly while the scene loads behind it.</summary>
+    private static readonly Color SOLID_COVER = new Color(0.03f, 0.015f, 0.06f, 1f);
+
+    // Blur removed — the menu shimmer has no blur, and neither do transitions.
 
     public bool IsTransitioning { get; private set; }
+
+    /// <summary>True while the shimmer wipe is actively revealing a new scene.</summary>
+    public bool IsRevealing { get; private set; }
+
+    // ════════════════════════════════════════════════════════════════════
+    //  LIFECYCLE
+    // ════════════════════════════════════════════════════════════════════
 
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
-        SetAlpha(fadeOverlay,  0f);
+
+        _shimmerColorIndex = UnityEngine.Random.Range(0, SHIMMER_PALETTE.Length);
         SetAlpha(flashOverlay, 0f);
+
+        // Reset fadeOverlay to default (no custom material, transparent)
+        if (fadeOverlay != null)
+        {
+            fadeOverlay.material = null;
+            SetAlpha(fadeOverlay, 0f);
+            fadeOverlay.raycastTarget = false;
+        }
+
+        if (_fadeInOnNextScene)
+        {
+            _fadeInOnNextScene = false;
+
+            if (_pendingCapture != null)
+            {
+                // Old scene captured — cover with solid, then shimmer-reveal
+                if (fadeOverlay != null)
+                {
+                    fadeOverlay.color = SOLID_COVER;
+                    fadeOverlay.raycastTarget = true;
+                }
+                StartCoroutine(RevealWithCapture());
+            }
+            else
+            {
+                // No capture (fallback) — simple fade from solid cover
+                if (fadeOverlay != null)
+                {
+                    fadeOverlay.color = SOLID_COVER;
+                    fadeOverlay.raycastTarget = true;
+                }
+                StartCoroutine(SimpleFadeIn(0.8f));
+            }
+        }
     }
 
-    /// <summary>Cosmic fade to opaque, runs midpoint callback, cosmic fade back in.</summary>
+    /// <summary>
+    /// Creates the shimmer overlay showing the old scene screenshot,
+    /// hides the solid cover, then slowly wipes the screenshot away.
+    /// </summary>
+    private IEnumerator RevealWithCapture()
+    {
+        IsRevealing = true;
+        yield return null; // Let scene Awake/Start finish
+
+        CreateShimmerOverlay(_pendingCapture);
+
+        // Shimmer overlay now covers everything with the old scene.
+        // Hide the solid fadeOverlay so the live new scene is underneath.
+        SetAlpha(fadeOverlay, 0f);
+        fadeOverlay.raycastTarget = false;
+
+        yield return AnimateShimmerWipe(SHIMMER_SWEEP_DUR);
+
+        DestroyShimmerOverlay();
+        ReleasePendingCapture();
+        IsRevealing = false;
+    }
+
+    /// <summary>Fallback: simple alpha fade from solid to transparent.</summary>
+    private IEnumerator SimpleFadeIn(float dur)
+    {
+        yield return null;
+        float elapsed = 0f;
+        while (elapsed < dur)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            SetAlpha(fadeOverlay, 1f - Mathf.Clamp01(elapsed / dur));
+            yield return null;
+        }
+        SetAlpha(fadeOverlay, 0f);
+        fadeOverlay.raycastTarget = false;
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    //  PUBLIC API — same signatures so all existing callers still work
+    // ════════════════════════════════════════════════════════════════════
+
+    /// <summary>Captures screen, runs midpoint, then shimmer-reveals the result.</summary>
     public void FadeTransition(Action onMidpoint, float duration = -1f)
     {
         if (IsTransitioning) return;
-        float dur = duration > 0f ? duration : defaultFadeDuration;
-        StartCoroutine(CosmicFadeTransitionRoutine(onMidpoint, dur));
+        StartCoroutine(ShimmerTransitionRoutine(onMidpoint));
     }
 
-    /// <summary>Cosmic fade out and loads a scene by name.</summary>
+    /// <summary>Captures screen, loads a scene. New scene shimmer-reveals automatically.</summary>
     public void FadeToScene(string sceneName, float duration = -1f)
     {
-        float dur = duration > 0f ? duration : defaultFadeDuration;
-        CosmicFadeOut(dur, () => SceneManager.LoadScene(sceneName));
+        StartCoroutine(DissolveAndLoadScene(sceneName));
     }
 
-    /// <summary>Gold radiance burst (win).</summary>
+    /// <summary>Gold radiance burst (win effect).</summary>
     public void GoldBurst(Action onComplete = null)
     {
         if (IsTransitioning) return;
@@ -66,7 +183,7 @@ public class ScreenTransitionManager : MonoBehaviour
         StartCoroutine(FlashRoutine(gold, 1.2f, onComplete));
     }
 
-    /// <summary>Red fracture flash (game over).</summary>
+    /// <summary>Red fracture flash (game over effect).</summary>
     public void RedFracture(Action onComplete = null)
     {
         if (IsTransitioning) return;
@@ -75,139 +192,311 @@ public class ScreenTransitionManager : MonoBehaviour
         StartCoroutine(FlashRoutine(danger, 0.8f, onComplete));
     }
 
-    /// <summary>Sets the fade overlay to fully opaque cosmic base color.</summary>
+    /// <summary>Covers the screen immediately with a solid dark overlay.</summary>
     public void SetBlack()
     {
         if (fadeOverlay == null) return;
-        Color c = COSMIC_BASE;
-        c.a = 1f;
-        fadeOverlay.color = c;
+        fadeOverlay.material = null;
+        fadeOverlay.color = SOLID_COVER;
+        fadeOverlay.raycastTarget = true;
     }
 
-    /// <summary>Fades in from cosmic overlay.</summary>
+    /// <summary>Reveals the scene. Uses shimmer if a capture exists, otherwise fades.</summary>
     public void FadeIn(float duration = -1f, Action onComplete = null)
     {
-        float dur = duration > 0f ? duration : defaultFadeDuration;
-        StartCoroutine(CosmicFadeRoutine(1f, 0f, dur, onComplete));
+        _fadeInOnNextScene = false;
+        StartCoroutine(FadeInRoutine(onComplete));
     }
 
-    /// <summary>Fades out to cosmic overlay.</summary>
+    /// <summary>Captures the screen, covers it, then calls the callback.</summary>
     public void FadeOut(float duration = -1f, Action onComplete = null)
     {
-        float dur = duration > 0f ? duration : defaultFadeDuration;
-        StartCoroutine(CosmicFadeRoutine(0f, 1f, dur, onComplete));
+        StartCoroutine(CaptureAndCover(onComplete));
     }
 
-    // ── Cosmic Transitions ──────────────────────────────────────────
-
-    /// <summary>
-    /// Fades out through a cosmic color wash (deep purple → indigo → gold shimmer).
-    /// The overlay sweeps through cosmic hues instead of going to flat black.
-    /// </summary>
+    /// <summary>Alias for FadeOut — captures screen, covers, calls callback.</summary>
     public void CosmicFadeOut(float duration = -1f, Action onComplete = null)
     {
-        float dur = duration > 0f ? duration : defaultFadeDuration;
-        StartCoroutine(CosmicFadeRoutine(0f, 1f, dur, onComplete));
+        StartCoroutine(CaptureAndCover(onComplete));
     }
 
-    /// <summary>Fades back in from the cosmic wash.</summary>
+    /// <summary>Alias for FadeIn — reveals the scene with shimmer.</summary>
     public void CosmicFadeIn(float duration = -1f, Action onComplete = null)
     {
-        float dur = duration > 0f ? duration : defaultFadeDuration;
-        StartCoroutine(CosmicFadeRoutine(1f, 0f, dur, onComplete));
+        _fadeInOnNextScene = false;
+        StartCoroutine(FadeInRoutine(onComplete));
     }
 
-    /// <summary>Cosmic transition: fade out, run midpoint callback, fade back in.</summary>
+    /// <summary>Full shimmer transition: capture, midpoint, reveal.</summary>
     public void CosmicFadeTransition(Action onMidpoint, float duration = -1f)
     {
         if (IsTransitioning) return;
-        float dur = duration > 0f ? duration : defaultFadeDuration;
-        StartCoroutine(CosmicFadeTransitionRoutine(onMidpoint, dur));
+        StartCoroutine(ShimmerTransitionRoutine(onMidpoint));
     }
 
-    private IEnumerator CosmicFadeTransitionRoutine(Action onMidpoint, float duration)
+    // ════════════════════════════════════════════════════════════════════
+    //  CORE ROUTINES
+    // ════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Dissolves visible scene elements into sand, then captures the remaining
+    /// background and loads the new scene. The new scene auto-reveals via shimmer wipe.
+    /// </summary>
+    private IEnumerator DissolveAndLoadScene(string sceneName)
+    {
+        if (fadeOverlay != null) fadeOverlay.raycastTarget = true;
+
+        // Start music fade alongside the dissolve
+        if (SoundManager.Instance != null)
+            SoundManager.Instance.FadeMusicOut(2.5f);
+
+        // Run sand dissolve sequence
+        // The orchestrator is not destroyed manually — it gets destroyed
+        // automatically when the scene unloads, ensuring all child
+        // coroutines (element dissolves) run to completion.
+        SandTransitionOrchestrator orchestrator = gameObject.AddComponent<SandTransitionOrchestrator>();
+        yield return orchestrator.RunDissolve();
+
+        // Capture the remaining background (elements are gone)
+        yield return new WaitForEndOfFrame();
+        ReleasePendingCapture();
+        _pendingCapture = CaptureScreen();
+
+        // Solid cover hides the gap between old scene unload and new scene render
+        if (fadeOverlay != null)
+        {
+            fadeOverlay.material = null;
+            fadeOverlay.color = SOLID_COVER;
+        }
+        _fadeInOnNextScene = true;
+
+        // Tell the next scene's SoundManager to fade music in during the shimmer
+        SoundManager.PendingMusicFadeIn = true;
+        SoundManager.PendingFadeInDuration = SHIMMER_SWEEP_DUR;
+
+        SceneManager.LoadScene(sceneName);
+    }
+
+    /// <summary>Captures the screen, loads a scene. New scene auto-reveals.</summary>
+    private IEnumerator CaptureAndLoadScene(string sceneName)
+    {
+        if (fadeOverlay != null) fadeOverlay.raycastTarget = true;
+
+        // Fade music out quickly before capture
+        if (SoundManager.Instance != null)
+            SoundManager.Instance.FadeMusicOut(0.4f);
+        yield return new WaitForSecondsRealtime(0.4f);
+
+        yield return new WaitForEndOfFrame();
+        ReleasePendingCapture();
+        _pendingCapture = CaptureScreen();
+
+        // Solid cover hides the gap between old scene unload and new scene render
+        if (fadeOverlay != null)
+        {
+            fadeOverlay.material = null;
+            fadeOverlay.color = SOLID_COVER;
+        }
+        _fadeInOnNextScene = true;
+
+        // Tell the next scene's SoundManager to fade music in during the shimmer
+        SoundManager.PendingMusicFadeIn = true;
+        SoundManager.PendingFadeInDuration = SHIMMER_SWEEP_DUR;
+
+        SceneManager.LoadScene(sceneName);
+    }
+
+    /// <summary>Captures the screen, covers it, calls callback (usually triggers a scene load).</summary>
+    private IEnumerator CaptureAndCover(Action onComplete)
+    {
+        if (fadeOverlay != null) fadeOverlay.raycastTarget = true;
+
+        // Fade music out quickly before capture
+        if (SoundManager.Instance != null)
+            SoundManager.Instance.FadeMusicOut(0.4f);
+        yield return new WaitForSecondsRealtime(0.4f);
+
+        yield return new WaitForEndOfFrame();
+        ReleasePendingCapture();
+        _pendingCapture = CaptureScreen();
+
+        if (fadeOverlay != null)
+        {
+            fadeOverlay.material = null;
+            fadeOverlay.color = SOLID_COVER;
+        }
+        _fadeInOnNextScene = true;
+
+        // Tell the next scene's SoundManager to fade music in during the shimmer
+        SoundManager.PendingMusicFadeIn = true;
+        SoundManager.PendingFadeInDuration = SHIMMER_SWEEP_DUR;
+
+        onComplete?.Invoke();
+    }
+
+    /// <summary>In-scene transition: capture, run midpoint, shimmer-reveal the result.</summary>
+    private IEnumerator ShimmerTransitionRoutine(Action onMidpoint)
     {
         IsTransitioning = true;
-        float half = duration * 0.5f;
-        yield return CosmicFadeCore(0f, 1f, half);
+        if (fadeOverlay != null) fadeOverlay.raycastTarget = true;
+
+        yield return new WaitForEndOfFrame();
+        Texture2D capture = CaptureScreen();
+
+        // Run midpoint action (rearranges UI, changes state, etc.)
         onMidpoint?.Invoke();
-        yield return new WaitForSecondsRealtime(0.1f);
-        yield return CosmicFadeCore(1f, 0f, half);
+        yield return null; // Let changes render
+
+        // Old scene screenshot on top, then wipe it away
+        CreateShimmerOverlay(capture);
+
+        if (fadeOverlay != null) fadeOverlay.raycastTarget = false;
+        yield return AnimateShimmerWipe(SHIMMER_SWEEP_DUR);
+
+        DestroyShimmerOverlay();
+        Destroy(capture);
+
         IsTransitioning = false;
     }
 
-    private IEnumerator CosmicFadeRoutine(float from, float to, float dur, Action cb)
+    /// <summary>Reveals the scene — shimmer wipe if capture exists, else simple fade.</summary>
+    private IEnumerator FadeInRoutine(Action onComplete)
     {
-        yield return CosmicFadeCore(from, to, dur);
-        cb?.Invoke();
+        IsRevealing = true;
+
+        if (_pendingCapture != null)
+        {
+            CreateShimmerOverlay(_pendingCapture);
+            if (fadeOverlay != null)
+            {
+                SetAlpha(fadeOverlay, 0f);
+                fadeOverlay.raycastTarget = false;
+            }
+
+            yield return AnimateShimmerWipe(SHIMMER_SWEEP_DUR);
+
+            DestroyShimmerOverlay();
+            ReleasePendingCapture();
+        }
+        else
+        {
+            yield return SimpleFadeIn(0.8f);
+        }
+
+        IsRevealing = false;
+        onComplete?.Invoke();
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    //  SHIMMER OVERLAY
+    // ════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Creates a full-screen RawImage showing the captured old scene
+    /// with the ShimmerWipe shader. Renders on top of everything.
+    /// </summary>
+    private void CreateShimmerOverlay(Texture2D texture)
+    {
+        if (_shimmerOverlay != null) DestroyShimmerOverlay();
+
+        Transform parent = fadeOverlay.transform.parent;
+        GameObject go = new GameObject("ShimmerWipeOverlay");
+        go.transform.SetParent(parent, false);
+        go.transform.SetAsLastSibling();
+
+        RectTransform rt = go.AddComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+
+        _shimmerOverlay = go.AddComponent<RawImage>();
+        _shimmerOverlay.raycastTarget = false;
+        _shimmerOverlay.texture = texture;
+
+        Shader shader = Shader.Find("UI/ShimmerWipe");
+        if (shader != null)
+        {
+            _shimmerMat = new Material(shader);
+            _shimmerMat.SetFloat(PropProgress, 0f);
+            CycleShimmerColors();
+            _shimmerOverlay.material = _shimmerMat;
+        }
     }
 
     /// <summary>
-    /// Core cosmic fade: sweeps the overlay through cosmic colors as alpha changes.
-    /// Phase 0.0-0.3: deep purple sweep in
-    /// Phase 0.3-0.6: shift to midnight blue  
-    /// Phase 0.6-0.85: touch of gold shimmer
-    /// Phase 0.85-1.0: settle to deep cosmic indigo
+    /// Animates the shimmer wipe from 0 (old scene fully visible) to 1
+    /// (old scene gone, new scene fully revealed). Linear progress.
     /// </summary>
-    private IEnumerator CosmicFadeCore(float fromAlpha, float toAlpha, float dur)
+    private IEnumerator AnimateShimmerWipe(float duration)
     {
-        if (fadeOverlay == null) yield break;
+        if (_shimmerMat == null) yield break;
 
-        _savedFadeColor = fadeOverlay.color;
+        _shimmerMat.SetFloat(PropProgress, 0f);
+
         float elapsed = 0f;
-
-        while (elapsed < dur)
+        while (elapsed < duration)
         {
             elapsed += Time.unscaledDeltaTime;
-            float t = Mathf.Clamp01(elapsed / dur);
-            float alpha = Mathf.Lerp(fromAlpha, toAlpha, t);
-
-            // Sweep through cosmic palette based on progress
-            Color col;
-            if (t < 0.3f)
-            {
-                // Deep purple sweep
-                col = Color.Lerp(COSMIC_BASE, COSMIC_PURPLE, t / 0.3f);
-            }
-            else if (t < 0.6f)
-            {
-                // Shift to midnight blue
-                col = Color.Lerp(COSMIC_PURPLE, COSMIC_BLUE, (t - 0.3f) / 0.3f);
-            }
-            else if (t < 0.85f)
-            {
-                // Touch of gold shimmer at peak
-                float goldT = (t - 0.6f) / 0.25f;
-                float goldAmount = Mathf.Sin(goldT * Mathf.PI) * 0.25f;
-                col = Color.Lerp(COSMIC_BLUE, COSMIC_BASE, goldT);
-                col = Color.Lerp(col, COSMIC_GOLD, goldAmount);
-            }
-            else
-            {
-                // Settle to deep indigo
-                col = COSMIC_BASE;
-            }
-
-            col.a = alpha;
-            fadeOverlay.color = col;
+            float t = Mathf.Clamp01(elapsed / duration);
+            _shimmerMat.SetFloat(PropProgress, t);
             yield return null;
         }
 
-        Color final_col = COSMIC_BASE;
-        final_col.a = toAlpha;
-        fadeOverlay.color = final_col;
+        _shimmerMat.SetFloat(PropProgress, 1f);
     }
 
-    private IEnumerator FadeTransitionRoutine(Action onMidpoint, float duration)
+    /// <summary>Destroys the shimmer overlay and its material.</summary>
+    private void DestroyShimmerOverlay()
     {
-        IsTransitioning = true;
-        float half = duration * 0.5f;
-        yield return FadeAlpha(fadeOverlay, 0f, 1f, half);
-        onMidpoint?.Invoke();
-        yield return new WaitForSecondsRealtime(0.1f);
-        yield return FadeAlpha(fadeOverlay, 1f, 0f, half);
-        IsTransitioning = false;
+        if (_shimmerOverlay != null)
+        {
+            Destroy(_shimmerOverlay.gameObject);
+            _shimmerOverlay = null;
+        }
+        if (_shimmerMat != null)
+        {
+            Destroy(_shimmerMat);
+            _shimmerMat = null;
+        }
     }
+
+    /// <summary>Picks the next color pair from the palette.</summary>
+    private void CycleShimmerColors()
+    {
+        if (_shimmerMat == null) return;
+        _shimmerColorIndex = (_shimmerColorIndex + 1) % SHIMMER_PALETTE.Length;
+        int next = (_shimmerColorIndex + 1) % SHIMMER_PALETTE.Length;
+        _shimmerMat.SetColor(PropColor1, SHIMMER_PALETTE[_shimmerColorIndex]);
+        _shimmerMat.SetColor(PropColor2, SHIMMER_PALETTE[next]);
+    }
+
+    /// <summary>Releases the static captured screenshot to free memory.</summary>
+    private static void ReleasePendingCapture()
+    {
+        if (_pendingCapture != null)
+        {
+            Destroy(_pendingCapture);
+            _pendingCapture = null;
+        }
+    }
+
+    /// <summary>
+    /// Captures the current screen using ReadPixels instead of
+    /// CaptureScreenshotAsTexture to avoid a known Unity bug where
+    /// colors are brighter/oversaturated in Linear color space projects.
+    /// </summary>
+    private static Texture2D CaptureScreen()
+    {
+        Texture2D tex = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
+        tex.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0, false);
+        tex.Apply(false, false);
+        return tex;
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    //  FLASH HELPERS (GoldBurst / RedFracture — unchanged)
+    // ════════════════════════════════════════════════════════════════════
 
     private IEnumerator FlashRoutine(Color color, float duration, Action onComplete)
     {
@@ -218,12 +507,6 @@ public class ScreenTransitionManager : MonoBehaviour
         yield return FadeAlpha(flashOverlay, FLASH_PEAK_ALPHA, 0f, half);
         IsTransitioning = false;
         onComplete?.Invoke();
-    }
-
-    private IEnumerator FadeAlphaRoutine(Image img, float from, float to, float dur, Action cb)
-    {
-        yield return FadeAlpha(img, from, to, dur);
-        cb?.Invoke();
     }
 
     private IEnumerator FadeAlpha(Image img, float from, float to, float dur)

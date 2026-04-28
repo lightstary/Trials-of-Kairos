@@ -214,6 +214,9 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    /// <summary>Maximum horizontal distance to snap onto a moving tile after a roll.</summary>
+    private const float MOVING_TILE_SNAP_RADIUS = 0.75f;
+
     void SnapAfterRoll()
     {
         float halfHeight = GetHalfHeight();
@@ -229,6 +232,47 @@ public class PlayerMovement : MonoBehaviour
         euler.y = Mathf.Round(euler.y / 90f) * 90f;
         euler.z = Mathf.Round(euler.z / 90f) * 90f;
         transform.eulerAngles = euler;
+
+        // If a moving tile is nearby, snap onto its center so the player
+        // doesn't end up half-on half-off due to the tile shifting mid-roll.
+        SnapToNearbyMovingTile();
+    }
+
+    /// <summary>Finds the closest moving tile within snap range and aligns the player to its center.</summary>
+    private void SnapToNearbyMovingTile()
+    {
+        MovingTile closest = null;
+        float closestDist = float.MaxValue;
+
+        MovingTile[] tiles = FindObjectsOfType<MovingTile>();
+        for (int i = 0; i < tiles.Length; i++)
+        {
+            MovingTile tile = tiles[i];
+            Vector3 tilePos = tile.transform.position;
+            float dx = transform.position.x - tilePos.x;
+            float dz = transform.position.z - tilePos.z;
+            float dist = Mathf.Sqrt(dx * dx + dz * dz);
+
+            if (dist < MOVING_TILE_SNAP_RADIUS && dist < closestDist)
+            {
+                // Verify the player is roughly at the right height
+                float tileTopY = tilePos.y + tile.transform.lossyScale.y * 0.5f;
+                float heightAbove = transform.position.y - tileTopY;
+                if (heightAbove > -0.2f && heightAbove < 2.5f)
+                {
+                    closest = tile;
+                    closestDist = dist;
+                }
+            }
+        }
+
+        if (closest != null)
+        {
+            Vector3 pos = transform.position;
+            pos.x = closest.transform.position.x;
+            pos.z = closest.transform.position.z;
+            transform.position = pos;
+        }
     }
 
     public void ResetMovement()

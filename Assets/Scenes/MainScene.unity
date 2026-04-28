@@ -7943,11 +7943,11 @@ RectTransform:
   - {fileID: 2020659589}
   - {fileID: 1296167934}
   - {fileID: 998919382}
-  - {fileID: 462881998}
-  - {fileID: 1359294257}
   - {fileID: 1906411705}
   - {fileID: 1819657562}
   - {fileID: 1049617421}
+  - {fileID: 462881998}
+  - {fileID: 1359294257}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -11694,7 +11694,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61b6e779ddf4acf4a8a86da5a022c1fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fillLerpSpeed: 5
 --- !u!4 &662015371 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: b5e7b8886f6ca3d4aa07f77e932c5f50, type: 3}
@@ -12457,7 +12456,6 @@ MonoBehaviour:
   tickInterval: 1
   minTime: -4
   maxTime: 4
-  smoothMovement: 0
 --- !u!65 &706326132
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -27683,7 +27681,6 @@ MonoBehaviour:
   tickInterval: 1
   minTime: -4
   maxTime: 4
-  smoothMovement: 0
 --- !u!65 &1759034088
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -29364,7 +29361,7 @@ MonoBehaviour:
   maxValue: 10
   warningZone: 5
   dangerZone: 8
-  bossRateMultiplier: 0.4
+  rateMultiplier: 0.4
 --- !u!4 &1889438390
 Transform:
   m_ObjectHideFlags: 0
@@ -32584,7 +32581,6 @@ MonoBehaviour:
   tickInterval: 1
   minTime: -4
   maxTime: 4
-  smoothMovement: 0
 --- !u!65 &2023957590
 BoxCollider:
   m_ObjectHideFlags: 0

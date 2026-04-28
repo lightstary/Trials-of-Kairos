@@ -4634,7 +4634,6 @@ MonoBehaviour:
   tickInterval: 1
   minTime: -4
   maxTime: 4
-  smoothMovement: 0
 --- !u!65 &280542682
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -6207,7 +6206,6 @@ MonoBehaviour:
   tickInterval: 1
   minTime: -4
   maxTime: 4
-  smoothMovement: 0
 --- !u!65 &335325554
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -8076,11 +8074,11 @@ RectTransform:
   - {fileID: 2020659589}
   - {fileID: 1296167934}
   - {fileID: 998919382}
-  - {fileID: 462881998}
-  - {fileID: 1359294257}
   - {fileID: 1906411705}
   - {fileID: 1819657562}
   - {fileID: 1049617421}
+  - {fileID: 462881998}
+  - {fileID: 1359294257}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -9374,7 +9372,6 @@ MonoBehaviour:
   tickInterval: 1
   minTime: -4
   maxTime: 4
-  smoothMovement: 0
 --- !u!65 &511858598
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -9942,7 +9939,6 @@ MonoBehaviour:
   tickInterval: 1
   minTime: -4
   maxTime: 4
-  smoothMovement: 0
 --- !u!65 &543157074
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -11861,7 +11857,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61b6e779ddf4acf4a8a86da5a022c1fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fillLerpSpeed: 5
 --- !u!1 &667049102
 GameObject:
   m_ObjectHideFlags: 0
@@ -12624,7 +12619,6 @@ MonoBehaviour:
   tickInterval: 1
   minTime: -4
   maxTime: 4
-  smoothMovement: 0
 --- !u!65 &691412606
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -12911,7 +12905,6 @@ MonoBehaviour:
   tickInterval: 1
   minTime: -4
   maxTime: 4
-  smoothMovement: 0
 --- !u!65 &701672504
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -13114,7 +13107,6 @@ MonoBehaviour:
   tickInterval: 1
   minTime: -4
   maxTime: 4
-  smoothMovement: 0
 --- !u!65 &706326132
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -18192,7 +18184,6 @@ MonoBehaviour:
   tickInterval: 1
   minTime: -4
   maxTime: 4
-  smoothMovement: 0
 --- !u!65 &1044260229
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -19975,7 +19966,6 @@ MonoBehaviour:
   tickInterval: 1
   minTime: -4
   maxTime: 4
-  smoothMovement: 0
 --- !u!65 &1137786911
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -23462,7 +23452,6 @@ MonoBehaviour:
   tickInterval: 1
   minTime: -4
   maxTime: 4
-  smoothMovement: 0
 --- !u!65 &1331833119
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -27984,7 +27973,6 @@ MonoBehaviour:
   tickInterval: 1
   minTime: -4
   maxTime: 4
-  smoothMovement: 0
 --- !u!65 &1623900563
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -28864,7 +28852,6 @@ MonoBehaviour:
   tickInterval: 1
   minTime: -4
   maxTime: 4
-  smoothMovement: 0
 --- !u!65 &1719261097
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -29621,7 +29608,6 @@ MonoBehaviour:
   tickInterval: 1
   minTime: -4
   maxTime: 4
-  smoothMovement: 0
 --- !u!65 &1726692589
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -30965,7 +30951,6 @@ MonoBehaviour:
   tickInterval: 1
   minTime: -4
   maxTime: 4
-  smoothMovement: 0
 --- !u!65 &1807575850
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -32103,7 +32088,7 @@ MonoBehaviour:
   maxValue: 10
   warningZone: 5
   dangerZone: 8
-  bossRateMultiplier: 0.4
+  rateMultiplier: 0.4
 --- !u!4 &1889438390
 Transform:
   m_ObjectHideFlags: 0
@@ -33846,7 +33831,6 @@ MonoBehaviour:
   tickInterval: 1
   minTime: -4
   maxTime: 4
-  smoothMovement: 0
 --- !u!65 &1975629896
 BoxCollider:
   m_ObjectHideFlags: 0
