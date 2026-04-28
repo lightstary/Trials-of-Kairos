@@ -2,48 +2,53 @@ using UnityEngine;
 using System.Collections;
 
 /// <summary>
-/// Garden Boss (Boss B) — a pointer-vs-pointer duel on the time scale meter.
+/// Garden Boss (Boss B) — a tug-of-war duel on the time scale meter.
 ///
-/// The boss has a pointer that moves toward one end of the meter each round.
-/// The player must set their time state to the OPPOSITE direction to contest
-/// and push back. When both pointers overlap, the boss pointer stops.
+/// Both the player and the boss have separate pointers on the meter.
+/// Each round, the boss pointer pushes toward one end of the scale.
+/// The player contests by setting their time state to the OPPOSITE direction,
+/// which stops the boss pointer. Going the SAME direction accelerates the boss.
 ///
-/// Frozen time pauses both pointers briefly before the boss resumes
-/// (the boss can ignore time constraints).
+/// During frozen time, both pointers pause briefly, then the boss resumes
+/// (the boss can ignore time constraints, forcing the player to reposition).
 ///
-/// The fight is designed to last 20–30 seconds across several short rounds.
-/// Lose condition: boss pointer reaches either edge of the meter.
-/// Win condition: survive the full duration.
+/// The player's own timescale still accrues normally — hitting +/-10 kills them
+/// just like in normal gameplay. This creates a dual threat: manage your own
+/// meter position while fighting the boss pointer.
+///
+/// Fight length: 20–30 seconds across short rounds.
+/// Lose: boss pointer reaches either edge of the meter.
+/// Win: survive the full duration.
 /// </summary>
 public class BossBFight : MonoBehaviour
 {
     public static BossBFight Instance;
 
-    [Header("Survival Settings")]
-    [Tooltip("Total time (seconds) the player must survive to win.")]
+    [Header("Survival")]
+    [Tooltip("Total seconds the player must survive to win.")]
     public float survivalTime = 25f;
 
-    [Header("Round Settings")]
-    [Tooltip("Seconds between boss direction changes.")]
+    [Header("Rounds")]
+    [Tooltip("Starting seconds between boss direction changes.")]
     public float roundDuration = 4f;
 
-    [Tooltip("Minimum round duration as the fight progresses.")]
+    [Tooltip("Minimum round duration as the fight ramps up.")]
     public float minRoundDuration = 2f;
 
     [Tooltip("Seconds removed from round duration each round.")]
     public float roundDurationShrink = 0.3f;
 
-    [Header("Boss Pointer Settings")]
+    [Header("Boss Pointer")]
     [Tooltip("Starting movement speed of the boss pointer (units/sec).")]
     public float bossStartSpeed = 1.8f;
 
     [Tooltip("Speed increase each round.")]
     public float bossSpeedIncrease = 0.35f;
 
-    [Tooltip("Speed multiplier when the player moves in the same direction as the boss.")]
+    [Tooltip("Speed multiplier when the player goes the same direction as the boss.")]
     public float sameDirectionMultiplier = 1.5f;
 
-    [Tooltip("How much the boss pointer is slowed when contested (0 = full stop, 0.5 = half speed).")]
+    [Tooltip("How much the boss pointer is slowed when contested (0 = full stop).")]
     public float contestSlowFactor = 0f;
 
     [Header("Frozen Time")]
@@ -53,7 +58,7 @@ public class BossBFight : MonoBehaviour
     // ── Runtime state ───────────────────────────────────────────────────
     private float _bossPointerValue;
     private float _bossSpeed;
-    private int _bossDirection = 1; // +1 = toward max, -1 = toward min
+    private int _bossDirection = 1;
     private int _roundIndex;
     private float _survivalTimer;
     private float _currentRoundDuration;
@@ -63,15 +68,16 @@ public class BossBFight : MonoBehaviour
     private float _frozenPauseTimer;
     private bool _wasFrozenLastFrame;
 
+    /// <summary>True when the boss fight is active.</summary>
     public bool bossActive { get; private set; }
 
     /// <summary>True when the player is successfully opposing the boss pointer.</summary>
     public bool IsContesting => _isContesting;
 
-    /// <summary>Current boss pointer direction (+1 or -1).</summary>
+    /// <summary>Current boss pointer direction (+1 toward max, -1 toward min).</summary>
     public int BossDirection => _bossDirection;
 
-    /// <summary>Event fired when contesting state changes.</summary>
+    /// <summary>Fired when contesting state changes.</summary>
     public event System.Action<bool> OnContestingChanged;
 
     // Tutorial glow
@@ -98,7 +104,6 @@ public class BossBFight : MonoBehaviour
 
         _survivalTimer += Time.deltaTime;
 
-        // Check win
         if (_survivalTimer >= survivalTime)
         {
             WinBossFight();
@@ -117,6 +122,7 @@ public class BossBFight : MonoBehaviour
     {
         if (bossActive) return;
         bossActive = true;
+
         _survivalTimer = 0f;
         _roundIndex = 0;
         _bossPointerValue = 0f;
@@ -141,6 +147,7 @@ public class BossBFight : MonoBehaviour
     {
         StopAllCoroutines();
         bossActive = false;
+
         _survivalTimer = 0f;
         _bossPointerValue = 0f;
         _bossSpeed = bossStartSpeed;
@@ -157,33 +164,31 @@ public class BossBFight : MonoBehaviour
 
     // ── Core loop ───────────────────────────────────────────────────────
 
-    /// <summary>Coroutine that changes boss direction every round.</summary>
+    /// <summary>Flips boss direction each round, increases speed, shortens rounds.</summary>
     private IEnumerator RunRounds()
     {
         while (bossActive)
         {
             yield return new WaitForSeconds(_currentRoundDuration);
-
             if (!bossActive) yield break;
 
-            // New round: flip direction, increase speed, shorten round
             _roundIndex++;
             _bossDirection *= -1;
             _bossSpeed += bossSpeedIncrease;
             _currentRoundDuration = Mathf.Max(minRoundDuration, _currentRoundDuration - roundDurationShrink);
 
-            Debug.Log($"[BossB] Round {_roundIndex}: boss now pushing {(_bossDirection > 0 ? "FORWARD" : "REVERSE")}, speed={_bossSpeed:F1}");
+            Debug.Log($"[BossB] Round {_roundIndex}: boss pushing {(_bossDirection > 0 ? "FORWARD" : "REVERSE")}, speed={_bossSpeed:F1}");
         }
     }
 
-    /// <summary>Handles the frozen-time pause mechanic.</summary>
+    /// <summary>Handles the frozen-time pause: both pointers freeze briefly, then boss resumes.</summary>
     private void UpdateFrozenPause()
     {
         if (TimeState.Instance == null) return;
 
         bool isFrozen = TimeState.Instance.currentState == TimeState.State.Frozen;
 
-        // Detect transition INTO frozen state → start pause
+        // Entering frozen state starts a new pause window
         if (isFrozen && !_wasFrozenLastFrame)
         {
             _frozenPauseActive = true;
@@ -192,7 +197,6 @@ public class BossBFight : MonoBehaviour
 
         _wasFrozenLastFrame = isFrozen;
 
-        // Tick down the frozen pause
         if (_frozenPauseActive)
         {
             _frozenPauseTimer -= Time.deltaTime;
@@ -201,16 +205,15 @@ public class BossBFight : MonoBehaviour
         }
     }
 
-    /// <summary>Moves the boss pointer based on player's time state.</summary>
+    /// <summary>Moves the boss pointer based on the player's current time state.</summary>
     private void UpdateBossPointer()
     {
-        if (TimeScaleLogic.Instance == null) return;
-        if (TimeState.Instance == null) return;
+        if (TimeScaleLogic.Instance == null || TimeState.Instance == null) return;
 
         float minV = TimeScaleLogic.Instance.minValue;
         float maxV = TimeScaleLogic.Instance.maxValue;
 
-        // During frozen pause, both pointers are frozen — no movement
+        // During frozen pause, both pointers are fully frozen
         if (_frozenPauseActive)
         {
             UpdateMeter(minV, maxV);
@@ -222,14 +225,13 @@ public class BossBFight : MonoBehaviour
         bool playerFrozen  = TimeState.Instance.currentState == TimeState.State.Frozen;
         bool bossGoingForward = _bossDirection > 0;
 
-        // Determine contestation: player opposes boss direction
-        bool contesting = (playerReverse && bossGoingForward) ||
-                          (playerForward && !bossGoingForward);
+        // Contesting: player opposes boss direction
+        bool contesting = (playerReverse && bossGoingForward)
+                       || (playerForward && !bossGoingForward);
 
-        bool sameDirection = (playerForward && bossGoingForward) ||
-                             (playerReverse && !bossGoingForward);
+        bool sameDirection = (playerForward && bossGoingForward)
+                          || (playerReverse && !bossGoingForward);
 
-        // Fire event on contesting state change
         if (contesting != _isContesting)
         {
             _isContesting = contesting;
@@ -239,23 +241,22 @@ public class BossBFight : MonoBehaviour
         // Move boss pointer
         if (contesting)
         {
-            // Player is opposing — boss is slowed or stopped
+            // Player opposing — boss is slowed or fully stopped
             float slowedSpeed = _bossSpeed * contestSlowFactor;
             _bossPointerValue += _bossDirection * slowedSpeed * Time.deltaTime;
         }
         else if (playerFrozen && !_frozenPauseActive)
         {
-            // Frozen but pause expired — boss ignores frozen and moves normally
+            // Frozen pause expired — boss ignores frozen and pushes normally
             _bossPointerValue += _bossDirection * _bossSpeed * Time.deltaTime;
         }
         else if (sameDirection)
         {
-            // Player going same way as boss — boss moves faster
+            // Player going same way — boss accelerates
             _bossPointerValue += _bossDirection * _bossSpeed * sameDirectionMultiplier * Time.deltaTime;
         }
         else
         {
-            // Normal movement
             _bossPointerValue += _bossDirection * _bossSpeed * Time.deltaTime;
         }
 
@@ -264,14 +265,14 @@ public class BossBFight : MonoBehaviour
         UpdateMeter(minV, maxV);
     }
 
-    /// <summary>Updates the meter display.</summary>
+    /// <summary>Pushes the boss pointer state to the meter UI.</summary>
     private void UpdateMeter(float minV, float maxV)
     {
         if (_meter != null)
             _meter.SetBossPointer(_bossPointerValue, minV, maxV, _isContesting);
     }
 
-    /// <summary>Checks if the boss pointer reached the edges.</summary>
+    /// <summary>Checks if the boss pointer reached either edge — instant lose.</summary>
     private void CheckBossPointerKill()
     {
         if (TimeScaleLogic.Instance == null) return;

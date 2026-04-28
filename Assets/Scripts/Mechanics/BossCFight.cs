@@ -19,7 +19,7 @@ public class BossCFight : MonoBehaviour
     public Transform clockHand;
 
     [Tooltip("Target angles in degrees (clockwise from 12:00). 0=12:00, 90=3:00, 180=6:00, 270=9:00")]
-    public float[] challengeAngles = { 270f, 30f, 180f, 90f };
+    public float[] challengeAngles = { 120f, 300f, 210f };
 
     public float angleThreshold = 5f;
     public float tickInterval   = 0.5f;

@@ -11,18 +11,14 @@ public class MovingTile : MonoBehaviour
     public float minTime = -4f;
     public float maxTime = 4f;
 
-    [Header("Smooth Movement")]
-    [Tooltip("When true, the tile moves continuously instead of jumping on ticks.")]
-    public bool smoothMovement = false;
-
     private const float RIDE_RADIUS = 0.7f;
     private const float RIDE_HEIGHT = 2.5f;
 
     private Vector3 startPosition;
     private Vector3 endPosition;
     private float currentTime;
-    private float tickTimer = 0f;
     private Transform _player;
+    private Vector3 _frameDelta;
 
     void Start()
     {
@@ -35,33 +31,8 @@ public class MovingTile : MonoBehaviour
     {
         if (TimeState.Instance == null) return;
 
-        if (_player == null)
-        {
-            GameObject p = GameObject.FindWithTag("Player");
-            if (p != null) _player = p.transform;
-        }
-
-        bool riding = _player != null && IsPlayerOnTile();
-
         Vector3 posBeforeMove = transform.position;
 
-        if (smoothMovement)
-            UpdateSmooth();
-        else
-            UpdateTicked();
-
-        if (riding)
-        {
-            Vector3 delta = transform.position - posBeforeMove;
-            if (delta.sqrMagnitude > 0.0001f)
-            {
-                _player.position += delta;
-            }
-        }
-    }
-
-    private void UpdateSmooth()
-    {
         float rate = tickInterval > 0f ? (1f / tickInterval) : 1f;
 
         switch (TimeState.Instance.currentState)
@@ -71,7 +42,6 @@ public class MovingTile : MonoBehaviour
                 {
                     currentTime += rate * Time.deltaTime;
                     currentTime = Mathf.Min(currentTime, maxTime);
-                    ApplyPosition();
                 }
                 break;
             case TimeState.State.Frozen:
@@ -81,44 +51,33 @@ public class MovingTile : MonoBehaviour
                 {
                     currentTime -= rate * Time.deltaTime;
                     currentTime = Mathf.Max(currentTime, minTime);
-                    ApplyPosition();
                 }
                 break;
         }
+
+        float progress = Mathf.InverseLerp(minTime, maxTime, currentTime);
+        transform.position = Vector3.Lerp(startPosition, endPosition, progress);
+
+        _frameDelta = transform.position - posBeforeMove;
     }
 
-    private void UpdateTicked()
+    void LateUpdate()
     {
-        switch (TimeState.Instance.currentState)
+        if (_frameDelta.sqrMagnitude < 0.000001f) return;
+
+        if (_player == null)
         {
-            case TimeState.State.Forward:
-                if (currentTime >= maxTime) return;
-                tickTimer += Time.deltaTime;
-                if (tickTimer >= tickInterval)
-                {
-                    tickTimer = 0f;
-                    currentTime += 1f;
-                    currentTime = Mathf.Clamp(currentTime, minTime, maxTime);
-                    ApplyPosition();
-                }
-                break;
-            case TimeState.State.Frozen:
-                tickTimer = 0f;
-                break;
-            case TimeState.State.Reverse:
-                if (currentTime <= minTime) return;
-                tickTimer += Time.deltaTime;
-                if (tickTimer >= tickInterval)
-                {
-                    tickTimer = 0f;
-                    currentTime -= 1f;
-                    currentTime = Mathf.Clamp(currentTime, minTime, maxTime);
-                    ApplyPosition();
-                }
-                break;
+            GameObject p = GameObject.FindWithTag("Player");
+            if (p != null) _player = p.transform;
+        }
+
+        if (_player != null && IsPlayerOnTile())
+        {
+            _player.position += _frameDelta;
         }
     }
 
+    /// <summary>Checks whether the player is standing on this tile.</summary>
     public bool IsPlayerOnTile()
     {
         if (_player == null) return false;
@@ -133,11 +92,5 @@ public class MovingTile : MonoBehaviour
 
         float heightAbove = playerPos.y - tileTopY;
         return heightAbove > -0.1f && heightAbove < RIDE_HEIGHT;
-    }
-
-    private void ApplyPosition()
-    {
-        float progress = Mathf.InverseLerp(minTime, maxTime, currentTime);
-        transform.position = Vector3.Lerp(startPosition, endPosition, progress);
     }
 }

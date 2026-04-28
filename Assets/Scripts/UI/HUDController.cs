@@ -1,6 +1,8 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using TMPro;
 
 /// <summary>
@@ -38,6 +40,25 @@ public class HUDController : MonoBehaviour
     private const float ORBIT_SPEED            = 15f;
     private const float HOURGLASS_ROTATE_SPEED = 10f;
     private const float OBJECTIVE_FADE         = 0.5f;
+
+    // ── Trial mapping ────────────────────────────────────────────────────
+    private const int TRIAL_TOTAL = 3;
+
+    private static readonly Dictionary<string, int> SCENE_TO_TRIAL = new Dictionary<string, int>
+    {
+        { "MainScene",   1 },  // The Citadel
+        { "GardenScene", 2 },  // The Garden
+        { "ClockScene",  3 },  // The Clock
+    };
+
+    /// <summary>Returns the 1-based trial number for the currently loaded scene.</summary>
+    private static int GetTrialNumber()
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+        if (SCENE_TO_TRIAL.TryGetValue(sceneName, out int num))
+            return num;
+        return 1;
+    }
 
     private float targetHourglassAngle;
     private float currentHourglassAngle;
@@ -81,8 +102,10 @@ public class HUDController : MonoBehaviour
         // Hide the yellow objective diamond
         if (objectiveDiamond != null) objectiveDiamond.gameObject.SetActive(false);
 
-        // Default objective
-        SetObjective("REACH THE BOSS", 1, 1);
+        // Default objective — derive trial number from active scene
+        int trialNum = GetTrialNumber();
+        int trialTotal = TRIAL_TOTAL;
+        SetObjective("REACH THE BOSS", trialNum, trialTotal);
 
         if (TimeState.Instance != null)
             HandleTimeStateChanged(TimeState.Instance.currentState);

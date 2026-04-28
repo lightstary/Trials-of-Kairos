@@ -1,16 +1,17 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 /// <summary>
 /// Global time value that progresses continuously based on player orientation.
 /// Upright = forward, upside down = reverse, flat = frozen at exact current value.
-/// Value progresses at (1 / tickInterval) units per second for smooth float precision.
-/// During boss fights, escalating threat states trigger at warning/danger/fail thresholds.
+/// Value progresses at (1 / tickInterval) * rateMultiplier units per second.
+/// Reaching minValue or maxValue triggers a lose condition in all game modes.
 /// </summary>
 public class TimeScaleLogic : MonoBehaviour
 {
     public static TimeScaleLogic Instance;
 
-    /// <summary>Boss-fight threat level for escalating UI feedback.</summary>
+    /// <summary>Threat level for escalating UI feedback.</summary>
     public enum ThreatState { Safe, Warning, Danger, Fail }
 
     [Header("References")]
@@ -23,9 +24,10 @@ public class TimeScaleLogic : MonoBehaviour
     public float warningZone = 5f;
     public float dangerZone = 8f;
 
-    [Header("Boss Fight")]
-    [Tooltip("Rate multiplier during boss fights (< 1 = slower, e.g. 0.4 = 40% speed).")]
-    public float bossRateMultiplier = 0.4f;
+    [Header("Rate")]
+    [Tooltip("Global rate multiplier (< 1 = slower progression). Applied in all modes.")]
+    [FormerlySerializedAs("bossRateMultiplier")]
+    public float rateMultiplier = 0.4f;
 
     private float currentValue = 0f;
     private bool isDead = false;
@@ -34,10 +36,10 @@ public class TimeScaleLogic : MonoBehaviour
     /// <summary>Current time scale value (continuous float, can be negative).</summary>
     public float CurrentValue => currentValue;
 
-    /// <summary>True when the player has hit a fatal time boundary during boss fight.</summary>
+    /// <summary>True when the player has hit a fatal time boundary.</summary>
     public bool IsDead => isDead;
 
-    /// <summary>Current boss-fight threat level.</summary>
+    /// <summary>Current threat level.</summary>
     public ThreatState CurrentThreatState => currentThreat;
 
     void Awake()
@@ -50,7 +52,6 @@ public class TimeScaleLogic : MonoBehaviour
         if (isDead) return;
         if (TimeState.Instance == null) return;
 
-        // Boss fights bypass the hub tutorial lock
         bool bossActive = (BossFight.Instance != null && BossFight.Instance.bossActive)
                        || (BossBFight.Instance != null && BossBFight.Instance.bossActive)
                        || (BossCFight.Instance != null && BossCFight.Instance.bossActive);
@@ -59,10 +60,7 @@ public class TimeScaleLogic : MonoBehaviour
         if (!bossActive && TimeScaleIntroModal.IsTimeLocked) return;
 
         float rate = tickInterval > 0f ? (1f / tickInterval) : 1f;
-
-        // Slow the meter during boss fights so the player has more breathing room
-        if (bossActive)
-            rate *= bossRateMultiplier;
+        rate *= rateMultiplier;
 
         switch (TimeState.Instance.currentState)
         {
@@ -89,17 +87,12 @@ public class TimeScaleLogic : MonoBehaviour
         UpdateThreatState();
     }
 
-    /// <summary>Evaluates boss-fight threat level and triggers fail at extremes.</summary>
+    /// <summary>Evaluates threat level and triggers fail at extremes.</summary>
     private void UpdateThreatState()
     {
         bool bossActive = (BossFight.Instance != null && BossFight.Instance.bossActive)
                        || (BossBFight.Instance != null && BossBFight.Instance.bossActive)
                        || (BossCFight.Instance != null && BossCFight.Instance.bossActive);
-        if (!bossActive)
-        {
-            currentThreat = ThreatState.Safe;
-            return;
-        }
 
         float absVal = Mathf.Abs(currentValue);
 
@@ -109,7 +102,11 @@ public class TimeScaleLogic : MonoBehaviour
             {
                 isDead = true;
                 currentThreat = ThreatState.Fail;
-                TriggerBossLose();
+
+                if (bossActive)
+                    TriggerBossLose();
+                else
+                    TriggerNormalLose();
             }
         }
         else if (absVal >= dangerZone)
@@ -126,21 +123,21 @@ public class TimeScaleLogic : MonoBehaviour
         }
     }
 
-    /// <summary>Triggers the boss fight lose flow with proper UI.</summary>
-    private void TriggerBossLose()
+    /// <summary>Triggers the lose flow during normal gameplay (no boss active).</summary>
+    private void TriggerNormalLose()
     {
-        // Stop all boss fights
-        if (BossFight.Instance != null && BossFight.Instance.bossActive)
-            BossFight.Instance.StopBossFight();
-        if (BossBFight.Instance != null && BossBFight.Instance.bossActive)
-            BossBFight.Instance.StopBossFight();
-        if (BossCFight.Instance != null && BossCFight.Instance.bossActive)
-            BossCFight.Instance.StopBossFight();
+        // Route through FallDetection for the disintegration effect
+        FallDetection fd = FindObjectOfType<FallDetection>();
+        if (fd != null)
+        {
+            fd.TriggerTimelineDeath("THE TIMELINE HAS COLLAPSED");
+            return;
+        }
 
+        // Fallback: no FallDetection found, show screen directly
         SoundManager sm = FindObjectOfType<SoundManager>();
         if (sm != null) sm.PlayLose();
 
-        // Prefer GameOverScreenController for a proper lose screen
         GameOverScreenController gosc = FindObjectOfType<GameOverScreenController>(true);
         if (gosc != null)
         {
@@ -149,7 +146,39 @@ public class TimeScaleLogic : MonoBehaviour
             return;
         }
 
-        // Fallback to BossFailUI
+        Debug.LogWarning("[TimeScaleLogic] GameOverScreenController not found. No lose screen shown.");
+    }
+
+    /// <summary>Triggers the boss fight lose flow with proper UI.</summary>
+    private void TriggerBossLose()
+    {
+        if (BossFight.Instance != null && BossFight.Instance.bossActive)
+            BossFight.Instance.StopBossFight();
+        if (BossBFight.Instance != null && BossBFight.Instance.bossActive)
+            BossBFight.Instance.StopBossFight();
+        if (BossCFight.Instance != null && BossCFight.Instance.bossActive)
+            BossCFight.Instance.StopBossFight();
+
+        // Route through FallDetection for the disintegration effect
+        FallDetection fd = FindObjectOfType<FallDetection>();
+        if (fd != null)
+        {
+            fd.TriggerTimelineDeath("THE TIMELINE HAS COLLAPSED");
+            return;
+        }
+
+        // Fallback: no FallDetection found, show screen directly
+        SoundManager sm = FindObjectOfType<SoundManager>();
+        if (sm != null) sm.PlayLose();
+
+        GameOverScreenController gosc = FindObjectOfType<GameOverScreenController>(true);
+        if (gosc != null)
+        {
+            Time.timeScale = 0f;
+            gosc.Show("THE TIMELINE HAS COLLAPSED");
+            return;
+        }
+
         BossFailUI failUI = FindObjectOfType<BossFailUI>(true);
         if (failUI == null)
         {

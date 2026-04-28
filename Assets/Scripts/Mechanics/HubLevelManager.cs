@@ -125,7 +125,6 @@ public class HubLevelManager : MonoBehaviour
                 mt.tickInterval = 1f;
                 mt.minTime = -2f;
                 mt.maxTime = 2f;
-                mt.smoothMovement = true;
             }
 
             // Floating orbs — add animation component at runtime

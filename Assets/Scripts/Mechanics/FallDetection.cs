@@ -12,6 +12,10 @@ public class FallDetection : MonoBehaviour
     private PlayerMovement playerMovement;
     private bool isFalling = false;
     private bool hasCheckpoint = false;
+    private float respawnGraceTimer = 0f;
+
+    /// <summary>Number of seconds after respawn where fall checks are skipped.</summary>
+    private const float RESPAWN_GRACE_PERIOD = 0.3f;
 
     void Start()
     {
@@ -23,43 +27,284 @@ public class FallDetection : MonoBehaviour
 
     void Update()
     {
+        if (respawnGraceTimer > 0f)
+        {
+            respawnGraceTimer -= Time.unscaledDeltaTime;
+            return;
+        }
         CheckFall();
+    }
+
+    /// <summary>Gentle drift speed toward nearest tile center.</summary>
+    private const float CENTER_DRIFT_SPEED = 2f;
+
+    void LateUpdate()
+    {
+        if (isFalling || playerMovement.isMoving) return;
+
+        // Raycast down from player center to find the tile directly below
+        Vector3 rayOrigin = transform.position;
+        rayOrigin.y = TILE_TOP + 0.5f;
+
+        if (!Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, RAY_LENGTH))
+            return;
+
+        if (!hit.collider.CompareTag("Tile")) return;
+
+        Vector3 tileCenter = hit.collider.transform.position;
+        Vector3 playerPos = transform.position;
+        float t = CENTER_DRIFT_SPEED * Time.deltaTime;
+
+        var ori = playerMovement.orientation;
+
+        switch (ori)
+        {
+            case PlayerMovement.Orientation.FlatX:
+            case PlayerMovement.Orientation.FlatX_R:
+                // Spanning along X — only drift Z
+                playerPos.z = Mathf.Lerp(playerPos.z, tileCenter.z, t);
+                break;
+            case PlayerMovement.Orientation.FlatZ:
+            case PlayerMovement.Orientation.FlatZ_R:
+                // Spanning along Z — only drift X
+                playerPos.x = Mathf.Lerp(playerPos.x, tileCenter.x, t);
+                break;
+            default:
+                // Standing / UpsideDown — drift both axes
+                playerPos.x = Mathf.Lerp(playerPos.x, tileCenter.x, t);
+                playerPos.z = Mathf.Lerp(playerPos.z, tileCenter.z, t);
+                break;
+        }
+
+        transform.position = playerPos;
     }
 
     void CheckFall()
     {
         if (playerMovement.isMoving) return;
         if (isFalling) return;
-        if (IsRidingMovingTile()) return;
 
-        // Check if standing on a death tile (instant kill → Game Over)
+        // Check if standing on a death tile (instant kill)
         if (IsOnDeathTile())
         {
             StartCoroutine(DeathTileKill());
             return;
         }
 
-        int supported = 0;
-        Vector3[] points = GetFootprintPoints();
+        // Skip all fall/topple checks while riding a moving tile to avoid
+        // false positives from gaps between continuously moving tiles
+        if (IsRidingMovingTile()) return;
 
-        foreach (Vector3 checkPoint in points)
+        var ori = playerMovement.orientation;
+        bool isFlat = ori == PlayerMovement.Orientation.FlatX
+                   || ori == PlayerMovement.Orientation.FlatX_R
+                   || ori == PlayerMovement.Orientation.FlatZ
+                   || ori == PlayerMovement.Orientation.FlatZ_R;
+
+        if (isFlat)
         {
-            if (IsTileBelow(checkPoint))
-                supported++;
+            // When flat, the hourglass spans two tiles.
+            // If one half is unsupported, topple over that edge.
+            GetFlatHalfPoints(out Vector3[] sideA, out Vector3[] sideB, out Vector3 dirA, out Vector3 dirB);
+            bool sideASupported = HasAnySupport(sideA);
+            bool sideBSupported = HasAnySupport(sideB);
+
+            if (!sideASupported && !sideBSupported)
+            {
+                StartFallFlow();
+            }
+            else if (!sideASupported)
+            {
+                StartCoroutine(ToppleAndFall(dirA));
+            }
+            else if (!sideBSupported)
+            {
+                StartCoroutine(ToppleAndFall(dirB));
+            }
+        }
+        else
+        {
+            Vector3[] points = GetFootprintPoints();
+            if (!HasAnySupport(points))
+            {
+                StartFallFlow();
+            }
+        }
+    }
+
+    /// <summary>Starts the appropriate fall flow (boss lose or fall modal).</summary>
+    private void StartFallFlow()
+    {
+        if (IsAnyBossActive())
+            StartCoroutine(BossFallLose());
+        else
+            StartCoroutine(FallWithModal());
+    }
+
+    /// <summary>Returns true if at least one point in the array has a tile below it.</summary>
+    private bool HasAnySupport(Vector3[] points)
+    {
+        foreach (Vector3 p in points)
+        {
+            if (IsTileBelow(p)) return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Topples the hourglass over the unsupported edge, then triggers the fall flow.
+    /// Pivots around the center-bottom edge of the block (the boundary between the two halves).
+    /// </summary>
+    private IEnumerator ToppleAndFall(Vector3 toppleDir)
+    {
+        if (isFalling) yield break;
+        isFalling = true;
+
+        playerMovement.ResetMovement();
+        playerMovement.enabled = false;
+
+        SoundManager.Instance?.PlayFall();
+
+        // Pivot is at the center-bottom of the hourglass (the boundary between the two tile halves)
+        Vector3 pivot = transform.position;
+        pivot.y = TILE_TOP;
+
+        // Rotation axis: perpendicular to topple direction on the horizontal plane
+        Vector3 rotAxis = new Vector3(toppleDir.z, 0f, -toppleDir.x);
+
+        // Brief wobble before toppling
+        float wobbleDuration = 0.45f;
+        float wobbleElapsed = 0f;
+        float wobbleFreq = 20f;
+        float wobbleAmp = 4f;
+        Quaternion baseRot = transform.rotation;
+        Vector3 wobbleAxis = rotAxis;
+
+        while (wobbleElapsed < wobbleDuration)
+        {
+            wobbleElapsed += Time.deltaTime;
+            float wt = wobbleElapsed / wobbleDuration;
+            // Ramp up amplitude then cut off
+            float envelope = Mathf.Sin(wt * Mathf.PI) * wobbleAmp;
+            float angle = Mathf.Sin(wobbleElapsed * wobbleFreq) * envelope;
+            transform.rotation = baseRot * Quaternion.AngleAxis(angle, transform.InverseTransformDirection(wobbleAxis));
+            yield return null;
+        }
+        transform.rotation = baseRot;
+
+        // Topple 90 degrees over the edge
+        float toppleSpeed = 5f;
+        float totalAngle = 0f;
+        while (totalAngle < 90f)
+        {
+            float step = toppleSpeed * Time.deltaTime * 90f;
+            if (totalAngle + step > 90f) step = 90f - totalAngle;
+            transform.RotateAround(pivot, rotAxis, step);
+            totalAngle += step;
+            yield return null;
         }
 
-        if (supported == 0)
+        // Fall straight down through the ground
+        float elapsed = 0f;
+        float fallTime = 0.6f;
+        Vector3 startPos = transform.position;
+        Vector3 endPos = startPos + Vector3.down * 10f;
+
+        while (elapsed < fallTime)
         {
-            if (IsAnyBossActive())
+            elapsed += Time.deltaTime;
+            transform.position = Vector3.Lerp(startPos, endPos, elapsed / fallTime);
+            yield return null;
+        }
+
+        Time.timeScale = 0f;
+
+        if (IsAnyBossActive())
+        {
+            if (BossFight.Instance != null) BossFight.Instance.StopBossFight();
+            if (BossBFight.Instance != null) BossBFight.Instance.StopBossFight();
+            if (BossCFight.Instance != null) BossCFight.Instance.StopBossFight();
+
+            SoundManager.Instance?.PlayLose();
+
+            GameOverScreenController gosc = FindObjectOfType<GameOverScreenController>(true);
+            if (gosc != null)
             {
-                // During a boss fight, falling = losing
-                StartCoroutine(BossFallLose());
+                gosc.Show();
             }
             else
             {
-                // Outside boss fight: show the fall modal
-                StartCoroutine(FallWithModal());
+                Time.timeScale = 1f;
+                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
             }
+        }
+        else
+        {
+            FallModal.Show(
+                hasCheckpoint: hasCheckpoint,
+                onCheckpoint: () =>
+                {
+                    Time.timeScale = 1f;
+                    DoCheckpointRespawn();
+                    if (ScreenTransitionManager.Instance != null)
+                        ScreenTransitionManager.Instance.CosmicFadeIn(0.5f);
+                },
+                onRestartLevel: () =>
+                {
+                    MainMenuController.RequestRestartTrialOnLoad();
+                    Time.timeScale = 1f;
+                    SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+                }
+            );
+        }
+
+        // isFalling stays true — DoCheckpointRespawn or scene reload clears it
+    }
+
+    /// <summary>
+    /// Splits the flat hourglass footprint into two halves with their outward directions.
+    /// </summary>
+    private void GetFlatHalfPoints(out Vector3[] sideA, out Vector3[] sideB,
+                                    out Vector3 dirA, out Vector3 dirB)
+    {
+        Vector3 center = transform.position;
+        center.y = TILE_TOP + 0.05f;
+
+        var ori = playerMovement.orientation;
+        bool alongX = ori == PlayerMovement.Orientation.FlatX
+                   || ori == PlayerMovement.Orientation.FlatX_R;
+
+        if (alongX)
+        {
+            // Spans 2 tiles along X: +X side and -X side
+            dirA = Vector3.right;
+            dirB = Vector3.left;
+            sideA = new Vector3[]
+            {
+                center + new Vector3(0.9f, 0,  0.4f),
+                center + new Vector3(0.9f, 0, -0.4f)
+            };
+            sideB = new Vector3[]
+            {
+                center + new Vector3(-0.9f, 0,  0.4f),
+                center + new Vector3(-0.9f, 0, -0.4f)
+            };
+        }
+        else
+        {
+            // Spans 2 tiles along Z: +Z side and -Z side
+            dirA = Vector3.forward;
+            dirB = Vector3.back;
+            sideA = new Vector3[]
+            {
+                center + new Vector3( 0.4f, 0, 0.9f),
+                center + new Vector3(-0.4f, 0, 0.9f)
+            };
+            sideB = new Vector3[]
+            {
+                center + new Vector3( 0.4f, 0, -0.9f),
+                center + new Vector3(-0.4f, 0, -0.9f)
+            };
         }
     }
 
@@ -151,10 +396,119 @@ public class FallDetection : MonoBehaviour
         return false;
     }
 
+    // ════════════════════════════════════════════════════════════════════
+    //  DEATH MESSAGES
+    // ════════════════════════════════════════════════════════════════════
+
+    private static readonly string[] VINE_TITLES = {
+        "ENSNARED",
+        "CONSUMED",
+        "ENTANGLED",
+        "DEVOURED",
+        "CLAIMED"
+    };
+
+    private static readonly string[] VINE_MESSAGES = {
+        "The temporal vines wrapped around you.",
+        "Time's roots pulled you under.",
+        "The garden has reclaimed what was borrowed.",
+        "Entangled in moments that should not exist.",
+        "The vines do not forgive trespassers.",
+        "Consumed by the grip of living time."
+    };
+
+    // ════════════════════════════════════════════════════════════════════
+    //  DISINTEGRATION EFFECT
+    // ════════════════════════════════════════════════════════════════════
+
+    /// <summary>Duration before the player model is hidden after particles spawn.</summary>
+    private const float DISINTEGRATE_HIDE_DELAY = 0.15f;
+
+    /// <summary>Hold time after disintegration before showing death UI, letting particles breathe.</summary>
+    private const float POST_DISINTEGRATE_HOLD = 0.6f;
+
     /// <summary>
-    /// Kills the player when stepping on a death tile.
-    /// Shows the Game Over screen (full restart required).
+    /// Runs the sand disintegration visual: spawns particles, then hides the
+    /// player model after a short delay. No material swapping — just particles.
     /// </summary>
+    private IEnumerator PlayDisintegration()
+    {
+        Vector3 effectSize = transform.lossyScale;
+        SandDisintegrationEffect.Spawn(transform.position, effectSize);
+
+        // Brief delay so particles overlap with the model before it vanishes
+        yield return new WaitForSecondsRealtime(DISINTEGRATE_HIDE_DELAY);
+
+        // Hide all renderers
+        Renderer[] renderers = GetComponentsInChildren<Renderer>();
+        foreach (Renderer r in renderers)
+        {
+            if (r != null) r.enabled = false;
+        }
+    }
+
+    /// <summary>Restores all player renderers to full visibility.</summary>
+    private void RestorePlayerVisuals()
+    {
+        Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
+        foreach (Renderer r in renderers)
+        {
+            if (r != null) r.enabled = true;
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    //  PUBLIC API — for external death triggers (TimeScaleLogic)
+    // ════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Called by TimeScaleLogic when the player hits +/-10.
+    /// Disintegrates the player, then shows the GameOverScreenController.
+    /// </summary>
+    public void TriggerTimelineDeath(string subtitle)
+    {
+        if (isFalling) return;
+        StartCoroutine(TimelineDeathRoutine(subtitle));
+    }
+
+    private IEnumerator TimelineDeathRoutine(string subtitle)
+    {
+        isFalling = true;
+
+        playerMovement.ResetMovement();
+        playerMovement.enabled = false;
+
+        SoundManager.Instance?.PlayFall();
+
+        yield return StartCoroutine(PlayDisintegration());
+
+        // Brief hold — particles keep drifting into the death screen
+        yield return new WaitForSecondsRealtime(POST_DISINTEGRATE_HOLD);
+
+        Time.timeScale = 0f;
+
+        SoundManager.Instance?.PlayLose();
+
+        GameOverScreenController gosc = FindObjectOfType<GameOverScreenController>(true);
+        if (gosc != null)
+        {
+            gosc.Show(subtitle);
+        }
+        else
+        {
+            Debug.LogWarning("[FallDetection] GameOverScreenController not found. Reloading scene.");
+            Time.timeScale = 1f;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
+
+        // isFalling stays true — scene reload clears it
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    //  DEATH TILE KILL (vines)
+    // ════════════════════════════════════════════════════════════════════
+
+    /// <summary>Kills the player on a vine/death tile with disintegration and a vine-themed modal.</summary>
     private IEnumerator DeathTileKill()
     {
         if (isFalling) yield break;
@@ -164,39 +518,48 @@ public class FallDetection : MonoBehaviour
         playerMovement.enabled = false;
 
         SoundManager.Instance?.PlayFall();
-        SoundManager.Instance?.PlayLose();
 
-        float elapsed = 0f;
-        float fallTime = 0.6f;
-        Vector3 startPos = transform.position;
-        Vector3 endPos = startPos + Vector3.down * 8f;
+        yield return StartCoroutine(PlayDisintegration());
 
-        while (elapsed < fallTime)
-        {
-            elapsed += Time.deltaTime;
-            transform.position = Vector3.Lerp(startPos, endPos, elapsed / fallTime);
-            yield return null;
-        }
+        // Let particles drift before the death modal
+        yield return new WaitForSecondsRealtime(POST_DISINTEGRATE_HOLD);
 
         Time.timeScale = 0f;
 
-        GameOverScreenController gosc = FindObjectOfType<GameOverScreenController>(true);
-        if (gosc != null)
-        {
-            gosc.Show("CONSUMED BY THE VINES");
-        }
-        else
-        {
-            Debug.LogWarning("[FallDetection] GameOverScreenController not found. Reloading scene.");
-            Time.timeScale = 1f;
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-        }
+        string vineTitle = VINE_TITLES[Random.Range(0, VINE_TITLES.Length)];
+        string vineMsg = VINE_MESSAGES[Random.Range(0, VINE_MESSAGES.Length)];
 
-        isFalling = false;
+        FallModal.Show(
+            hasCheckpoint: hasCheckpoint,
+            onCheckpoint: () =>
+            {
+                SandDisintegrationEffect.DestroyAll();
+                RestorePlayerVisuals();
+                Time.timeScale = 1f;
+                DoCheckpointRespawn();
+
+                if (ScreenTransitionManager.Instance != null)
+                    ScreenTransitionManager.Instance.CosmicFadeIn(0.5f);
+            },
+            onRestartLevel: () =>
+            {
+                MainMenuController.RequestRestartTrialOnLoad();
+                Time.timeScale = 1f;
+                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            },
+            title: vineTitle,
+            message: vineMsg
+        );
+
+        // isFalling stays true — DoCheckpointRespawn or scene reload clears it
     }
 
+    // ════════════════════════════════════════════════════════════════════
+    //  NORMAL FALL (off edge, no boss)
+    // ════════════════════════════════════════════════════════════════════
+
     /// <summary>
-    /// Non-boss fall: plays fall animation, then shows the fall modal.
+    /// Non-boss fall: falls through the ground, then shows the fall modal.
     /// If no checkpoint has been reached, only "Restart Level" is shown.
     /// </summary>
     private IEnumerator FallWithModal()
@@ -221,7 +584,6 @@ public class FallDetection : MonoBehaviour
             yield return null;
         }
 
-        // Pause and show modal
         Time.timeScale = 0f;
         FallModal.Show(
             hasCheckpoint: hasCheckpoint,
@@ -242,8 +604,12 @@ public class FallDetection : MonoBehaviour
         );
     }
 
+    // ════════════════════════════════════════════════════════════════════
+    //  BOSS FALL (off edge during boss fight)
+    // ════════════════════════════════════════════════════════════════════
+
     /// <summary>
-    /// Boss fight fall: plays fall animation, stops boss, shows game over screen.
+    /// Boss fight fall: falls through the ground, stops boss, shows game over screen.
     /// </summary>
     private IEnumerator BossFallLose()
     {
@@ -287,8 +653,12 @@ public class FallDetection : MonoBehaviour
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
 
-        isFalling = false;
+        // isFalling stays true — scene reload clears it
     }
+
+    // ════════════════════════════════════════════════════════════════════
+    //  SILENT RESPAWN (boss round failure)
+    // ════════════════════════════════════════════════════════════════════
 
     /// <summary>Instantly respawns at checkpoint without modal (used during boss fights).</summary>
     public void RespawnSilent()
@@ -353,17 +723,34 @@ public class FallDetection : MonoBehaviour
         isFalling = false;
     }
 
+    // ════════════════════════════════════════════════════════════════════
+    //  CHECKPOINT / SPAWN
+    // ════════════════════════════════════════════════════════════════════
+
     /// <summary>Teleports the player back to the last checkpoint.</summary>
     private void DoCheckpointRespawn()
     {
+        // Stop any lingering fall/topple coroutines on this component
+        StopAllCoroutines();
+        isFalling = false;
+
+        // Clean up any leftover disintegration effects and restore visuals
+        SandDisintegrationEffect.DestroyAll();
+        RestorePlayerVisuals();
+
         playerMovement.enabled = true;
         transform.position = spawnPosition;
         transform.rotation = spawnRotation;
         playerMovement.orientation = PlayerMovement.Orientation.Standing;
         playerMovement.ResetMovement();
 
+        // Force physics to recognize the new position before raycasts fire
+        Physics.SyncTransforms();
+
+        // Grace period so CheckFall doesn't trigger while physics settles
+        respawnGraceTimer = RESPAWN_GRACE_PERIOD;
+
         SoundManager.Instance?.PlayRespawn();
-        isFalling = false;
     }
 
     /// <summary>Updates the checkpoint spawn position.</summary>

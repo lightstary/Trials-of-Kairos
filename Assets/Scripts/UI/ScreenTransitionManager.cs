@@ -42,16 +42,20 @@ public class ScreenTransitionManager : MonoBehaviour
         SetAlpha(flashOverlay, 0f);
     }
 
-    /// <summary>Fades to black, runs midpoint callback, fades back in.</summary>
+    /// <summary>Cosmic fade to opaque, runs midpoint callback, cosmic fade back in.</summary>
     public void FadeTransition(Action onMidpoint, float duration = -1f)
     {
         if (IsTransitioning) return;
-        StartCoroutine(FadeTransitionRoutine(onMidpoint, duration > 0f ? duration : defaultFadeDuration));
+        float dur = duration > 0f ? duration : defaultFadeDuration;
+        StartCoroutine(CosmicFadeTransitionRoutine(onMidpoint, dur));
     }
 
-    /// <summary>Fades out and loads a scene by name.</summary>
+    /// <summary>Cosmic fade out and loads a scene by name.</summary>
     public void FadeToScene(string sceneName, float duration = -1f)
-        => FadeTransition(() => SceneManager.LoadScene(sceneName), duration);
+    {
+        float dur = duration > 0f ? duration : defaultFadeDuration;
+        CosmicFadeOut(dur, () => SceneManager.LoadScene(sceneName));
+    }
 
     /// <summary>Gold radiance burst (win).</summary>
     public void GoldBurst(Action onComplete = null)
@@ -71,18 +75,28 @@ public class ScreenTransitionManager : MonoBehaviour
         StartCoroutine(FlashRoutine(danger, 0.8f, onComplete));
     }
 
-    /// <summary>Sets the fade overlay to fully opaque black.</summary>
-    public void SetBlack() => SetAlpha(fadeOverlay, 1f);
+    /// <summary>Sets the fade overlay to fully opaque cosmic base color.</summary>
+    public void SetBlack()
+    {
+        if (fadeOverlay == null) return;
+        Color c = COSMIC_BASE;
+        c.a = 1f;
+        fadeOverlay.color = c;
+    }
 
-    /// <summary>Fades in from black.</summary>
+    /// <summary>Fades in from cosmic overlay.</summary>
     public void FadeIn(float duration = -1f, Action onComplete = null)
-        => StartCoroutine(FadeAlphaRoutine(fadeOverlay, 1f, 0f,
-            duration > 0f ? duration : defaultFadeDuration, onComplete));
+    {
+        float dur = duration > 0f ? duration : defaultFadeDuration;
+        StartCoroutine(CosmicFadeRoutine(1f, 0f, dur, onComplete));
+    }
 
-    /// <summary>Fades out to black.</summary>
+    /// <summary>Fades out to cosmic overlay.</summary>
     public void FadeOut(float duration = -1f, Action onComplete = null)
-        => StartCoroutine(FadeAlphaRoutine(fadeOverlay, 0f, 1f,
-            duration > 0f ? duration : defaultFadeDuration, onComplete));
+    {
+        float dur = duration > 0f ? duration : defaultFadeDuration;
+        StartCoroutine(CosmicFadeRoutine(0f, 1f, dur, onComplete));
+    }
 
     // ── Cosmic Transitions ──────────────────────────────────────────
 

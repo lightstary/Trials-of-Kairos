@@ -224,6 +224,12 @@ public class GameOverScreenController : MonoBehaviour
     //  ANIMATION
     // ================================================================
 
+    // ── Animation timing ───────────────────────────────────────────
+    private const float PANEL_SCALE_FROM  = 0.90f;
+    private const float PANEL_SLIDE_Y     = -30f;
+    private const float PANEL_ENTRY_DUR   = 0.6f;
+    private const float OVERLAY_ENTRY_DUR = 0.5f;
+
     private IEnumerator Animate(string subtitle)
     {
         _panelCG.alpha   = 0f;
@@ -237,24 +243,34 @@ public class GameOverScreenController : MonoBehaviour
         _quoteTMP.text  = $"\u201C{q}\u201D";
         _attribTMP.text = "\u2014CHRONOS";
 
-        // Red fracture transition
+        // Red fracture flash (layered under panel)
         if (ScreenTransitionManager.Instance != null)
             ScreenTransitionManager.Instance.RedFracture();
 
         StartCoroutine(AnimateOverlay());
 
-        // Fade in panel
+        // Panel entry: scale from 0.90 + slide up from -30 + alpha fade — eased
+        RectTransform panelRT = _panel.GetComponent<RectTransform>();
+        Vector2 targetPos = panelRT.anchoredPosition;
+        Vector2 startPos  = targetPos + new Vector2(0f, PANEL_SLIDE_Y);
+
         float elapsed = 0f;
-        float dur = 0.5f;
-        while (elapsed < dur)
+        while (elapsed < PANEL_ENTRY_DUR)
         {
             elapsed += Time.unscaledDeltaTime;
-            _panelCG.alpha = Mathf.Clamp01(elapsed / dur);
+            float t = Mathf.Clamp01(elapsed / PANEL_ENTRY_DUR);
+            float eased = EaseOutCubic(t);
+
+            _panelCG.alpha = eased;
+            panelRT.localScale = Vector3.one * Mathf.Lerp(PANEL_SCALE_FROM, 1f, eased);
+            panelRT.anchoredPosition = Vector2.Lerp(startPos, targetPos, eased);
             yield return null;
         }
         _panelCG.alpha = 1f;
+        panelRT.localScale = Vector3.one;
+        panelRT.anchoredPosition = targetPos;
 
-        // Shake title
+        // Title shake — subtle, sells the impact
         if (_titleRT != null)
         {
             Vector2 orig = _titleRT.anchoredPosition;
@@ -262,27 +278,30 @@ public class GameOverScreenController : MonoBehaviour
             while (elapsed < titleShakeDuration)
             {
                 elapsed += Time.unscaledDeltaTime;
+                float decay = 1f - (elapsed / titleShakeDuration);
                 _titleRT.anchoredPosition = orig + new Vector2(
-                    Random.Range(-titleShakeAmount, titleShakeAmount),
-                    Random.Range(-titleShakeAmount * 0.5f, titleShakeAmount * 0.5f));
+                    Random.Range(-titleShakeAmount, titleShakeAmount) * decay,
+                    Random.Range(-titleShakeAmount * 0.5f, titleShakeAmount * 0.5f) * decay);
                 yield return null;
             }
             _titleRT.anchoredPosition = orig;
         }
 
-        // Quote + attribution reveal
+        // Staggered quote reveal
         yield return new WaitForSecondsRealtime(quoteDelay);
 
         elapsed = 0f;
-        dur = 0.8f;
-        while (elapsed < dur)
+        float quoteDur = 0.8f;
+        while (elapsed < quoteDur)
         {
             elapsed += Time.unscaledDeltaTime;
-            float t = Mathf.Clamp01(elapsed / dur);
+            float t = EaseOutCubic(Mathf.Clamp01(elapsed / quoteDur));
             _quoteTMP.alpha  = t;
-            _attribTMP.alpha = t;
+            _attribTMP.alpha = t * 0.85f; // Attribution trails slightly
             yield return null;
         }
+        _quoteTMP.alpha  = 1f;
+        _attribTMP.alpha = 1f;
 
         // Select retry button for controller navigation
         if (UnityEngine.EventSystems.EventSystem.current != null)
@@ -293,26 +312,30 @@ public class GameOverScreenController : MonoBehaviour
         }
     }
 
-    /// <summary>Red overlay pulse.</summary>
+    private static float EaseOutCubic(float t) => 1f - Mathf.Pow(1f - t, 3f);
+
+    /// <summary>Red overlay: smooth ease-in, then gentle breathing pulse.</summary>
     private IEnumerator AnimateOverlay()
     {
         if (_overlay == null) yield break;
 
         Color c = OVERLAY_COL;
 
+        // Ease-in ramp — matches panel entry timing
         float elapsed = 0f;
-        float dur = 0.5f;
-        while (elapsed < dur)
+        while (elapsed < OVERLAY_ENTRY_DUR)
         {
             elapsed += Time.unscaledDeltaTime;
-            c.a = Mathf.Clamp01(elapsed / dur) * 0.25f;
+            float t = EaseOutCubic(Mathf.Clamp01(elapsed / OVERLAY_ENTRY_DUR));
+            c.a = t * 0.22f;
             _overlay.color = c;
             yield return null;
         }
 
+        // Gentle breathing pulse
         while (_overlay != null && _overlay.gameObject.activeInHierarchy)
         {
-            float pulse = Mathf.Sin(Time.unscaledTime * 2.5f) * 0.06f + 0.18f;
+            float pulse = Mathf.Sin(Time.unscaledTime * 2f) * 0.04f + 0.18f;
             c.a = pulse;
             _overlay.color = c;
             yield return null;
@@ -357,46 +380,71 @@ public class GameOverScreenController : MonoBehaviour
     //  BUTTONS
     // ================================================================
 
-    /// <summary>Restarts the current level with a cosmic fade.</summary>
+    /// <summary>Restarts the current level with a smooth exit + cosmic fade.</summary>
     private void RetryTrial()
     {
         IsOpen = false;
         MainMenuController.RequestRestartTrialOnLoad();
         string scene = SceneManager.GetActiveScene().name;
-
-        if (ScreenTransitionManager.Instance != null)
-        {
-            ScreenTransitionManager.Instance.CosmicFadeOut(0.6f, () =>
-            {
-                Time.timeScale = 1f;
-                SceneManager.LoadScene(scene);
-            });
-        }
-        else
+        StartCoroutine(ExitThenTransition(() =>
         {
             Time.timeScale = 1f;
             SceneManager.LoadScene(scene);
-        }
+        }));
     }
 
-    /// <summary>Returns to trial selection with a cosmic fade.</summary>
+    /// <summary>Returns to trial selection with a smooth exit + cosmic fade.</summary>
     private void ReturnToHub()
     {
         IsOpen = false;
         MainMenuController.RequestTrialSelectOnLoad();
-
-        if (ScreenTransitionManager.Instance != null)
-        {
-            ScreenTransitionManager.Instance.CosmicFadeOut(0.6f, () =>
-            {
-                Time.timeScale = 1f;
-                SceneManager.LoadScene("MainScene");
-            });
-        }
-        else
+        StartCoroutine(ExitThenTransition(() =>
         {
             Time.timeScale = 1f;
             SceneManager.LoadScene("MainScene");
+        }));
+    }
+
+    private const float EXIT_PANEL_DUR = 0.25f;
+
+    /// <summary>Shrinks + fades the panel, then runs a cosmic fade before executing the callback.</summary>
+    private IEnumerator ExitThenTransition(System.Action callback)
+    {
+        // Disable buttons to prevent double-clicks
+        foreach (Button btn in _panel.GetComponentsInChildren<Button>())
+            btn.interactable = false;
+
+        RectTransform panelRT = _panel.GetComponent<RectTransform>();
+        Vector2 startPos = panelRT.anchoredPosition;
+
+        float elapsed = 0f;
+        while (elapsed < EXIT_PANEL_DUR)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / EXIT_PANEL_DUR);
+            float eased = t * t * t; // ease-in
+
+            _panelCG.alpha = 1f - eased;
+            panelRT.localScale = Vector3.one * Mathf.Lerp(1f, 0.92f, eased);
+            panelRT.anchoredPosition = startPos + new Vector2(0f, -20f * eased);
+
+            if (_overlay != null)
+            {
+                Color c = _overlay.color;
+                c.a *= (1f - eased * 0.5f);
+                _overlay.color = c;
+            }
+
+            yield return null;
+        }
+
+        if (ScreenTransitionManager.Instance != null)
+        {
+            ScreenTransitionManager.Instance.CosmicFadeOut(0.6f, () => callback?.Invoke());
+        }
+        else
+        {
+            callback?.Invoke();
         }
     }
 

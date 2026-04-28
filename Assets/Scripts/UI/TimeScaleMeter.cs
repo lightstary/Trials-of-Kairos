@@ -4,8 +4,6 @@ using TMPro;
 
 public class TimeScaleMeter : MonoBehaviour
 {
-    [Header("Settings")]
-    [SerializeField] private float fillLerpSpeed = 12f;
 
     public bool AlwaysShowZones { get; set; }
 
@@ -142,10 +140,10 @@ public class TimeScaleMeter : MonoBehaviour
         bool bossBActive = BossBFight.Instance != null && BossBFight.Instance.bossActive;
         bool bossCActive = BossCFight.Instance != null && BossCFight.Instance.bossActive;
         bool anyBossActive = bossActive || bossBActive || bossCActive;
-        bool showZones = anyBossActive || AlwaysShowZones;
+        bool showZones = anyBossActive || AlwaysShowZones
+                      || threat >= TimeScaleLogic.ThreatState.Warning;
 
         // ── Threat coloring ─────────────────────────────────────────────
-        if (anyBossActive)
         {
             float absDisplay = Mathf.Abs(_display);
             if (absDisplay >= dng)
@@ -160,12 +158,12 @@ public class TimeScaleMeter : MonoBehaviour
             }
         }
 
-        bool inWarning = anyBossActive && threat >= TimeScaleLogic.ThreatState.Warning;
+        bool inWarning = threat >= TimeScaleLogic.ThreatState.Warning;
         float wp = inWarning ? Mathf.Sin(Time.time * 3f) * 0.15f + 0.25f : 0.08f;
         if (_warnR != null) { _warnR.enabled = showZones; Color c = WARN_COL; c.a = wp * (raw >= wrn ? 1f : 0.3f); _warnR.color = c; }
         if (_warnL != null) { _warnL.enabled = showZones; Color c = WARN_COL; c.a = wp * (raw <= -wrn ? 1f : 0.3f); _warnL.color = c; }
 
-        bool inDanger = anyBossActive && threat >= TimeScaleLogic.ThreatState.Danger;
+        bool inDanger = threat >= TimeScaleLogic.ThreatState.Danger;
         float dp = inDanger ? Mathf.Sin(Time.time * 6f) * 0.3f + 0.7f : 0.15f;
         if (_dangerR != null) { _dangerR.enabled = showZones; Color c = DANGER_COL; c.a = dp * (raw >= dng ? 1f : 0.3f); _dangerR.color = c; }
         if (_dangerL != null) { _dangerL.enabled = showZones; Color c = DANGER_COL; c.a = dp * (raw <= -dng ? 1f : 0.3f); _dangerL.color = c; }

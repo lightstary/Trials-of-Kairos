@@ -28,7 +28,7 @@ public class DeathTileTutorial : MonoBehaviour
     private const float PANEL_HEIGHT = 340f;
 
     private const string TITLE_TEXT = "!!  DANGER \u2014 DEATH TILES";
-    private const string BODY_TEXT  = "The white tiles ahead are <color=#E63219>deadly temporal vines</color>.\n\n" +
+    private const string BODY_TEXT  = "The tiles ahead are covered in <color=#E63219>deadly temporal vines</color>.\n\n" +
                                       "Stepping on them will <color=#E63219>end your trial instantly</color>.\n\n" +
                                       "Navigate carefully around them to survive.";
 

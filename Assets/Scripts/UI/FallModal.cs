@@ -13,7 +13,7 @@ public class FallModal : MonoBehaviour
 {
     // ── Theme (matches GameOverScreen / WinScreen style) ────────────
     private static readonly Color PANEL_BG     = new Color(0.059f, 0.102f, 0.188f, 0.95f);
-    private static readonly Color DIMMER_COL   = new Color(0f, 0f, 0f, 0.5f);
+    private static readonly Color DIMMER_COL   = new Color(0f, 0f, 0f, 0.6f);
     private static readonly Color TITLE_COL    = new Color(0.85f, 0.20f, 0.15f, 1f);
     private static readonly Color DESC_COL     = new Color(0.82f, 0.84f, 0.90f, 0.85f);
     private static readonly Color BTN_PRIMARY  = new Color(0.85f, 0.20f, 0.15f, 1f);
@@ -29,6 +29,14 @@ public class FallModal : MonoBehaviour
     private const float BTN_H   = 50f;
     private const float BTN_GAP = 24f;
 
+    // ── Animation ───────────────────────────────────────────────────
+    private const float DIMMER_FADE_DUR  = 0.3f;
+    private const float PANEL_ANIM_DUR   = 0.4f;
+    private const float PANEL_ANIM_DELAY = 0.1f;   // Dimmer leads, panel follows
+    private const float PANEL_SCALE_FROM = 0.88f;
+    private const float PANEL_SLIDE_Y    = -40f;    // Slides up from below
+    private const float EXIT_DUR         = 0.25f;
+
     private static readonly string[] FALL_MESSAGES = {
         "You slipped between the seconds.",
         "The path crumbled beneath you.",
@@ -41,6 +49,7 @@ public class FallModal : MonoBehaviour
     private const string TITLE_TEXT = "LOST IN TIME";
 
     private static GameObject _root;
+    private static bool _dismissing;
 
     /// <summary>True while the fall modal is visible.</summary>
     public static bool IsOpen => _root != null;
@@ -48,13 +57,12 @@ public class FallModal : MonoBehaviour
     /// <summary>
     /// Shows the fall modal with options based on whether a checkpoint exists.
     /// </summary>
-    /// <param name="hasCheckpoint">If true, shows both "Restart from Checkpoint" and "Restart Level". If false, only "Restart Level".</param>
-    /// <param name="onCheckpoint">Called when the player chooses to restart from checkpoint.</param>
-    /// <param name="onRestartLevel">Called when the player chooses to restart the level.</param>
-    public static void Show(bool hasCheckpoint, Action onCheckpoint, Action onRestartLevel)
+    public static void Show(bool hasCheckpoint, Action onCheckpoint, Action onRestartLevel,
+        string title = null, string message = null)
     {
         // Destroy any existing modal
         if (_root != null) Destroy(_root);
+        _dismissing = false;
 
         Canvas canvas = UnityEngine.Object.FindObjectOfType<Canvas>();
         if (canvas == null)
@@ -64,7 +72,7 @@ public class FallModal : MonoBehaviour
             return;
         }
 
-        // Root container (full-screen dimmer)
+        // Root container (full-screen)
         _root = new GameObject("FallModal");
         _root.transform.SetParent(canvas.transform, false);
         RectTransform rootRT = _root.AddComponent<RectTransform>();
@@ -73,23 +81,27 @@ public class FallModal : MonoBehaviour
         rootRT.offsetMin = Vector2.zero;
         rootRT.offsetMax = Vector2.zero;
 
-        Image dimmer = _root.AddComponent<Image>();
-        dimmer.color = DIMMER_COL;
-        dimmer.raycastTarget = true; // Block clicks behind modal
-
-        CanvasGroup cg = _root.AddComponent<CanvasGroup>();
-        cg.alpha = 0f;
-        cg.interactable = true;
-        cg.blocksRaycasts = true;
+        // Dimmer — fades in separately for a layered feel
+        GameObject dimmerGO = MakeRect("Dimmer", _root.transform,
+            Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+        Image dimmer = dimmerGO.AddComponent<Image>();
+        dimmer.color = new Color(DIMMER_COL.r, DIMMER_COL.g, DIMMER_COL.b, 0f);
+        dimmer.raycastTarget = true;
 
         // Panel
         GameObject panel = MakeRect("Panel", _root.transform,
             new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
             Vector2.zero, Vector2.zero);
-        panel.GetComponent<RectTransform>().sizeDelta = new Vector2(PANEL_W, PANEL_H);
+        RectTransform panelRT = panel.GetComponent<RectTransform>();
+        panelRT.sizeDelta = new Vector2(PANEL_W, PANEL_H);
         Image panelBg = panel.AddComponent<Image>();
         panelBg.color = PANEL_BG;
         panelBg.raycastTarget = true;
+
+        CanvasGroup panelCG = panel.AddComponent<CanvasGroup>();
+        panelCG.alpha = 0f;
+        panelCG.interactable = true;
+        panelCG.blocksRaycasts = true;
 
         // Accent bar (top)
         GameObject accent = MakeRect("Accent", panel.transform,
@@ -105,12 +117,12 @@ public class FallModal : MonoBehaviour
             new Vector2(0f, 1f), new Vector2(1f, 1f),
             new Vector2(30f, -75f), new Vector2(-30f, -20f),
             36f, true, TITLE_COL, TextAlignmentOptions.Center);
-        titleTMP.text = TITLE_TEXT;
+        titleTMP.text = title ?? TITLE_TEXT;
         titleTMP.characterSpacing = 6f;
         titleTMP.enableWordWrapping = false;
 
         // Description
-        string msg = FALL_MESSAGES[UnityEngine.Random.Range(0, FALL_MESSAGES.Length)];
+        string msg = message ?? FALL_MESSAGES[UnityEngine.Random.Range(0, FALL_MESSAGES.Length)];
         TextMeshProUGUI descTMP = MakeLabel("Desc", panel.transform,
             new Vector2(0f, 0.40f), new Vector2(1f, 0.65f),
             new Vector2(40f, 0f), new Vector2(-40f, 0f),
@@ -128,19 +140,11 @@ public class FallModal : MonoBehaviour
 
             Button checkpointBtn = MakeButton("CheckpointBtn", panel.transform,
                 leftX, btnY, "RESTART FROM CHECKPOINT", BTN_PRIMARY, BTN_TEXT);
-            checkpointBtn.onClick.AddListener(() =>
-            {
-                Dismiss();
-                FadeAndExecute(onCheckpoint);
-            });
+            checkpointBtn.onClick.AddListener(() => DismissAndExecute(onCheckpoint));
 
             Button restartBtn = MakeButton("RestartBtn", panel.transform,
                 rightX, btnY, "RESTART LEVEL", BTN_SECONDARY, BTN_TEXT);
-            restartBtn.onClick.AddListener(() =>
-            {
-                Dismiss();
-                FadeAndExecute(onRestartLevel);
-            });
+            restartBtn.onClick.AddListener(() => DismissAndExecute(onRestartLevel));
         }
         else
         {
@@ -148,52 +152,157 @@ public class FallModal : MonoBehaviour
 
             Button restartBtn = MakeButton("RestartBtn", panel.transform,
                 0f, btnY, "RESTART LEVEL", BTN_PRIMARY, BTN_TEXT);
-            restartBtn.onClick.AddListener(() =>
-            {
-                Dismiss();
-                FadeAndExecute(onRestartLevel);
-            });
+            restartBtn.onClick.AddListener(() => DismissAndExecute(onRestartLevel));
         }
 
-        // Fade in
+        // Animate in
         FallModal fm = _root.AddComponent<FallModal>();
-        fm.StartCoroutine(fm.FadeIn(cg));
+        fm.StartCoroutine(fm.AnimateIn(dimmer, panelCG, panelRT));
     }
 
-    private IEnumerator FadeIn(CanvasGroup cg)
+    // ════════════════════════════════════════════════════════════════════
+    //  ANIMATIONS
+    // ════════════════════════════════════════════════════════════════════
+
+    /// <summary>Layered entrance: dimmer fades first, then panel scales + slides up.</summary>
+    private IEnumerator AnimateIn(Image dimmer, CanvasGroup panelCG, RectTransform panelRT)
     {
+        Vector2 panelTarget = panelRT.anchoredPosition;
+        Vector2 panelStart  = panelTarget + new Vector2(0f, PANEL_SLIDE_Y);
+
+        // Phase 1: dimmer fades in
         float elapsed = 0f;
-        float dur = 0.35f;
-        while (elapsed < dur)
+        while (elapsed < DIMMER_FADE_DUR)
         {
             elapsed += Time.unscaledDeltaTime;
-            cg.alpha = Mathf.Clamp01(elapsed / dur);
+            float t = Mathf.Clamp01(elapsed / DIMMER_FADE_DUR);
+            float eased = EaseOutCubic(t);
+            Color c = DIMMER_COL;
+            c.a = DIMMER_COL.a * eased;
+            dimmer.color = c;
             yield return null;
         }
-        cg.alpha = 1f;
+        dimmer.color = DIMMER_COL;
+
+        // Brief beat before panel enters
+        yield return new WaitForSecondsRealtime(PANEL_ANIM_DELAY);
+
+        // Phase 2: panel scales up + slides in + fades
+        elapsed = 0f;
+        while (elapsed < PANEL_ANIM_DUR)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / PANEL_ANIM_DUR);
+            float eased = EaseOutCubic(t);
+
+            panelCG.alpha = eased;
+            panelRT.localScale = Vector3.one * Mathf.Lerp(PANEL_SCALE_FROM, 1f, eased);
+            panelRT.anchoredPosition = Vector2.Lerp(panelStart, panelTarget, eased);
+            yield return null;
+        }
+
+        panelCG.alpha = 1f;
+        panelRT.localScale = Vector3.one;
+        panelRT.anchoredPosition = panelTarget;
+
+        // Select first button for controller/keyboard nav
+        if (UnityEngine.EventSystems.EventSystem.current != null)
+        {
+            Button btn = panelRT.GetComponentInChildren<Button>();
+            if (btn != null)
+                UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(btn.gameObject);
+        }
     }
 
-    private static void Dismiss()
+    /// <summary>Smooth exit: panel shrinks + fades, dimmer follows, then cosmic transition.</summary>
+    private IEnumerator AnimateOut(Action callback)
     {
+        if (_root == null) yield break;
+
+        CanvasGroup panelCG = _root.GetComponentInChildren<CanvasGroup>();
+        RectTransform panelRT = panelCG != null ? panelCG.GetComponent<RectTransform>() : null;
+        Image dimmer = null;
+        Transform dimmerT = _root.transform.Find("Dimmer");
+        if (dimmerT != null) dimmer = dimmerT.GetComponent<Image>();
+
+        float elapsed = 0f;
+        Vector2 startPos = panelRT != null ? panelRT.anchoredPosition : Vector2.zero;
+
+        while (elapsed < EXIT_DUR)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / EXIT_DUR);
+            float eased = EaseInCubic(t);
+
+            if (panelCG != null) panelCG.alpha = 1f - eased;
+            if (panelRT != null)
+            {
+                panelRT.localScale = Vector3.one * Mathf.Lerp(1f, 0.92f, eased);
+                panelRT.anchoredPosition = startPos + new Vector2(0f, PANEL_SLIDE_Y * 0.5f * eased);
+            }
+            if (dimmer != null)
+            {
+                Color c = dimmer.color;
+                c.a = DIMMER_COL.a * (1f - eased);
+                dimmer.color = c;
+            }
+            yield return null;
+        }
+
         if (_root != null) Destroy(_root);
         _root = null;
-    }
 
-    /// <summary>Fades through a cosmic wash, then executes the callback.</summary>
-    private static void FadeAndExecute(Action callback)
-    {
+        // Cosmic fade out, then execute the actual restart/checkpoint logic
         if (ScreenTransitionManager.Instance != null)
         {
-            ScreenTransitionManager.Instance.CosmicFadeOut(0.5f, () =>
-            {
-                callback?.Invoke();
-            });
+            ScreenTransitionManager.Instance.CosmicFadeOut(0.5f, () => callback?.Invoke());
         }
         else
         {
             callback?.Invoke();
         }
     }
+
+    // ════════════════════════════════════════════════════════════════════
+    //  DISMISS
+    // ════════════════════════════════════════════════════════════════════
+
+    /// <summary>Plays exit animation, then executes the callback through a cosmic fade.</summary>
+    private static void DismissAndExecute(Action callback)
+    {
+        if (_dismissing) return;
+        _dismissing = true;
+
+        if (_root != null)
+        {
+            FallModal fm = _root.GetComponent<FallModal>();
+            if (fm != null)
+            {
+                fm.StartCoroutine(fm.AnimateOut(callback));
+                return;
+            }
+        }
+
+        // Fallback if no FallModal component
+        if (_root != null) Destroy(_root);
+        _root = null;
+
+        if (ScreenTransitionManager.Instance != null)
+            ScreenTransitionManager.Instance.CosmicFadeOut(0.5f, () => callback?.Invoke());
+        else
+            callback?.Invoke();
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    //  EASING
+    // ════════════════════════════════════════════════════════════════════
+
+    private static float EaseOutCubic(float t) => 1f - Mathf.Pow(1f - t, 3f);
+    private static float EaseInCubic(float t)  => t * t * t;
+
+    // ════════════════════════════════════════════════════════════════════
+    //  UI HELPERS
+    // ════════════════════════════════════════════════════════════════════
 
     private static Button MakeButton(string name, Transform parent,
         float x, float y, string label, Color bgColor, Color textColor)
@@ -216,7 +325,7 @@ public class FallModal : MonoBehaviour
         cb.highlightedColor = BTN_HOVER;
         cb.selectedColor    = BTN_HOVER;
         cb.pressedColor     = BTN_PRESS;
-        cb.fadeDuration     = 0.05f;
+        cb.fadeDuration     = 0.1f;
         btn.colors = cb;
 
         TextMeshProUGUI tmp = MakeLabel("Label", go.transform,
