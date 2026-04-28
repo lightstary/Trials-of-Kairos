@@ -380,7 +380,7 @@ public class GameOverScreenController : MonoBehaviour
     //  BUTTONS
     // ================================================================
 
-    /// <summary>Restarts the current level with dissolve + shimmer transition.</summary>
+    /// <summary>Restarts the current level with a quick transition.</summary>
     private void RetryTrial()
     {
         IsOpen = false;
@@ -390,7 +390,7 @@ public class GameOverScreenController : MonoBehaviour
         {
             Time.timeScale = 1f;
             if (ScreenTransitionManager.Instance != null)
-                ScreenTransitionManager.Instance.FadeToScene(scene);
+                ScreenTransitionManager.Instance.QuickReloadScene(scene);
             else
                 SceneManager.LoadScene(scene);
         }));

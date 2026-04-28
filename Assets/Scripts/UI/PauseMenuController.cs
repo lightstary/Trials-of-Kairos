@@ -312,7 +312,7 @@ public class PauseMenuController : MonoBehaviour
         Time.timeScale = 1f; _isPaused = false;
         MainMenuController.RequestRestartTrialOnLoad();
         if (ScreenTransitionManager.Instance != null)
-            ScreenTransitionManager.Instance.FadeToScene(SceneManager.GetActiveScene().name);
+            ScreenTransitionManager.Instance.QuickReloadScene(SceneManager.GetActiveScene().name);
         else
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
@@ -443,7 +443,7 @@ public class PauseMenuController : MonoBehaviour
         {
             Time.timeScale = 1f;
             if (ScreenTransitionManager.Instance != null)
-                ScreenTransitionManager.Instance.FadeToScene(SceneManager.GetActiveScene().name);
+                ScreenTransitionManager.Instance.QuickReloadScene(SceneManager.GetActiveScene().name);
             else
                 SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }

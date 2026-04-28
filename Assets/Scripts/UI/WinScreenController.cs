@@ -511,7 +511,7 @@ public class WinScreenController : MonoBehaviour
         Time.timeScale = 1f;
         MainMenuController.RequestRestartTrialOnLoad();
         if (ScreenTransitionManager.Instance != null)
-            ScreenTransitionManager.Instance.FadeToScene(SceneManager.GetActiveScene().name);
+            ScreenTransitionManager.Instance.QuickReloadScene(SceneManager.GetActiveScene().name);
         else
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }

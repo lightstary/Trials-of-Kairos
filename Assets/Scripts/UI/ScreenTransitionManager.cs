@@ -168,14 +168,16 @@ public class ScreenTransitionManager : MonoBehaviour
         StartCoroutine(ShimmerTransitionRoutine(onMidpoint));
     }
 
-    /// <summary>Loads a scene with transition. Uses dissolve for cross-scene, quick fade for same-scene.</summary>
+    /// <summary>Loads a scene with full dissolve + shimmer transition.</summary>
     public void FadeToScene(string sceneName, float duration = -1f)
     {
-        bool sameScene = sceneName == SceneManager.GetActiveScene().name;
-        if (sameScene)
-            StartCoroutine(CaptureAndLoadScene(sceneName));
-        else
-            StartCoroutine(DissolveAndLoadScene(sceneName));
+        StartCoroutine(DissolveAndLoadScene(sceneName));
+    }
+
+    /// <summary>Loads a scene with a quick capture (no dissolve). Use for same-level restarts.</summary>
+    public void QuickReloadScene(string sceneName)
+    {
+        StartCoroutine(CaptureAndLoadScene(sceneName));
     }
 
     /// <summary>Gold radiance burst (win effect).</summary>

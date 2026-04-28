@@ -834,11 +834,11 @@ public class FallDetection : MonoBehaviour
         Debug.Log("Spawn point updated to: " + spawnPosition);
     }
 
-    /// <summary>Loads a scene using dissolve + shimmer if available, raw load otherwise.</summary>
+    /// <summary>Reloads the current scene with a quick transition (no dissolve).</summary>
     private static void LoadSceneWithTransition(string sceneName)
     {
         if (ScreenTransitionManager.Instance != null)
-            ScreenTransitionManager.Instance.FadeToScene(sceneName);
+            ScreenTransitionManager.Instance.QuickReloadScene(sceneName);
         else
             SceneManager.LoadScene(sceneName);
     }

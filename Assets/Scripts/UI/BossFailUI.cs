@@ -117,7 +117,7 @@ public class BossFailUI : MonoBehaviour
         if (fd != null)
             fd.Respawn();
         else if (ScreenTransitionManager.Instance != null)
-            ScreenTransitionManager.Instance.FadeToScene(SceneManager.GetActiveScene().name);
+            ScreenTransitionManager.Instance.QuickReloadScene(SceneManager.GetActiveScene().name);
         else
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }

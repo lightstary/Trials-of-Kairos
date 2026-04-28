@@ -52,6 +52,9 @@ public class TimeScaleLogic : MonoBehaviour
         if (isDead) return;
         if (TimeState.Instance == null) return;
 
+        // Don't tick the meter while the shimmer transition is still revealing
+        if (ScreenTransitionManager.Instance != null && ScreenTransitionManager.Instance.IsRevealing) return;
+
         bool bossActive = (BossFight.Instance != null && BossFight.Instance.bossActive)
                        || (BossBFight.Instance != null && BossBFight.Instance.bossActive)
                        || (BossCFight.Instance != null && BossCFight.Instance.bossActive);
