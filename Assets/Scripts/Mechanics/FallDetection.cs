@@ -229,11 +229,21 @@ public class FallDetection : MonoBehaviour
 
             SoundManager.Instance?.PlayLose();
 
-            GameOverScreenController gosc = FindObjectOfType<GameOverScreenController>(true);
-            if (gosc != null)
+            // Show boss fail UI with checkpoint/restart/trial-select options
+            BossFailUI failUI = FindObjectOfType<BossFailUI>(true);
+            if (failUI == null)
             {
-                gosc.Show();
+                Canvas canvas = FindObjectOfType<Canvas>();
+                if (canvas != null)
+                {
+                    GameObject go = new GameObject("BossFailUI");
+                    go.transform.SetParent(canvas.transform, false);
+                    failUI = go.AddComponent<BossFailUI>();
+                }
             }
+
+            if (failUI != null)
+                failUI.ShowFail();
             else
             {
                 Time.timeScale = 1f;
@@ -509,6 +519,10 @@ public class FallDetection : MonoBehaviour
         {
             anim.Rebind();
             anim.Update(0f);
+
+            // Disable root motion so the character model stays centered
+            // inside the hourglass after respawn instead of drifting out
+            anim.applyRootMotion = false;
         }
 
         // Restore child local transforms to undo any root motion drift
@@ -819,6 +833,21 @@ public class FallDetection : MonoBehaviour
         respawnGraceTimer = RESPAWN_GRACE_PERIOD;
 
         SoundManager.Instance?.PlayRespawn();
+    }
+
+    /// <summary>Forces the fall state to clear so Respawn() or checkpoint respawn can proceed.</summary>
+    public void ForceResetFallState()
+    {
+        StopAllCoroutines();
+        isFalling = false;
+        SandDisintegrationEffect.DestroyAll();
+        RestorePlayerVisuals();
+    }
+
+    /// <summary>Public wrapper around DoCheckpointRespawn for external callers like BossFailUI.</summary>
+    public void DoCheckpointRespawnPublic()
+    {
+        DoCheckpointRespawn();
     }
 
     /// <summary>Updates the checkpoint spawn position.</summary>

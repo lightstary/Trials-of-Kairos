@@ -164,7 +164,8 @@ public class TilePlayerGlow : MonoBehaviour
     {
         if (BossFight.Instance != null && BossFight.Instance.bossActive)
             return BossFight.Instance.allTiles;
-        // Boss B no longer uses tile attacks — no tiles to track
+        if (BossBFight.Instance != null && BossBFight.Instance.bossActive)
+            return BossBFight.Instance.GetAllTiles();
         if (BossCFight.Instance != null && BossCFight.Instance.bossActive)
             return BossCFight.Instance.allTiles;
         return null;
@@ -307,7 +308,8 @@ public class TilePlayerGlow : MonoBehaviour
     {
         if (BossFight.Instance != null && BossFight.Instance.bossActive)
             return BossFight.Instance.GetSafeTiles().Contains(tile);
-        // Boss B no longer uses tile attacks — no safe/danger tiles
+        if (BossBFight.Instance != null && BossBFight.Instance.bossActive)
+            return BossBFight.Instance.GetSafeTiles().Contains(tile);
         if (BossCFight.Instance != null && BossCFight.Instance.bossActive)
             return BossCFight.Instance.GetSafeTiles().Contains(tile);
         return false;

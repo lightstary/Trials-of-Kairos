@@ -195,14 +195,17 @@ public class TimeScaleMeter : MonoBehaviour
                 ? Mathf.Clamp01((_bossPointerValue - _bossMinV) / bossRange)
                 : 0.5f;
 
-            // Death pointer marker: wide bar, contained inside the bar area
+            // Death pointer marker: tall and wide, extends above and below bar
             if (_deathPtrMarkerRT != null && _deathPtrMarker != null)
             {
                 _deathPtrMarker.enabled = true;
-                float halfW = 0.008f;
-                _deathPtrMarkerRT.anchorMin = new Vector2(bossNorm - halfW, 0f);
-                _deathPtrMarkerRT.anchorMax = new Vector2(bossNorm + halfW, 1f);
+                float halfW = 0.012f;
+                _deathPtrMarkerRT.anchorMin = new Vector2(bossNorm - halfW, -0.6f);
+                _deathPtrMarkerRT.anchorMax = new Vector2(bossNorm + halfW,  1.6f);
                 _deathPtrMarkerRT.offsetMin = _deathPtrMarkerRT.offsetMax = Vector2.zero;
+
+                // Ensure death pointer renders on top of player marker
+                _deathPtrMarkerRT.SetAsLastSibling();
 
                 // Fast pulse when uncontested, calm when blocked
                 float pulseRate = _bossContesting ? 2f : 5f;
@@ -377,8 +380,8 @@ public class TimeScaleMeter : MonoBehaviour
         _posMarker = I(MkR("PM", _barGO.transform, V(zA - 0.004f, -0.3f), V(zA + 0.004f, 1.3f)), FWD_COL);
         _posMarkerRT = _posMarker.GetComponent<RectTransform>();
 
-        // ── Boss B: Death Pointer marker (contained inside bar) ─────────
-        _deathPtrMarker = I(MkR("DP", _barGO.transform, V(zA - 0.008f, 0f), V(zA + 0.008f, 1f)), DEATH_PTR_COL);
+        // ── Boss B: Death Pointer marker — tall, wide, renders ABOVE bar ──
+        _deathPtrMarker = I(MkR("DP", _barGO.transform, V(zA - 0.012f, -0.6f), V(zA + 0.012f, 1.6f)), DEATH_PTR_COL);
         _deathPtrMarkerRT = _deathPtrMarker.GetComponent<RectTransform>();
         _deathPtrMarker.enabled = false;
 

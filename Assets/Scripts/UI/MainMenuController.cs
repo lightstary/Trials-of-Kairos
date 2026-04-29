@@ -239,6 +239,14 @@ public class MainMenuController : MonoBehaviour
         if (titleLabel    != null) { titleLabel.alpha = 0f; titleLabel.characterSpacing = TITLE_SPACE_START; }
         if (subtitleLabel != null) subtitleLabel.alpha = 0f;
         if (buttonGroups  != null) foreach (var g in buttonGroups) if (g != null) g.alpha = 0f;
+
+        // Force the rotating squares to their intended subtle alpha to prevent
+        // a rare frame where they render at full opacity before breathing kicks in
+        if (_largeSqImg != null)
+            _largeSqImg.color = new Color(_largeSqImg.color.r, _largeSqImg.color.g, _largeSqImg.color.b, 0f);
+        if (_smallSqImg != null)
+            _smallSqImg.color = new Color(_smallSqImg.color.r, _smallSqImg.color.g, _smallSqImg.color.b, 0f);
+
         yield return new WaitForSecondsRealtime(0.5f);
         if (titleLabel    != null) yield return AnimateTitle();
         if (subtitleLabel != null) yield return FadeText(subtitleLabel, 0.4f);

@@ -62,6 +62,11 @@ public class TimeScaleLogic : MonoBehaviour
         // Don't accrue time until the intro modal has been dismissed (hub only)
         if (!bossActive && TimeScaleIntroModal.IsTimeLocked) return;
 
+        // During Boss B, the boss controls time scale movement directly.
+        // Player's own accrual is paused — opposing/same-direction logic
+        // is handled entirely by BossBFight.UpdateTimeScale().
+        if (BossBFight.Instance != null && BossBFight.Instance.bossActive) return;
+
         float rate = tickInterval > 0f ? (1f / tickInterval) : 1f;
         rate *= rateMultiplier;
 
@@ -152,7 +157,7 @@ public class TimeScaleLogic : MonoBehaviour
         Debug.LogWarning("[TimeScaleLogic] GameOverScreenController not found. No lose screen shown.");
     }
 
-    /// <summary>Triggers the boss fight lose flow with proper UI.</summary>
+    /// <summary>Triggers the boss fight lose flow — shows fail UI with options.</summary>
     private void TriggerBossLose()
     {
         if (BossFight.Instance != null && BossFight.Instance.bossActive)
@@ -162,25 +167,10 @@ public class TimeScaleLogic : MonoBehaviour
         if (BossCFight.Instance != null && BossCFight.Instance.bossActive)
             BossCFight.Instance.StopBossFight();
 
-        // Route through FallDetection for the disintegration effect
-        FallDetection fd = FindObjectOfType<FallDetection>();
-        if (fd != null)
-        {
-            fd.TriggerTimelineDeath("THE TIMELINE HAS COLLAPSED");
-            return;
-        }
-
-        // Fallback: no FallDetection found, show screen directly
         SoundManager sm = FindObjectOfType<SoundManager>();
         if (sm != null) sm.PlayLose();
 
-        GameOverScreenController gosc = FindObjectOfType<GameOverScreenController>(true);
-        if (gosc != null)
-        {
-            Time.timeScale = 0f;
-            gosc.Show("THE TIMELINE HAS COLLAPSED");
-            return;
-        }
+        Time.timeScale = 0f;
 
         BossFailUI failUI = FindObjectOfType<BossFailUI>(true);
         if (failUI == null)
@@ -204,5 +194,12 @@ public class TimeScaleLogic : MonoBehaviour
         currentValue = 0f;
         isDead = false;
         currentThreat = ThreatState.Safe;
+    }
+
+    /// <summary>Sets the time scale value directly (used by boss fights to push the meter).</summary>
+    public void SetValue(float value)
+    {
+        currentValue = Mathf.Clamp(value, minValue, maxValue);
+        UpdateThreatState();
     }
 }

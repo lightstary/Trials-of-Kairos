@@ -5,9 +5,10 @@ using UnityEngine.SceneManagement;
 using TMPro;
 
 /// <summary>
-/// Proper boss-fight fail screen with RETRY and RETURN TO MAIN MENU options.
-/// Replaces the temporary BossPopup 3D text with a real UI overlay.
-/// Supports both D-pad and free cursor interaction.
+/// Boss-fight fail screen with three options:
+///   1. RESPAWN AT CHECKPOINT — teleports player to last checkpoint, resets boss fight
+///   2. RESTART LEVEL — reloads the entire scene from scratch
+///   3. TRIAL SELECTION — returns to the trial selection menu
 /// </summary>
 public class BossFailUI : MonoBehaviour
 {
@@ -56,7 +57,7 @@ public class BossFailUI : MonoBehaviour
         panelGO.transform.SetParent(_overlayGO.transform, false);
         RectTransform pRT = panelGO.AddComponent<RectTransform>();
         pRT.anchorMin = pRT.anchorMax = new Vector2(0.5f, 0.5f);
-        pRT.sizeDelta = new Vector2(420f, 280f);
+        pRT.sizeDelta = new Vector2(420f, 340f);
         Image pBg = panelGO.AddComponent<Image>();
         pBg.color = BG_COL; pBg.raycastTarget = true;
         CanvasGroup pCG = panelGO.AddComponent<CanvasGroup>();
@@ -66,75 +67,111 @@ public class BossFailUI : MonoBehaviour
 
         // Title
         MakeText(panelGO.transform, "TEMPORAL FAILURE", 22f, FAIL_RED, true,
-            new Vector2(0.05f, 0.72f), new Vector2(0.95f, 0.93f), 6f);
+            new Vector2(0.05f, 0.78f), new Vector2(0.95f, 0.93f), 6f);
 
         // Subtitle
         MakeText(panelGO.transform, "The timeline has collapsed.\nThe temporal balance was lost.", 13f, TEXT_COL, false,
-            new Vector2(0.08f, 0.45f), new Vector2(0.92f, 0.72f), 0f);
+            new Vector2(0.08f, 0.58f), new Vector2(0.92f, 0.78f), 0f);
 
-        // RETRY button
-        Button retryBtn = MakeButton(panelGO.transform, "RETRY", new Vector2(0f, 85f));
-        retryBtn.onClick.AddListener(Retry);
+        // RESPAWN AT CHECKPOINT button
+        Button checkpointBtn = MakeButton(panelGO.transform, "RESPAWN AT CHECKPOINT", new Vector2(0f, 130f));
+        checkpointBtn.onClick.AddListener(RespawnAtCheckpoint);
 
-        // RETURN TO MAIN MENU button
-        Button menuBtn = MakeButton(panelGO.transform, "RETURN TO MAIN MENU", new Vector2(0f, 30f));
-        menuBtn.onClick.AddListener(ReturnToMainMenu);
+        // RESTART LEVEL button
+        Button restartBtn = MakeButton(panelGO.transform, "RESTART LEVEL", new Vector2(0f, 75f));
+        restartBtn.onClick.AddListener(RestartLevel);
 
-        // Wire navigation
-        Navigation retryNav = new Navigation();
-        retryNav.mode = Navigation.Mode.Explicit;
-        retryNav.selectOnDown = menuBtn;
-        retryNav.selectOnUp = menuBtn;
-        retryBtn.navigation = retryNav;
+        // TRIAL SELECTION button
+        Button trialBtn = MakeButton(panelGO.transform, "TRIAL SELECTION", new Vector2(0f, 20f));
+        trialBtn.onClick.AddListener(GoToTrialSelection);
 
-        Navigation menuNav = new Navigation();
-        menuNav.mode = Navigation.Mode.Explicit;
-        menuNav.selectOnUp = retryBtn;
-        menuNav.selectOnDown = retryBtn;
-        menuBtn.navigation = menuNav;
+        // Wire navigation for controller support
+        Navigation checkpointNav = new Navigation { mode = Navigation.Mode.Explicit };
+        checkpointNav.selectOnDown = restartBtn;
+        checkpointNav.selectOnUp = trialBtn;
+        checkpointBtn.navigation = checkpointNav;
 
-        // Select Retry for controller
+        Navigation restartNav = new Navigation { mode = Navigation.Mode.Explicit };
+        restartNav.selectOnUp = checkpointBtn;
+        restartNav.selectOnDown = trialBtn;
+        restartBtn.navigation = restartNav;
+
+        Navigation trialNav = new Navigation { mode = Navigation.Mode.Explicit };
+        trialNav.selectOnUp = restartBtn;
+        trialNav.selectOnDown = checkpointBtn;
+        trialBtn.navigation = trialNav;
+
+        // Select checkpoint button for controller
         if (UnityEngine.EventSystems.EventSystem.current != null)
-            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(retryBtn.gameObject);
+            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(checkpointBtn.gameObject);
 
-        // Fade in
         StartCoroutine(FadeIn(pCG));
     }
 
-    private void Retry()
+    /// <summary>Respawns the player at the most recent checkpoint and resets the boss fight.</summary>
+    private void RespawnAtCheckpoint()
     {
+        Close();
         Time.timeScale = 1f;
-        _shown = false;
-        IsOpen = false;
-
-        if (_overlayGO != null)
-            Destroy(_overlayGO);
 
         if (TimeScaleLogic.Instance != null)
             TimeScaleLogic.Instance.ResetMeter();
 
         FallDetection fd = FindObjectOfType<FallDetection>();
         if (fd != null)
-            fd.Respawn();
-        else if (ScreenTransitionManager.Instance != null)
+        {
+            // Force-clear fall state so checkpoint respawn works
+            // (isFalling stays true after boss death, blocking Respawn())
+            fd.ForceResetFallState();
+
+            if (ScreenTransitionManager.Instance != null)
+                ScreenTransitionManager.Instance.CosmicFadeOut(0.5f, () =>
+                {
+                    fd.DoCheckpointRespawnPublic();
+                    if (ScreenTransitionManager.Instance != null)
+                        ScreenTransitionManager.Instance.CosmicFadeIn(0.5f);
+                });
+            else
+            {
+                fd.DoCheckpointRespawnPublic();
+            }
+        }
+    }
+
+    /// <summary>Reloads the entire scene from the beginning.</summary>
+    private void RestartLevel()
+    {
+        Close();
+        Time.timeScale = 1f;
+
+        MainMenuController.RequestRestartTrialOnLoad();
+
+        if (ScreenTransitionManager.Instance != null)
             ScreenTransitionManager.Instance.QuickReloadScene(SceneManager.GetActiveScene().name);
         else
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-    private void ReturnToMainMenu()
+    /// <summary>Returns to the trial selection screen.</summary>
+    private void GoToTrialSelection()
     {
+        Close();
         Time.timeScale = 1f;
-        _shown = false;
-        IsOpen = false;
 
-        if (_overlayGO != null)
-            Destroy(_overlayGO);
+        MainMenuController.RequestTrialSelectOnLoad();
 
         if (ScreenTransitionManager.Instance != null)
             ScreenTransitionManager.Instance.FadeToScene("MainScene");
         else
             SceneManager.LoadScene("MainScene");
+    }
+
+    /// <summary>Cleans up the overlay and resets state.</summary>
+    private void Close()
+    {
+        _shown = false;
+        IsOpen = false;
+        if (_overlayGO != null) Destroy(_overlayGO);
     }
 
     private IEnumerator FadeIn(CanvasGroup cg)
