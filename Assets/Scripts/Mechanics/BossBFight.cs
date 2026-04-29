@@ -29,8 +29,8 @@ public class BossBFight : MonoBehaviour
     [Tooltip("Total tile-drop phases the player must survive to win.")]
     public int totalPhases = 4;
 
-    [Tooltip("Safe tiles that stay up each phase.")]
-    public int safeTilesPerPhase = 3;
+    [Tooltip("Number of safe tile PAIRS (2x1) that stay up each phase.")]
+    public int safePairsPerPhase = 2;
 
     [Tooltip("Seconds safe tiles glow before blinking starts.")]
     public float glowDuration = 3.5f;
@@ -294,13 +294,46 @@ public class BossBFight : MonoBehaviour
         List<GameObject> shuffled = new List<GameObject>(_allTiles);
         Shuffle(shuffled);
 
-        int safeCount = Mathf.Min(safeTilesPerPhase, shuffled.Count);
-        for (int i = 0; i < shuffled.Count; i++)
+        // Pick safe tile PAIRS (anchor + nearest neighbor) like Boss C
+        List<GameObject> available = new List<GameObject>(shuffled);
+        List<GameObject> chosenSafe = new List<GameObject>();
+
+        for (int p = 0; p < safePairsPerPhase; p++)
         {
-            if (i < safeCount)
-                _safeTiles.Add(shuffled[i]);
+            if (available.Count == 0) break;
+
+            // Pick an anchor tile
+            GameObject anchor = available[0];
+            available.RemoveAt(0);
+            chosenSafe.Add(anchor);
+
+            // Find the closest remaining tile as its neighbor
+            GameObject neighbor = null;
+            float closestDist = float.MaxValue;
+            foreach (GameObject candidate in available)
+            {
+                float dist = Vector3.Distance(anchor.transform.position, candidate.transform.position);
+                if (dist < closestDist)
+                {
+                    closestDist = dist;
+                    neighbor = candidate;
+                }
+            }
+
+            if (neighbor != null)
+            {
+                chosenSafe.Add(neighbor);
+                available.Remove(neighbor);
+            }
+        }
+
+        // Assign safe and danger lists
+        foreach (GameObject tile in _allTiles)
+        {
+            if (chosenSafe.Contains(tile))
+                _safeTiles.Add(tile);
             else
-                _dangerTiles.Add(shuffled[i]);
+                _dangerTiles.Add(tile);
         }
 
         // Glow safe tiles
@@ -316,8 +349,10 @@ public class BossBFight : MonoBehaviour
         // Blink danger tiles
         yield return StartCoroutine(BlinkTiles(_dangerTiles));
 
-        // Drop danger tiles with stagger
-        foreach (GameObject tile in _dangerTiles)
+        // Drop danger tiles in a predictable wave: farthest from safe tiles fall
+        // first, giving the player a visible sweep closing in toward safety
+        List<GameObject> orderedDanger = GetFallOrder(_dangerTiles);
+        foreach (GameObject tile in orderedDanger)
         {
             StartCoroutine(DropTile(tile));
             yield return new WaitForSeconds(fallDelay);
@@ -327,6 +362,37 @@ public class BossBFight : MonoBehaviour
 
         bool survived = PlayerOnSafeTile();
         callback(survived);
+    }
+
+    // ── Tile fall ordering ─────────────────────────────────────────────
+
+    /// <summary>
+    /// Sorts danger tiles so the farthest from the safe tile center drop first.
+    /// This creates a visible wave sweeping inward, giving the player a clear
+    /// visual cue of which direction to move.
+    /// </summary>
+    private List<GameObject> GetFallOrder(List<GameObject> tiles)
+    {
+        // Compute the center of all safe tiles as the "safe zone"
+        Vector3 safeCenter = Vector3.zero;
+        int safeCount = 0;
+        foreach (GameObject safe in _safeTiles)
+        {
+            if (safe == null) continue;
+            safeCenter += safe.transform.position;
+            safeCount++;
+        }
+        if (safeCount > 0) safeCenter /= safeCount;
+
+        List<GameObject> ordered = new List<GameObject>(tiles);
+        ordered.Sort((a, b) =>
+        {
+            float distA = Vector3.Distance(a.transform.position, safeCenter);
+            float distB = Vector3.Distance(b.transform.position, safeCenter);
+            return distB.CompareTo(distA); // Farthest first
+        });
+
+        return ordered;
     }
 
     // ── Time scale control ──────────────────────────────────────────────
