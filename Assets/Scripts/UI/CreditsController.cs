@@ -63,7 +63,7 @@ public class CreditsController : MonoBehaviour
         "Environment Design|Reagan Jewett",
         "Asset Integration|Reagan Jewett",
         "Asset Artists|Zutzuy Ayala-Zeferino, Kayla Stromp",
-        "Texture Artist|Zutzuy Ayala-Zeferino",
+        "Texture Artists|Zutzuy Ayala-Zeferino, Kayla Stromp",
         "Character Designer|Chanai Rhodes",
         "Animation|Reagan Jewett, Chanai Rhodes",
         "Audio / SFX Design|Frederick Clay, Samantha Perry",
@@ -178,8 +178,8 @@ public class CreditsController : MonoBehaviour
         GridLayoutGroup grid = contentGO.AddComponent<GridLayoutGroup>();
         grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
         grid.constraintCount = COLUMNS;
-        grid.cellSize = new Vector2(420f, 120f);
-        grid.spacing = new Vector2(40f, 35f);
+        grid.cellSize = new Vector2(420f, 90f);
+        grid.spacing = new Vector2(40f, 20f);
         grid.childAlignment = TextAnchor.UpperCenter;
         grid.padding = new RectOffset(20, 20, 10, 30);
 
@@ -221,7 +221,7 @@ public class CreditsController : MonoBehaviour
             roleTMP.raycastTarget = false;
             CinzelFontHelper.Apply(roleTMP, true);
             LayoutElement roleLE = roleGO.AddComponent<LayoutElement>();
-            roleLE.preferredHeight = 32f;
+            roleLE.preferredHeight = 28f;
 
             // Names (smaller, dimmer, underneath)
             GameObject namesGO = new GameObject("Names");
@@ -236,7 +236,7 @@ public class CreditsController : MonoBehaviour
             namesTMP.enableWordWrapping = true;
             CinzelFontHelper.Apply(namesTMP, false);
             LayoutElement namesLE = namesGO.AddComponent<LayoutElement>();
-            namesLE.preferredHeight = 50f;
+            namesLE.preferredHeight = 36f;
 
             // Wrap the cell in a CanvasGroup for staggered fade
             CanvasGroup cg = cellGO.AddComponent<CanvasGroup>();
