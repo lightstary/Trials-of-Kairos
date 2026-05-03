@@ -830,6 +830,10 @@ public class FallDetection : MonoBehaviour
         SandDisintegrationEffect.DestroyAll();
         RestorePlayerVisuals();
 
+        // Reset the time scale meter back to 0 on every checkpoint respawn
+        if (TimeScaleLogic.Instance != null)
+            TimeScaleLogic.Instance.ResetMeter();
+
         playerMovement.enabled = true;
         transform.position = spawnPosition;
         transform.rotation = spawnRotation;

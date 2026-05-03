@@ -152,7 +152,10 @@ public class WinScreenController : MonoBehaviour
 
     private IEnumerator SimpleShowRoutine()
     {
+        SetButtonsVisible(false);
         yield return FadeIn(0.5f);
+        yield return new WaitForSecondsRealtime(0.5f);
+        yield return FadeButtonsIn(0.4f);
         SelectDefaultButton();
     }
 
@@ -282,11 +285,58 @@ public class WinScreenController : MonoBehaviour
             UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(target.gameObject);
     }
 
+    /// <summary>Shows or hides all navigation buttons (Retry, Next Trial, Trial Selection).</summary>
+    private void SetButtonsVisible(bool visible)
+    {
+        if (_retryButton     != null) _retryButton.gameObject.SetActive(visible);
+        if (nextTrialButton  != null) nextTrialButton.gameObject.SetActive(visible);
+        if (returnToHubButton != null) returnToHubButton.gameObject.SetActive(visible);
+    }
+
+    /// <summary>Fades in all navigation buttons over the given duration.</summary>
+    private IEnumerator FadeButtonsIn(float duration)
+    {
+        // Collect buttons and add CanvasGroups for the fade
+        var buttons = new System.Collections.Generic.List<CanvasGroup>();
+        Button[] allBtns = { _retryButton, nextTrialButton, returnToHubButton };
+
+        foreach (Button btn in allBtns)
+        {
+            if (btn == null) continue;
+            // Respect Next Trial visibility based on scene
+            if (btn == nextTrialButton && string.IsNullOrEmpty(GetNextTrialScene()))
+                continue;
+            btn.gameObject.SetActive(true);
+            CanvasGroup cg = btn.GetComponent<CanvasGroup>();
+            if (cg == null) cg = btn.gameObject.AddComponent<CanvasGroup>();
+            cg.alpha = 0f;
+            buttons.Add(cg);
+        }
+
+        LayoutButtons();
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float alpha = Mathf.Clamp01(elapsed / duration);
+            foreach (CanvasGroup cg in buttons)
+                if (cg != null) cg.alpha = alpha;
+            yield return null;
+        }
+
+        foreach (CanvasGroup cg in buttons)
+            if (cg != null) cg.alpha = 1f;
+    }
+
     private IEnumerator Animate(float time, int stars, bool isNewRecord,
                                 bool forward, bool frozen, bool reverse)
     {
         if (canvasGroup != null) canvasGroup.alpha = 0f;
         ClearStats();
+
+        // Hide all buttons until the text animation sequence finishes
+        SetButtonsVisible(false);
 
         if (radianceOverlay != null) StartCoroutine(AnimateRadiance());
         yield return FadeIn(0.5f);
@@ -330,6 +380,9 @@ public class WinScreenController : MonoBehaviour
             ShowNewRecordLabel();
         }
 
+        // ── Phase 6: Reveal buttons with a short fade ───────────────────
+        yield return new WaitForSecondsRealtime(0.3f);
+        yield return FadeButtonsIn(0.4f);
         SelectDefaultButton();
     }
 

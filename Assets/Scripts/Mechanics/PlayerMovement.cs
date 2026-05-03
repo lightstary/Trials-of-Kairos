@@ -22,6 +22,13 @@ public class PlayerMovement : MonoBehaviour
     private float inputBufferTimer = 0f;
     private Vector3 bufferedInput = Vector3.zero;
 
+    /// <summary>Short grace period after scene load to prevent input during the
+    /// initial transition reveal. Shorter than the full shimmer so the player
+    /// doesn't feel stuck while already seeing their character.</summary>
+    private const float SCENE_LOAD_GRACE = 1.5f;
+    private float _sceneLoadTimer;
+    private bool _wasBlocked;
+
     void Start()
     {
         Vector3 pos = transform.position;
@@ -30,11 +37,38 @@ public class PlayerMovement : MonoBehaviour
         pos.y = TILE_TOP + 1.0f;
         transform.position = pos;
         transform.rotation = Quaternion.identity;
+
+        // Start the grace-period countdown if a shimmer reveal is active
+        bool revealing = ScreenTransitionManager.Instance != null
+                      && ScreenTransitionManager.Instance.IsRevealing;
+        _sceneLoadTimer = revealing ? SCENE_LOAD_GRACE : 0f;
+        _wasBlocked = revealing;
     }
 
     void Update()
     {
         if (Time.timeScale == 0f) return;
+
+        // Block input for a short grace period at scene start so the
+        // player can't move before the level is visually stable.
+        if (_sceneLoadTimer > 0f)
+        {
+            _sceneLoadTimer -= Time.unscaledDeltaTime;
+            _wasBlocked = true;
+            // Drain axis tracking so threshold-crossing doesn't
+            // fire a phantom tap on the first unlocked frame.
+            prevH = Input.GetAxisRaw("Horizontal");
+            prevV = Input.GetAxisRaw("Vertical");
+            return;
+        }
+
+        // First frame after the block lifts — flush stale input buffer
+        if (_wasBlocked)
+        {
+            _wasBlocked = false;
+            bufferedInput = Vector3.zero;
+            inputBufferTimer = 0f;
+        }
 
         Vector3 input = Vector3.zero;
 
