@@ -5918,8 +5918,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 2
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -2
+  maxTime: 2
 --- !u!65 &36442271
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -8786,8 +8786,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 5
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &103683769
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -8910,8 +8910,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 7
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &111901806
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -9730,8 +9730,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 8
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &133153789
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -9854,8 +9854,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 8
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &133529983
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -9978,8 +9978,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 2
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -2
+  maxTime: 2
 --- !u!65 &134743493
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -10979,8 +10979,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 7
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &148561665
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -13133,8 +13133,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 7
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &232402290
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -23470,8 +23470,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 7
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &247038831
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -24143,8 +24143,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 5
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &258774002
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -25034,8 +25034,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 8
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &294317033
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -30278,8 +30278,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 8
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &303478613
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -36186,8 +36186,8 @@ MonoBehaviour:
   moveDirection: {x: 0, y: 0, z: 1}
   moveDistance: 5
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &327250395
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -41797,8 +41797,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 7
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &348422377
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -42892,8 +42892,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 5
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &379946529
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -43538,8 +43538,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 4
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &400778579
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -43702,6 +43702,8 @@ GameObject:
   - component: {fileID: 403358932}
   - component: {fileID: 403358933}
   - component: {fileID: 403358934}
+  - component: {fileID: 403358936}
+  - component: {fileID: 403358935}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -43796,7 +43798,7 @@ Transform:
   m_LocalScale: {x: 1, y: 2, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1992075638}
+  - {fileID: 1468642551}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &403358932
@@ -43838,6 +43840,220 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 18945178e4f0dd04eac2c7a09bf67e28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &403358935
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 403358927}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9ac8d30c6a0d9642a11e5be4c440740, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Root: {fileID: 1340715324}
+  m_Roots:
+  - {fileID: 1468642549}
+  m_UpdateRate: 60
+  m_UpdateMode: 3
+  m_Damping: 0.25
+  m_DampingDistrib:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  m_Elasticity: 0.1
+  m_ElasticityDistrib:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 1
+      outSlope: 1
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 1
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  m_Stiffness: 0.1
+  m_StiffnessDistrib:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  m_Inert: 0
+  m_InertDistrib:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  m_Friction: 0
+  m_FrictionDistrib:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  m_Radius: 0
+  m_RadiusDistrib:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  m_EndLength: 0
+  m_EndOffset: {x: 0, y: 0, z: 0}
+  m_Gravity: {x: 0, y: 0, z: 0}
+  m_Force: {x: 0, y: 0, z: 0}
+  m_BlendWeight: 1
+  m_Colliders: []
+  m_Exclusions: []
+  m_FreezeAxis: 0
+  m_DistantDisable: 0
+  m_ReferenceObject: {fileID: 0}
+  m_DistanceToObject: 20
+  m_Multithread: 1
+--- !u!114 &403358936
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 403358927}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9ac8d30c6a0d9642a11e5be4c440740, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Root: {fileID: 2114039504}
+  m_Roots:
+  - {fileID: 1468642549}
+  m_UpdateRate: 60
+  m_UpdateMode: 3
+  m_Damping: 0.25
+  m_DampingDistrib:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  m_Elasticity: 0.1
+  m_ElasticityDistrib:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 1
+      outSlope: 1
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 1
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  m_Stiffness: 1
+  m_StiffnessDistrib:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  m_Inert: 0
+  m_InertDistrib:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  m_Friction: 0
+  m_FrictionDistrib:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  m_Radius: 0
+  m_RadiusDistrib:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  m_EndLength: 0
+  m_EndOffset: {x: 0, y: 0, z: 0}
+  m_Gravity: {x: 0, y: 0, z: 0}
+  m_Force: {x: 0, y: 0, z: 0}
+  m_BlendWeight: 1
+  m_Colliders: []
+  m_Exclusions: []
+  m_FreezeAxis: 0
+  m_DistantDisable: 0
+  m_ReferenceObject: {fileID: 0}
+  m_DistanceToObject: 20
+  m_Multithread: 1
 --- !u!1 &407928767
 GameObject:
   m_ObjectHideFlags: 0
@@ -44069,8 +44285,8 @@ MonoBehaviour:
   moveDirection: {x: 0, y: 0, z: 1}
   moveDistance: 5
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &412201666
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -49454,8 +49670,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 5
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &416700904
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -50016,8 +50232,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 8
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &424297892
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -50140,8 +50356,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 5
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &426519816
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -50478,8 +50694,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 2
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -2
+  maxTime: 2
 --- !u!65 &428580054
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -50675,8 +50891,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 2
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -2
+  maxTime: 2
 --- !u!65 &432199851
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -52710,8 +52926,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 2
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -2
+  maxTime: 2
 --- !u!65 &484045466
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -58389,8 +58605,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 10
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &498370559
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -58513,8 +58729,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 2
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -2
+  maxTime: 2
 --- !u!65 &500253000
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -59202,8 +59418,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 5
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &515484427
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -59851,8 +60067,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 2
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -2
+  maxTime: 2
 --- !u!65 &541640650
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -66463,8 +66679,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 2
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -2
+  maxTime: 2
 --- !u!65 &589857302
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -67473,8 +67689,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 2
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -2
+  maxTime: 2
 --- !u!65 &611519427
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -70523,8 +70739,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 8
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &694437503
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -70836,8 +71052,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 4
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &706326132
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -70960,8 +71176,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 2
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -2
+  maxTime: 2
 --- !u!65 &708084130
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -76844,8 +77060,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 2
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -2
+  maxTime: 2
 --- !u!65 &726201168
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -76968,8 +77184,8 @@ MonoBehaviour:
   moveDirection: {x: 0, y: 0, z: 1}
   moveDistance: 5
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &727780325
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -77530,8 +77746,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 8
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &741525262
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -78487,8 +78703,8 @@ MonoBehaviour:
   moveDirection: {x: 0, y: 0, z: 1}
   moveDistance: 5
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &773668444
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -78721,8 +78937,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 5
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &780353312
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -92741,8 +92957,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 2
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -2
+  maxTime: 2
 --- !u!65 &936027392
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -93239,8 +93455,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 5
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &943679572
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -100055,8 +100271,8 @@ MonoBehaviour:
   moveDirection: {x: 0, y: 0, z: 1}
   moveDistance: 5
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &999057376
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -105696,8 +105912,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 2
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -2
+  maxTime: 2
 --- !u!65 &1055835129
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -112179,8 +112395,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 2
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -2
+  maxTime: 2
 --- !u!65 &1104574961
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -112303,8 +112519,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 8
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &1107090749
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -113033,8 +113249,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 8
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &1117710969
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -113157,8 +113373,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 8
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &1121661382
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -118746,8 +118962,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 2
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -2
+  maxTime: 2
 --- !u!65 &1135357258
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -118870,8 +119086,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 7
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &1137925039
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -120020,8 +120236,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 10
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &1163564402
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -120538,8 +120754,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 10
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &1192981296
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -121506,8 +121722,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 2
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -2
+  maxTime: 2
 --- !u!65 &1213029154
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -123272,8 +123488,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 2
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -2
+  maxTime: 2
 --- !u!65 &1251312223
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -128802,8 +129018,8 @@ MonoBehaviour:
   moveDirection: {x: 0, y: 0, z: 1}
   moveDistance: 5
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &1273710074
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -129815,8 +130031,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 5
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &1295233814
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -131758,6 +131974,84 @@ PrefabInstance:
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: c200b7f90da40cb44b02c2f54cdcc68c, type: 3}
   m_PrefabInstance: {fileID: 1339650171}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &1340715323
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1468642550}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 844e45d448fed8e4494e1dd7eb90fa46, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.8588002
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 844e45d448fed8e4494e1dd7eb90fa46, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.8588003
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 844e45d448fed8e4494e1dd7eb90fa46, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.8588003
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 844e45d448fed8e4494e1dd7eb90fa46, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 844e45d448fed8e4494e1dd7eb90fa46, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.0031881153
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 844e45d448fed8e4494e1dd7eb90fa46, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.0002989928
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 844e45d448fed8e4494e1dd7eb90fa46, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 844e45d448fed8e4494e1dd7eb90fa46, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.00000004125543
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 844e45d448fed8e4494e1dd7eb90fa46, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 844e45d448fed8e4494e1dd7eb90fa46, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 844e45d448fed8e4494e1dd7eb90fa46, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 844e45d448fed8e4494e1dd7eb90fa46, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 180
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 844e45d448fed8e4494e1dd7eb90fa46, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 844e45d448fed8e4494e1dd7eb90fa46, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 698b8b4b666fc5341b0e76f76d0ba0d3, type: 2}
+    - target: {fileID: 919132149155446097, guid: 844e45d448fed8e4494e1dd7eb90fa46, type: 3}
+      propertyPath: m_Name
+      value: hg_bangs
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 844e45d448fed8e4494e1dd7eb90fa46, type: 3}
+--- !u!4 &1340715324 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 844e45d448fed8e4494e1dd7eb90fa46, type: 3}
+  m_PrefabInstance: {fileID: 1340715323}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1346730196
 PrefabInstance:
@@ -137802,8 +138096,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 8
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &1387461418
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -138685,8 +138979,8 @@ MonoBehaviour:
   moveDirection: {x: 0, y: 0, z: 1}
   moveDistance: 5
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &1420392970
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -140621,6 +140915,111 @@ MonoBehaviour:
   bobHeight: 0.3
   bobSpeed: 0.4
   rotateSpeed: 28
+--- !u!1001 &1468642548
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 403358931}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.1164814
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.0582407
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.1164814
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.402
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 180
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -2802472090540364350, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 4fad5caf6bb76d5419d37ca8332a89b9, type: 2}
+    - target: {fileID: 919132149155446097, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+      propertyPath: m_Name
+      value: hgHairBones_body
+      objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 04f6682ae3fc5c54daa515a68427dd86, type: 2}
+    - target: {fileID: 5866666021909216657, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 7208261743932278219, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1745850004}
+    - targetCorrespondingSourceObject: {fileID: 7208261743932278219, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1340715324}
+    - targetCorrespondingSourceObject: {fileID: 7208261743932278219, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2114039504}
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+--- !u!4 &1468642549 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -155809481951063746, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+  m_PrefabInstance: {fileID: 1468642548}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1468642550 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7208261743932278219, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+  m_PrefabInstance: {fileID: 1468642548}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1468642551 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 664777fd55070c147ad8c8f815f1b8a2, type: 3}
+  m_PrefabInstance: {fileID: 1468642548}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1468996494
 GameObject:
   m_ObjectHideFlags: 0
@@ -156775,8 +157174,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 5
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &1515371521
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -156982,8 +157381,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 8
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &1521658354
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -157695,8 +158094,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 7
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &1549526890
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -158339,8 +158738,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 8
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &1570743583
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -158888,8 +159287,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 8
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &1583073331
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -159507,8 +159906,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 7
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &1601980716
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -160353,8 +160752,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 5
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &1627214988
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -161482,8 +161881,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 10
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &1661491717
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -167119,8 +167518,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 2
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -2
+  maxTime: 2
 --- !u!65 &1689461136
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -178252,6 +178651,84 @@ Transform:
   - {fileID: 993207195}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1745850003
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1468642550}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 5403206c6bb323d40a4b908bb7212652, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.9688985
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5403206c6bb323d40a4b908bb7212652, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.9688986
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5403206c6bb323d40a4b908bb7212652, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.9688986
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5403206c6bb323d40a4b908bb7212652, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5403206c6bb323d40a4b908bb7212652, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.0010211747
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5403206c6bb323d40a4b908bb7212652, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.0009912911
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5403206c6bb323d40a4b908bb7212652, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5403206c6bb323d40a4b908bb7212652, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.00000004125543
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5403206c6bb323d40a4b908bb7212652, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5403206c6bb323d40a4b908bb7212652, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5403206c6bb323d40a4b908bb7212652, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5403206c6bb323d40a4b908bb7212652, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 180
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5403206c6bb323d40a4b908bb7212652, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 5403206c6bb323d40a4b908bb7212652, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 5da0e2d339976204c84c9ef2f27c98c5, type: 2}
+    - target: {fileID: 919132149155446097, guid: 5403206c6bb323d40a4b908bb7212652, type: 3}
+      propertyPath: m_Name
+      value: hgHairBones_eyes
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 5403206c6bb323d40a4b908bb7212652, type: 3}
+--- !u!4 &1745850004 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 5403206c6bb323d40a4b908bb7212652, type: 3}
+  m_PrefabInstance: {fileID: 1745850003}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1752595712
 GameObject:
   m_ObjectHideFlags: 0
@@ -178302,8 +178779,8 @@ MonoBehaviour:
   moveDirection: {x: 0, y: 0, z: 1}
   moveDistance: 5
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &1752595715
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -178841,8 +179318,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 2
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -2
+  maxTime: 2
 --- !u!65 &1764102856
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -179681,8 +180158,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 5
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &1783069794
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -180210,8 +180687,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 8
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &1802798685
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -192587,8 +193064,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 4
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &1913460568
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -192936,8 +193413,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 7
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &1916753063
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -193060,8 +193537,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 10
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &1919437540
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -193479,8 +193956,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 8
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &1926511329
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -195751,8 +196228,8 @@ MonoBehaviour:
   moveDirection: {x: 0, y: 0, z: 1}
   moveDistance: 5
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -3
+  maxTime: 3
 --- !u!65 &1974887284
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -201057,92 +201534,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1990474492}
   m_Mesh: {fileID: -2269245349382216059, guid: 085e56dd87e185242a1861e04adf6826, type: 3}
---- !u!1001 &1992075637
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 403358931}
-    m_Modifications:
-    - target: {fileID: -8679921383154817045, guid: 04f370260f847ac42aff1c7db3cb707c, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.1164814
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 04f370260f847ac42aff1c7db3cb707c, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.0582407
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 04f370260f847ac42aff1c7db3cb707c, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 0.1164814
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 04f370260f847ac42aff1c7db3cb707c, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 04f370260f847ac42aff1c7db3cb707c, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -0.40250003
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 04f370260f847ac42aff1c7db3cb707c, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 04f370260f847ac42aff1c7db3cb707c, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 04f370260f847ac42aff1c7db3cb707c, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 04f370260f847ac42aff1c7db3cb707c, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 04f370260f847ac42aff1c7db3cb707c, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 04f370260f847ac42aff1c7db3cb707c, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 04f370260f847ac42aff1c7db3cb707c, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 180
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 04f370260f847ac42aff1c7db3cb707c, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -2802472090540364350, guid: 04f370260f847ac42aff1c7db3cb707c, type: 3}
-      propertyPath: m_Materials.Array.data[0]
-      value: 
-      objectReference: {fileID: 2100000, guid: 4fad5caf6bb76d5419d37ca8332a89b9, type: 2}
-    - target: {fileID: 919132149155446097, guid: 04f370260f847ac42aff1c7db3cb707c, type: 3}
-      propertyPath: m_Name
-      value: hgNewArms
-      objectReference: {fileID: 0}
-    - target: {fileID: 5866666021909216657, guid: 04f370260f847ac42aff1c7db3cb707c, type: 3}
-      propertyPath: m_Controller
-      value: 
-      objectReference: {fileID: 9100000, guid: 04f6682ae3fc5c54daa515a68427dd86, type: 2}
-    - target: {fileID: 5866666021909216657, guid: 04f370260f847ac42aff1c7db3cb707c, type: 3}
-      propertyPath: m_ApplyRootMotion
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 04f370260f847ac42aff1c7db3cb707c, type: 3}
---- !u!4 &1992075638 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 04f370260f847ac42aff1c7db3cb707c, type: 3}
-  m_PrefabInstance: {fileID: 1992075637}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1992452219
 GameObject:
   m_ObjectHideFlags: 0
@@ -202197,8 +202588,8 @@ MonoBehaviour:
   moveDirection: {x: 1, y: 0, z: 0}
   moveDistance: 4
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -1.25
+  maxTime: 1.25
 --- !u!65 &2037319956
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -208849,6 +209240,84 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: a2da93508da68c14f8dbcd6f9fcb4ada, type: 3}
   m_PrefabInstance: {fileID: 2113075893}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &2114039503
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1468642550}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 7af226e04d7d6564eb5a43ba62e1ed13, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.0017012628
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7af226e04d7d6564eb5a43ba62e1ed13, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.001701263
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7af226e04d7d6564eb5a43ba62e1ed13, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.001701263
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7af226e04d7d6564eb5a43ba62e1ed13, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7af226e04d7d6564eb5a43ba62e1ed13, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.003930072
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7af226e04d7d6564eb5a43ba62e1ed13, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.00029899273
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7af226e04d7d6564eb5a43ba62e1ed13, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7af226e04d7d6564eb5a43ba62e1ed13, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.00000004125543
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7af226e04d7d6564eb5a43ba62e1ed13, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7af226e04d7d6564eb5a43ba62e1ed13, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7af226e04d7d6564eb5a43ba62e1ed13, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7af226e04d7d6564eb5a43ba62e1ed13, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 180
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7af226e04d7d6564eb5a43ba62e1ed13, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -5540101340706346392, guid: 7af226e04d7d6564eb5a43ba62e1ed13, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 269d21e1e22abae41a07267570fa7cc5, type: 2}
+    - target: {fileID: 919132149155446097, guid: 7af226e04d7d6564eb5a43ba62e1ed13, type: 3}
+      propertyPath: m_Name
+      value: hgHairBones_hair
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 7af226e04d7d6564eb5a43ba62e1ed13, type: 3}
+--- !u!4 &2114039504 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 7af226e04d7d6564eb5a43ba62e1ed13, type: 3}
+  m_PrefabInstance: {fileID: 2114039503}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &2115876664
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -209807,8 +210276,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 2
   tickInterval: 1
-  minTime: -4
-  maxTime: 4
+  minTime: -2
+  maxTime: 2
 --- !u!65 &2140866269
 BoxCollider:
   m_ObjectHideFlags: 0
