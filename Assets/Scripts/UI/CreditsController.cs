@@ -52,35 +52,25 @@ public class CreditsController : MonoBehaviour
     private static readonly Color SAND_DARK  = new Color(0.76f, 0.60f, 0.32f, 1f);
     private static readonly Color SAND_LIGHT = new Color(0.95f, 0.85f, 0.55f, 1f);
 
+    // Credits data: each entry is "Role|Name1, Name2, ...".
+    // Roles are displayed on top (bold, larger) with names underneath.
     private static readonly string[] CREDITS = new string[]
     {
-        "ROLE:Programmer",
-        "NAME:Alexandra Arizmendi Cortes",
-        "",
-        "ROLE:Asset Artist, Texture Artist",
-        "NAME:Zutzuy Ayala-Zeferino",
-        "",
-        "ROLE:User Interface, Programmer",
-        "NAME:Daniel Chaviano",
-        "",
-        "ROLE:Audio/SFX, Level Designer",
-        "NAME:Fredrick Clay",
-        "",
-        "ROLE:Environment Design, Asset Integration, Animation",
-        "NAME:Reagan Jewett",
-        "",
-        "ROLE:Production Lead, Level Designer, Marketing Videos",
-        "NAME:Lily Miska",
-        "",
-        "ROLE:Audio Designer",
-        "NAME:Samantha Perry",
-        "",
-        "ROLE:Character Designer, Animation",
-        "NAME:Chanai Rhodes",
-        "",
-        "ROLE:Asset Artist, Marketing Materials",
-        "NAME:Kayla Stromp",
+        "Production Lead|Lily Miska",
+        "Programmers|Alexandra Arizmendi Cortes, Daniel Chaviano",
+        "UI / UX Design|Daniel Chaviano",
+        "Level Design|Frederick Clay, Lily Miska",
+        "Environment Design|Reagan Jewett",
+        "Asset Integration|Reagan Jewett",
+        "Asset Artists|Zutzuy Ayala-Zeferino, Kayla Stromp",
+        "Texture Artist|Zutzuy Ayala-Zeferino",
+        "Character Designer|Chanai Rhodes",
+        "Animation|Reagan Jewett, Chanai Rhodes",
+        "Audio / SFX Design|Frederick Clay, Samantha Perry",
+        "Marketing Materials|Lily Miska, Kayla Stromp",
     };
+
+    private const int COLUMNS = 2;
 
     // All fade-in elements for stagger entrance and dissolve exit
     private readonly List<CanvasGroup> _entryElements = new List<CanvasGroup>();
@@ -152,8 +142,8 @@ public class CreditsController : MonoBehaviour
         GameObject scrollAreaGO = new GameObject("ScrollArea");
         scrollAreaGO.transform.SetParent(_canvasGO.transform, false);
         RectTransform scrollRT = scrollAreaGO.AddComponent<RectTransform>();
-        scrollRT.anchorMin = new Vector2(0.15f, 0.10f);
-        scrollRT.anchorMax = new Vector2(0.85f, 0.77f);
+        scrollRT.anchorMin = new Vector2(0.10f, 0.12f);
+        scrollRT.anchorMax = new Vector2(0.90f, 0.77f);
         scrollRT.offsetMin = Vector2.zero;
         scrollRT.offsetMax = Vector2.zero;
 
@@ -184,43 +174,74 @@ public class CreditsController : MonoBehaviour
         scrollRect.content = contentRT;
         scrollRect.viewport = scrollRT;
 
-        VerticalLayoutGroup vlg = contentGO.AddComponent<VerticalLayoutGroup>();
-        vlg.childAlignment = TextAnchor.UpperCenter;
-        vlg.childControlWidth = true;
-        vlg.childControlHeight = true;
-        vlg.childForceExpandWidth = true;
-        vlg.childForceExpandHeight = false;
-        vlg.spacing = 2f;
-        vlg.padding = new RectOffset(20, 20, 10, 30);
+        // Use a GridLayoutGroup for a two-column layout
+        GridLayoutGroup grid = contentGO.AddComponent<GridLayoutGroup>();
+        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        grid.constraintCount = COLUMNS;
+        grid.cellSize = new Vector2(420f, 120f);
+        grid.spacing = new Vector2(40f, 35f);
+        grid.childAlignment = TextAnchor.UpperCenter;
+        grid.padding = new RectOffset(20, 20, 10, 30);
 
         ContentSizeFitter csf = contentGO.AddComponent<ContentSizeFitter>();
         csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-        // Populate credits - each entry gets its own CanvasGroup for staggered fade
+        // Populate credits — each entry gets a cell with role on top, names underneath
         foreach (string entry in CREDITS)
         {
-            if (string.IsNullOrEmpty(entry))
-            {
-                // Spacer
-                GameObject spacer = new GameObject("Spacer");
-                spacer.transform.SetParent(contentGO.transform, false);
-                LayoutElement le = spacer.AddComponent<LayoutElement>();
-                le.preferredHeight = 16f;
-                continue;
-            }
+            if (string.IsNullOrEmpty(entry)) continue;
 
-            if (entry.StartsWith("ROLE:"))
-            {
-                string role = entry.Substring(5);
-                CanvasGroup cg = MakeLayoutFadeLabel(contentGO.transform, role, 14f, ROLE_COLOR, false, 4f);
-                _entryElements.Add(cg);
-            }
-            else if (entry.StartsWith("NAME:"))
-            {
-                string personName = entry.Substring(5);
-                CanvasGroup cg = MakeLayoutFadeLabel(contentGO.transform, personName, 20f, TEXT_COLOR, true, 2f);
-                _entryElements.Add(cg);
-            }
+            string[] parts = entry.Split('|');
+            if (parts.Length < 2) continue;
+
+            string role = parts[0].Trim();
+            string names = parts[1].Trim();
+
+            // Cell container
+            GameObject cellGO = new GameObject("CreditCell");
+            cellGO.transform.SetParent(contentGO.transform, false);
+
+            VerticalLayoutGroup cellVLG = cellGO.AddComponent<VerticalLayoutGroup>();
+            cellVLG.childAlignment = TextAnchor.UpperCenter;
+            cellVLG.childControlWidth = true;
+            cellVLG.childControlHeight = true;
+            cellVLG.childForceExpandWidth = true;
+            cellVLG.childForceExpandHeight = false;
+            cellVLG.spacing = 4f;
+
+            // Role (bold, larger, on top)
+            GameObject roleGO = new GameObject("Role");
+            roleGO.transform.SetParent(cellGO.transform, false);
+            TextMeshProUGUI roleTMP = roleGO.AddComponent<TextMeshProUGUI>();
+            roleTMP.text = role;
+            roleTMP.fontSize = 22f;
+            roleTMP.color = TEXT_COLOR;
+            roleTMP.alignment = TextAlignmentOptions.Center;
+            roleTMP.characterSpacing = 2f;
+            roleTMP.raycastTarget = false;
+            CinzelFontHelper.Apply(roleTMP, true);
+            LayoutElement roleLE = roleGO.AddComponent<LayoutElement>();
+            roleLE.preferredHeight = 32f;
+
+            // Names (smaller, dimmer, underneath)
+            GameObject namesGO = new GameObject("Names");
+            namesGO.transform.SetParent(cellGO.transform, false);
+            TextMeshProUGUI namesTMP = namesGO.AddComponent<TextMeshProUGUI>();
+            namesTMP.text = names;
+            namesTMP.fontSize = 16f;
+            namesTMP.color = ROLE_COLOR;
+            namesTMP.alignment = TextAlignmentOptions.Center;
+            namesTMP.characterSpacing = 1f;
+            namesTMP.raycastTarget = false;
+            namesTMP.enableWordWrapping = true;
+            CinzelFontHelper.Apply(namesTMP, false);
+            LayoutElement namesLE = namesGO.AddComponent<LayoutElement>();
+            namesLE.preferredHeight = 50f;
+
+            // Wrap the cell in a CanvasGroup for staggered fade
+            CanvasGroup cg = cellGO.AddComponent<CanvasGroup>();
+            cg.alpha = 0f;
+            _entryElements.Add(cg);
         }
 
         // Return to Main Menu button - fixed at bottom, clear of scroll content

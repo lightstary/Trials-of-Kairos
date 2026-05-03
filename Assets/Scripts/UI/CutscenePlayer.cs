@@ -247,7 +247,7 @@ public class CutscenePlayer : MonoBehaviour
 
         Sprite icon = InputPromptManager.IsKeyboardMouse
             ? ControllerIcons.KeyEsc
-            : ControllerIcons.CtrlA;
+            : ControllerIcons.CtrlB;
 
         _iconImage.sprite = icon;
 
@@ -449,8 +449,8 @@ public class CutscenePlayer : MonoBehaviour
     /// <summary>Returns true when the skip button is being held.</summary>
     private bool IsSkipHeld()
     {
-        // ESC for keyboard, A button (JoystickButton0) for controller
-        return Input.GetKey(KeyCode.Escape) || Input.GetKey(KeyCode.JoystickButton0);
+        // ESC for keyboard, B button (JoystickButton1) for controller
+        return Input.GetKey(KeyCode.Escape) || Input.GetKey(KeyCode.JoystickButton1);
     }
 
     private void FinishPlayback()
