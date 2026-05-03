@@ -128,14 +128,47 @@ public class BossFailUI : MonoBehaviour
                 ScreenTransitionManager.Instance.CosmicFadeOut(0.5f, () =>
                 {
                     fd.DoCheckpointRespawnPublic();
+                    RestartActiveBossFight();
                     if (ScreenTransitionManager.Instance != null)
                         ScreenTransitionManager.Instance.CosmicFadeIn(0.5f);
                 });
             else
             {
                 fd.DoCheckpointRespawnPublic();
+                RestartActiveBossFight();
             }
         }
+    }
+
+    /// <summary>
+    /// Restarts whichever boss fight exists in the current scene and plays boss music.
+    /// Called after checkpoint respawn because OnTriggerEnter won't fire when the player
+    /// is teleported directly into the trigger volume.
+    /// </summary>
+    private static void RestartActiveBossFight()
+    {
+        if (BossFight.Instance != null)
+        {
+            BossFight.Instance.StopBossFight();
+            BossFight.Instance.StartBossFight();
+            return;
+        }
+        if (BossBFight.Instance != null)
+        {
+            BossBFight.Instance.StopBossFight();
+            BossBFight.Instance.StartBossFight();
+            return;
+        }
+        if (BossCFight.Instance != null)
+        {
+            BossCFight.Instance.StopBossFight();
+            BossCFight.Instance.StartBossFight();
+            return;
+        }
+
+        // No boss found — at least ensure boss music plays if SoundManager has it
+        if (SoundManager.Instance != null)
+            SoundManager.Instance.PlayBossMusic();
     }
 
     /// <summary>Reloads the entire scene from the beginning.</summary>

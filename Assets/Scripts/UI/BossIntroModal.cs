@@ -82,7 +82,12 @@ public class BossIntroModal : MonoBehaviour
 
     void OnDestroy()
     {
-        if (_instance == this) _instance = null;
+        if (_instance == this)
+        {
+            _instance = null;
+            // Reset static flag so Show() works after scene reloads
+            IsOpen = false;
+        }
         InputPromptManager.OnInputModeChanged -= OnInputModeChanged;
     }
 

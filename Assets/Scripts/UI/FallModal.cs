@@ -30,12 +30,12 @@ public class FallModal : MonoBehaviour
     private const float BTN_GAP = 24f;
 
     // ── Animation ───────────────────────────────────────────────────
-    private const float DIMMER_FADE_DUR  = 0.3f;
-    private const float PANEL_ANIM_DUR   = 0.4f;
-    private const float PANEL_ANIM_DELAY = 0.1f;   // Dimmer leads, panel follows
+    private const float DIMMER_FADE_DUR  = 0.15f;
+    private const float PANEL_ANIM_DUR   = 0.25f;
+    private const float PANEL_ANIM_DELAY = 0.05f;   // Dimmer leads, panel follows
     private const float PANEL_SCALE_FROM = 0.88f;
     private const float PANEL_SLIDE_Y    = -40f;    // Slides up from below
-    private const float EXIT_DUR         = 0.25f;
+    private const float EXIT_DUR         = 0.2f;
 
     private static readonly string[] FALL_MESSAGES = {
         "You slipped between the seconds.",

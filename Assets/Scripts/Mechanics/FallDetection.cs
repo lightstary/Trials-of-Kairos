@@ -175,7 +175,7 @@ public class FallDetection : MonoBehaviour
         Vector3 rotAxis = new Vector3(toppleDir.z, 0f, -toppleDir.x);
 
         // Brief wobble before toppling
-        float wobbleDuration = 0.45f;
+        float wobbleDuration = 0.25f;
         float wobbleElapsed = 0f;
         float wobbleFreq = 20f;
         float wobbleAmp = 4f;
@@ -208,7 +208,7 @@ public class FallDetection : MonoBehaviour
 
         // Fall straight down through the ground
         float elapsed = 0f;
-        float fallTime = 0.6f;
+        float fallTime = 0.4f;
         Vector3 startPos = transform.position;
         Vector3 endPos = startPos + Vector3.down * 10f;
 
@@ -434,13 +434,13 @@ public class FallDetection : MonoBehaviour
     // ════════════════════════════════════════════════════════════════════
 
     /// <summary>Duration before the player model is hidden after particles spawn.</summary>
-    private const float DISINTEGRATE_HIDE_DELAY = 0.15f;
+    private const float DISINTEGRATE_HIDE_DELAY = 0.08f;
 
     /// <summary>Hold time after disintegration before showing death UI, letting particles breathe.</summary>
-    private const float POST_DISINTEGRATE_HOLD = 0.6f;
+    private const float POST_DISINTEGRATE_HOLD = 0.2f;
 
     /// <summary>Total duration of the shrink-to-nothing dissolve.</summary>
-    private const float DISINTEGRATE_SHRINK_DUR = 0.55f;
+    private const float DISINTEGRATE_SHRINK_DUR = 0.3f;
 
     /// <summary>
     /// Runs the sand disintegration visual: spawns particles, then gradually
@@ -655,7 +655,7 @@ public class FallDetection : MonoBehaviour
         SoundManager.Instance?.PlayFall();
 
         float elapsed = 0f;
-        float fallTime = 0.8f;
+        float fallTime = 0.5f;
         Vector3 startPos = transform.position;
         Vector3 endPos = startPos + Vector3.down * 10f;
 
@@ -710,7 +710,7 @@ public class FallDetection : MonoBehaviour
         SoundManager.Instance?.PlayLose();
 
         float elapsed = 0f;
-        float fallTime = 0.8f;
+        float fallTime = 0.5f;
         Vector3 startPos = transform.position;
         Vector3 endPos = startPos + Vector3.down * 10f;
 
@@ -723,14 +723,24 @@ public class FallDetection : MonoBehaviour
 
         Time.timeScale = 0f;
 
-        GameOverScreenController gosc = FindObjectOfType<GameOverScreenController>(true);
-        if (gosc != null)
+        // Show boss fail UI with checkpoint/restart/trial-select options
+        BossFailUI failUI = FindObjectOfType<BossFailUI>(true);
+        if (failUI == null)
         {
-            gosc.Show();
+            Canvas canvas = FindObjectOfType<Canvas>();
+            if (canvas != null)
+            {
+                GameObject go = new GameObject("BossFailUI");
+                go.transform.SetParent(canvas.transform, false);
+                failUI = go.AddComponent<BossFailUI>();
+            }
         }
+
+        if (failUI != null)
+            failUI.ShowFail();
         else
         {
-            Debug.LogWarning("[FallDetection] GameOverScreenController not found. Reloading scene.");
+            Debug.LogWarning("[FallDetection] BossFailUI not found. Reloading scene.");
             Time.timeScale = 1f;
             LoadSceneWithTransition(SceneManager.GetActiveScene().name);
         }
@@ -779,10 +789,10 @@ public class FallDetection : MonoBehaviour
 
         // Fall animation + simultaneous cosmic fade
         if (ScreenTransitionManager.Instance != null)
-            ScreenTransitionManager.Instance.CosmicFadeOut(0.7f);
+            ScreenTransitionManager.Instance.CosmicFadeOut(0.5f);
 
         float elapsed = 0f;
-        float fallTime = 0.8f;
+        float fallTime = 0.5f;
         Vector3 startPos = transform.position;
         Vector3 endPos = startPos + Vector3.down * 10f;
 

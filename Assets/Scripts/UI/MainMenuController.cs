@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
+using UnityEngine.Video;
 using TMPro;
 
 /// <summary>
@@ -25,6 +26,10 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private GameObject hudPanel;
     [SerializeField] private GameObject trialSelectScreen;
     [SerializeField] private GameObject controlsScreen;
+
+    [Header("Cutscenes")]
+    [Tooltip("Opening cutscene video clip. Plays once per session before the first trial select.")]
+    [SerializeField] private VideoClip openingCutscene;
 
     [Header("Title")]
     [SerializeField] private TextMeshProUGUI titleLabel;
@@ -80,9 +85,11 @@ public class MainMenuController : MonoBehaviour
     private GameObject _titleGroup, _buttonPanel, _sharedDustLayer, _shimmerLayer, _menuBgPanel;
     private CanvasGroup _menuContentGroup, _controlsCG, _trialSelectCG, _optionsCG;
     private GameObject _optionsScreen;
+    private Button _creditsButton;
 
     private static bool _openTrialSelectOnLoad;
     private static bool _restartTrialOnLoad;
+    private static bool _openingCutscenePlayed;
 
     /// <summary>Realtime timestamp when gameplay started (set by BeginTrial/SkipToGameplay).</summary>
     public static float GameplayStartRealtime { get; private set; }
@@ -123,6 +130,7 @@ public class MainMenuController : MonoBehaviour
         if (controlsButton    != null) controlsButton.onClick.AddListener(OpenControls);
         if (optionsButton     != null) optionsButton.onClick.AddListener(OpenOptions);
         else EnsureOptionsButton();
+        EnsureCreditsButton();
         if (quitButton        != null) quitButton.onClick.AddListener(QuitGame);
         if (versionLabel      != null) versionLabel.text = "v1.0";
         // Force title to always be two lines and apply Cinzel font
@@ -473,6 +481,134 @@ public class MainMenuController : MonoBehaviour
         btn.onClick.AddListener(OpenOptions);
     }
 
+    /// <summary>
+    /// Dynamically creates a CREDITS button between OPTIONS and QUIT.
+    /// Shifts the quit button down to make room.
+    /// </summary>
+    private void EnsureCreditsButton()
+    {
+        if (_buttonPanel == null) return;
+        if (_creditsButton != null) return;
+
+        // Reference button for styling (use options if available, otherwise controls)
+        Button refBtn = optionsButton != null ? optionsButton : controlsButton;
+        if (refBtn == null) return;
+
+        // Calculate button step from quit button position
+        RectTransform refRT = refBtn.GetComponent<RectTransform>();
+        float btnStep = 55f;
+
+        if (quitButton != null && refBtn != null)
+        {
+            RectTransform qRT = quitButton.GetComponent<RectTransform>();
+            btnStep = Mathf.Abs(refRT.anchoredPosition.y - qRT.anchoredPosition.y);
+            if (btnStep < 10f) btnStep = 55f; // Fallback if they overlap
+        }
+
+        // Shift quit button down one step
+        if (quitButton != null)
+        {
+            RectTransform quitRT = quitButton.GetComponent<RectTransform>();
+            quitRT.anchoredPosition += Vector2.down * btnStep;
+        }
+
+        // Place CREDITS where quit used to be (one step below options/reference)
+        float creditsY = refRT.anchoredPosition.y - btnStep;
+
+        GameObject btnGO = new GameObject("CreditsButton");
+        btnGO.transform.SetParent(_buttonPanel.transform, false);
+        RectTransform rt = btnGO.AddComponent<RectTransform>();
+        rt.anchorMin = refRT.anchorMin;
+        rt.anchorMax = refRT.anchorMax;
+        rt.sizeDelta = refRT.sizeDelta;
+        rt.anchoredPosition = new Vector2(refRT.anchoredPosition.x, creditsY);
+
+        // Copy styling from reference button
+        Image refImg = refBtn.GetComponent<Image>();
+        Image btnImg = btnGO.AddComponent<Image>();
+        if (refImg != null)
+        {
+            btnImg.color = refImg.color;
+            btnImg.sprite = refImg.sprite;
+            btnImg.type = refImg.type;
+        }
+        btnImg.raycastTarget = true;
+
+        _creditsButton = btnGO.AddComponent<Button>();
+        _creditsButton.targetGraphic = btnImg;
+        _creditsButton.colors = refBtn.colors;
+
+        Navigation nav = _creditsButton.navigation;
+        nav.mode = Navigation.Mode.Vertical;
+        nav.wrapAround = true;
+        _creditsButton.navigation = nav;
+
+        _creditsButton.onClick.AddListener(OpenCredits);
+
+        // Copy label style from reference button
+        TextMeshProUGUI refLabel = refBtn.GetComponentInChildren<TextMeshProUGUI>();
+        GameObject lblGO = new GameObject("Label");
+        lblGO.transform.SetParent(btnGO.transform, false);
+        RectTransform lblRT = lblGO.AddComponent<RectTransform>();
+        lblRT.anchorMin = Vector2.zero; lblRT.anchorMax = Vector2.one;
+        lblRT.offsetMin = Vector2.zero; lblRT.offsetMax = Vector2.zero;
+        TextMeshProUGUI tmp = lblGO.AddComponent<TextMeshProUGUI>();
+        tmp.text = "CREDITS";
+        if (refLabel != null)
+        {
+            tmp.fontSize = refLabel.fontSize;
+            tmp.alignment = refLabel.alignment;
+            tmp.color = refLabel.color;
+            tmp.characterSpacing = refLabel.characterSpacing;
+            tmp.font = refLabel.font;
+        }
+        else
+        {
+            tmp.fontSize = 20f;
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.color = new Color(0.91f, 0.918f, 0.965f, 1f);
+            CinzelFontHelper.Apply(tmp);
+        }
+        tmp.raycastTarget = false;
+
+        // CanvasGroup for stagger animation
+        CanvasGroup cg = btnGO.AddComponent<CanvasGroup>();
+        cg.alpha = 0f;
+
+        // Insert into buttonGroups array for entrance animation
+        if (buttonGroups != null)
+        {
+            // Find the index after the options button's group (or last if not found)
+            int insertIdx = buttonGroups.Length;
+            CanvasGroup optsCG = optionsButton != null ? optionsButton.GetComponent<CanvasGroup>() : null;
+            if (optsCG == null && optionsButton != null)
+                optsCG = optionsButton.GetComponentInParent<CanvasGroup>();
+            if (optsCG != null)
+            {
+                for (int i = 0; i < buttonGroups.Length; i++)
+                {
+                    if (buttonGroups[i] == optsCG) { insertIdx = i + 1; break; }
+                }
+            }
+
+            CanvasGroup[] newGroups = new CanvasGroup[buttonGroups.Length + 1];
+            for (int i = 0; i < insertIdx && i < buttonGroups.Length; i++)
+                newGroups[i] = buttonGroups[i];
+            newGroups[insertIdx] = cg;
+            for (int i = insertIdx; i < buttonGroups.Length; i++)
+                newGroups[i + 1] = buttonGroups[i];
+            buttonGroups = newGroups;
+        }
+    }
+
+    /// <summary>Opens the credits screen as an overlay on top of the main menu.</summary>
+    private void OpenCredits()
+    {
+        GameObject creditsGO = new GameObject("[CreditsScreen]");
+        CreditsController ctrl = creditsGO.AddComponent<CreditsController>();
+        ctrl.IsOverlay = true;
+    }
+
     /// <summary>Creates the ShimmerLayer if it doesn't exist in the scene.</summary>
     private void EnsureShimmerLayer()
     {
@@ -567,7 +703,24 @@ public class MainMenuController : MonoBehaviour
         SelectFirstButton();
     }
 
-    public void OpenTrialSelect() { if (_transitioning) return; StartCoroutine(CrossfadeToScreen(trialSelectScreen, _trialSelectCG)); }
+    public void OpenTrialSelect()
+    {
+        if (_transitioning) return;
+
+        // Play opening cutscene once per session before showing trial select
+        if (!_openingCutscenePlayed && openingCutscene != null)
+        {
+            _openingCutscenePlayed = true;
+            CutscenePlayer.Play(openingCutscene, () =>
+            {
+                // After cutscene finishes, show trial select
+                StartCoroutine(CrossfadeToScreen(trialSelectScreen, _trialSelectCG));
+            });
+            return;
+        }
+
+        StartCoroutine(CrossfadeToScreen(trialSelectScreen, _trialSelectCG));
+    }
     public void CloseTrialSelect() { if (_transitioning) return; StartCoroutine(CrossfadeFromScreen(trialSelectScreen, _trialSelectCG)); }
 
     public void OpenControls()

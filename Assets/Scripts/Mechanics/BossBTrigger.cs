@@ -6,14 +6,50 @@ public class BossBTrigger : MonoBehaviour
     private bool triggered = false;
     private bool _introShown = false;
 
+    private const float DETECT_RANGE = 2f;
+
     void OnTriggerEnter(Collider other)
     {
+        TryTrigger(other.gameObject);
+    }
+
+    void Update()
+    {
+        // Reset triggered flag when boss is no longer active so re-entry works
+        if (triggered && bossBFight != null && !bossBFight.bossActive)
+            triggered = false;
+
+        // Raycast-based detection ensures the boss starts the instant
+        // the player is on the checkpoint tile, even after a teleport/respawn
         if (triggered) return;
-        if (!other.CompareTag("Player")) return;
-        if (bossBFight == null) return;
+
+        Vector3 rayOrigin = transform.position + Vector3.up * 0.2f;
+        if (Physics.Raycast(rayOrigin, Vector3.up, out RaycastHit hit, DETECT_RANGE))
+        {
+            if (hit.collider.CompareTag("Player"))
+                TryTrigger(hit.collider.gameObject);
+        }
+    }
+
+    void OnDestroy()
+    {
+        BossIntroModal.OnPageChanged -= OnTutorialPageChanged;
+    }
+
+    /// <summary>Attempts to start the boss intro/fight when the player is detected.</summary>
+    private void TryTrigger(GameObject playerObj)
+    {
+        if (triggered) return;
+        if (!playerObj.CompareTag("Player")) return;
+        if (bossBFight == null)
+        {
+            Debug.LogWarning("[BossBTrigger] bossBFight reference is null.");
+            return;
+        }
         if (bossBFight.bossActive) return;
 
         triggered = true;
+        Debug.Log("[BossBTrigger] Player detected. introShown=" + _introShown);
 
         if (!_introShown)
         {
@@ -24,17 +60,6 @@ public class BossBTrigger : MonoBehaviour
         {
             bossBFight.StartBossFight();
         }
-    }
-
-    void Update()
-    {
-        if (triggered && bossBFight != null && !bossBFight.bossActive)
-            triggered = false;
-    }
-
-    void OnDestroy()
-    {
-        BossIntroModal.OnPageChanged -= OnTutorialPageChanged;
     }
 
     private void ShowIntroThenStart()

@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.Video;
 using TMPro;
 
 /// <summary>
@@ -34,6 +35,10 @@ public class WinScreenController : MonoBehaviour
     [Header("Config")]
     [SerializeField] public string nextTrialSceneName = "";
 
+    [Header("Cutscenes")]
+    [Tooltip("Ending cutscene video clip. Plays when all 3 trials are completed.")]
+    [SerializeField] private VideoClip endingCutscene;
+
     /// <summary>
     /// Returns the next trial scene based on the CURRENT scene name.
     /// This eliminates dependency on serialized field values.
@@ -63,6 +68,7 @@ public class WinScreenController : MonoBehaviour
 
     private bool _shown = false;
     private bool _listenersWired = false;
+    private static bool _endingCutscenePlayed;
     private string _trialName = "";
     private TextMeshProUGUI _newRecordLabel;
     private Button _retryButton;
@@ -488,10 +494,18 @@ public class WinScreenController : MonoBehaviour
         string nextScene = GetNextTrialScene();
         Debug.Log($"[WinScreen] GoToNextTrial called. nextScene='{nextScene}' (current='{SceneManager.GetActiveScene().name}')");
         Time.timeScale = 1f;
+
+        // When no next trial exists (Clock is the last), check for full completion
         if (string.IsNullOrEmpty(nextScene))
         {
+            if (AreAllTrialsComplete() && !_endingCutscenePlayed)
+            {
+                PlayEndingCutsceneAndCredits();
+                return;
+            }
+
             Debug.Log("[WinScreen] No next scene — falling back to trial selection.");
-            ReturnToTrialSelection();
+            ReturnToTrialSelectionDirect();
             return;
         }
 
@@ -502,6 +516,51 @@ public class WinScreenController : MonoBehaviour
             ScreenTransitionManager.Instance.FadeToScene(nextScene);
         else
             SceneManager.LoadScene(nextScene);
+    }
+
+    /// <summary>Checks whether all three trials have been completed this session.</summary>
+    private bool AreAllTrialsComplete()
+    {
+        return BestTimeTracker.Has(BestTimeTracker.KEY_CITADEL)
+            && BestTimeTracker.Has(BestTimeTracker.KEY_GARDEN)
+            && BestTimeTracker.Has(BestTimeTracker.KEY_CLOCK);
+    }
+
+    /// <summary>Plays the ending cutscene then shows the credits screen.</summary>
+    private void PlayEndingCutsceneAndCredits()
+    {
+        _endingCutscenePlayed = true;
+        Debug.Log("[WinScreen] All trials complete! Playing ending cutscene...");
+
+        if (endingCutscene != null)
+        {
+            // Hide the win panel so the cutscene plays cleanly
+            if (winPanel != null) winPanel.SetActive(false);
+
+            CutscenePlayer.Play(endingCutscene, () =>
+            {
+                ShowCredits();
+            });
+        }
+        else
+        {
+            Debug.LogWarning("[WinScreen] No ending cutscene assigned, showing credits directly.");
+            ShowCredits();
+        }
+    }
+
+    /// <summary>Shows the credits screen as a full-screen overlay after the ending cutscene.</summary>
+    private void ShowCredits()
+    {
+        Time.timeScale = 0f;
+
+        // Hide the win panel
+        if (winPanel != null) winPanel.SetActive(false);
+
+        // Credits opened from a trial scene — will navigate to MainScene on exit
+        GameObject creditsGO = new GameObject("[CreditsScreen]");
+        CreditsController ctrl = creditsGO.AddComponent<CreditsController>();
+        ctrl.IsOverlay = false;
     }
 
     /// <summary>Reloads the current scene to retry the trial.</summary>
@@ -518,6 +577,19 @@ public class WinScreenController : MonoBehaviour
 
     /// <summary>Returns to the trial selection screen (always in MainScene).</summary>
     private void ReturnToTrialSelection()
+    {
+        // If all trials are complete and ending cutscene hasn't played yet, play it first
+        if (AreAllTrialsComplete() && !_endingCutscenePlayed && endingCutscene != null)
+        {
+            PlayEndingCutsceneAndCredits();
+            return;
+        }
+
+        ReturnToTrialSelectionDirect();
+    }
+
+    /// <summary>Navigates directly to the trial selection screen without cutscene checks.</summary>
+    private void ReturnToTrialSelectionDirect()
     {
         Time.timeScale = 1f;
         MainMenuController.RequestTrialSelectOnLoad();

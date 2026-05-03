@@ -8174,6 +8174,7 @@ MonoBehaviour:
   hudPanel: {fileID: 1370083363}
   trialSelectScreen: {fileID: 1049617420}
   controlsScreen: {fileID: 1819657561}
+  openingCutscene: {fileID: 0}
   titleLabel: {fileID: 1977040530}
   subtitleLabel: {fileID: 355321363}
   chapterLabel: {fileID: 214066897}
@@ -22644,6 +22645,7 @@ MonoBehaviour:
   returnToHubButton: {fileID: 1141277251}
   radianceOverlay: {fileID: 191296495}
   nextTrialSceneName: 
+  endingCutscene: {fileID: 32900000, guid: 7ccd4cb6350bb8848b8b3e08cfc3b975, type: 3}
 --- !u!1 &1297502286
 GameObject:
   m_ObjectHideFlags: 0
