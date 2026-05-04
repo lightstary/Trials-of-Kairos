@@ -1,37 +1,26 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Kills the player when a pendulum physically collides with the hourglass.
+/// Attach to the player GameObject. Pendulums must be tagged "Pendulum".
+/// </summary>
 public class PendulumCollision : MonoBehaviour
 {
-    public float hitForce = 10f;
-	public MonoBehaviour playerMovementScript;
-	private Rigidbody rb;
-	
-	void Start()
-	{
-		rb = GetComponent<Rigidbody>();
-	}
-	
-	void OnCollisionEnter(Collision collision)
-	{
-		if(collision.gameObject.CompareTag("Pendulum"))
-		{
-			Vector3 direction = (transform.position - collision.contacts[0].point).normalized;
-			direction.y = 0.5f;
-			
-			rb.AddForce(direction * hitForce, ForceMode.Impulse);
-			
-			if(playerMovementScript != null)
-			{
-				playerMovementScript.enabled = false;
-				Invoke("EnableMovement", 0.5f);
-			}
-		}
-	}
-	
-	void EnableMovement()
-	{
-		playerMovementScript.enabled = true;
-	}
+    private FallDetection fallDetection;
+
+    void Start()
+    {
+        fallDetection = GetComponent<FallDetection>();
+    }
+
+    void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Pendulum"))
+        {
+            if (fallDetection != null)
+            {
+                fallDetection.TriggerPendulumDeath();
+            }
+        }
+    }
 }

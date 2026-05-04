@@ -430,6 +430,89 @@ public class FallDetection : MonoBehaviour
     };
 
     // ════════════════════════════════════════════════════════════════════
+    //  PENDULUM DEATH MESSAGES
+    // ════════════════════════════════════════════════════════════════════
+
+    private static readonly string[] PENDULUM_TITLES = {
+        "CRUSHED",
+        "STRUCK",
+        "SHATTERED",
+        "SWEPT AWAY",
+        "OBLITERATED"
+    };
+
+    private static readonly string[] PENDULUM_MESSAGES = {
+        "Chronos does not forgive mistiming.",
+        "You tried to defy the rhythm.",
+        "Time corrected you.",
+        "The pendulum always returns.",
+        "You were never meant to stand there.",
+        "The clock claimed you.",
+        "You challenged the cycle. You lost."
+    };
+
+    // ════════════════════════════════════════════════════════════════════
+    //  PENDULUM KILL
+    // ════════════════════════════════════════════════════════════════════
+
+    /// <summary>Kills the player when struck by a pendulum. Called by PendulumCollision.</summary>
+    public void TriggerPendulumDeath()
+    {
+        if (isFalling) return;
+        StartCoroutine(PendulumKill());
+    }
+
+    private IEnumerator PendulumKill()
+    {
+        if (isFalling) yield break;
+        isFalling = true;
+
+        playerMovement.ResetMovement();
+        playerMovement.enabled = false;
+
+        // Clear any residual physics velocity
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        SoundManager.Instance?.PlayFall();
+
+        yield return StartCoroutine(PlayDisintegration());
+
+        yield return new WaitForSecondsRealtime(POST_DISINTEGRATE_HOLD);
+
+        Time.timeScale = 0f;
+
+        string title = PENDULUM_TITLES[Random.Range(0, PENDULUM_TITLES.Length)];
+        string msg = PENDULUM_MESSAGES[Random.Range(0, PENDULUM_MESSAGES.Length)];
+
+        FallModal.Show(
+            hasCheckpoint: hasCheckpoint,
+            onCheckpoint: () =>
+            {
+                SandDisintegrationEffect.DestroyAll();
+                RestorePlayerVisuals();
+                Time.timeScale = 1f;
+                DoCheckpointRespawn();
+
+                if (ScreenTransitionManager.Instance != null)
+                    ScreenTransitionManager.Instance.CosmicFadeIn(0.5f);
+            },
+            onRestartLevel: () =>
+            {
+                MainMenuController.RequestRestartTrialOnLoad();
+                Time.timeScale = 1f;
+                LoadSceneWithTransition(SceneManager.GetActiveScene().name);
+            },
+            title: title,
+            message: msg
+        );
+    }
+
+    // ════════════════════════════════════════════════════════════════════
     //  DISINTEGRATION EFFECT
     // ════════════════════════════════════════════════════════════════════
 
@@ -833,6 +916,14 @@ public class FallDetection : MonoBehaviour
         // Reset the time scale meter back to 0 on every checkpoint respawn
         if (TimeScaleLogic.Instance != null)
             TimeScaleLogic.Instance.ResetMeter();
+
+        // Clear any residual physics velocity to prevent spazzing on respawn
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
 
         playerMovement.enabled = true;
         transform.position = spawnPosition;

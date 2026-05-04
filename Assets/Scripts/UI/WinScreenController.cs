@@ -39,19 +39,32 @@ public class WinScreenController : MonoBehaviour
     [Tooltip("Ending cutscene video clip. Plays when all 3 trials are completed.")]
     [SerializeField] private VideoClip endingCutscene;
 
+    /// <summary>Scene order for trial rotation.</summary>
+    private static readonly string[] TRIAL_SCENES = { "MainScene", "GardenScene", "ClockScene" };
+
     /// <summary>
-    /// Returns the next trial scene based on the CURRENT scene name.
-    /// This eliminates dependency on serialized field values.
+    /// Returns the next uncompleted trial scene, cycling from the current scene.
+    /// Returns empty if all trials are complete.
     /// </summary>
     private string GetNextTrialScene()
     {
+        if (AreAllTrialsComplete()) return "";
+
         string current = SceneManager.GetActiveScene().name;
-        switch (current)
+        int startIdx = System.Array.IndexOf(TRIAL_SCENES, current);
+        if (startIdx < 0) startIdx = 0;
+
+        // Cycle through trials starting from the one after current
+        for (int offset = 1; offset <= TRIAL_SCENES.Length; offset++)
         {
-            case "MainScene":   return "GardenScene";
-            case "GardenScene": return "ClockScene";
-            default:            return ""; // Clock and others have no next trial
+            int idx = (startIdx + offset) % TRIAL_SCENES.Length;
+            string candidate = TRIAL_SCENES[idx];
+            string key = BestTimeTracker.KeyForScene(candidate);
+            if (key != null && !BestTimeTracker.Has(key))
+                return candidate;
         }
+
+        return "";
     }
 
     private const string TITLE_TEXT          = "TIME  RESTORED";
@@ -544,20 +557,21 @@ public class WinScreenController : MonoBehaviour
 
     private void GoToNextTrial()
     {
-        string nextScene = GetNextTrialScene();
-        Debug.Log($"[WinScreen] GoToNextTrial called. nextScene='{nextScene}' (current='{SceneManager.GetActiveScene().name}')");
+        Debug.Log($"[WinScreen] GoToNextTrial called. (current='{SceneManager.GetActiveScene().name}')");
         Time.timeScale = 1f;
 
-        // When no next trial exists (Clock is the last), check for full completion
+        // All trials complete — play ending cutscene regardless of which scene we're on
+        if (AreAllTrialsComplete() && !_endingCutscenePlayed)
+        {
+            PlayEndingCutsceneAndCredits();
+            return;
+        }
+
+        string nextScene = GetNextTrialScene();
+
         if (string.IsNullOrEmpty(nextScene))
         {
-            if (AreAllTrialsComplete() && !_endingCutscenePlayed)
-            {
-                PlayEndingCutsceneAndCredits();
-                return;
-            }
-
-            Debug.Log("[WinScreen] No next scene — falling back to trial selection.");
+            Debug.Log("[WinScreen] No uncompleted trials remaining — falling back to trial selection.");
             ReturnToTrialSelectionDirect();
             return;
         }
@@ -584,6 +598,10 @@ public class WinScreenController : MonoBehaviour
     {
         _endingCutscenePlayed = true;
         Debug.Log("[WinScreen] All trials complete! Playing ending cutscene...");
+
+        // Fade out level music before the cutscene starts
+        if (SoundManager.Instance != null)
+            SoundManager.Instance.FadeMusicOut(1.0f);
 
         if (endingCutscene != null)
         {
@@ -632,7 +650,7 @@ public class WinScreenController : MonoBehaviour
     private void ReturnToTrialSelection()
     {
         // If all trials are complete and ending cutscene hasn't played yet, play it first
-        if (AreAllTrialsComplete() && !_endingCutscenePlayed && endingCutscene != null)
+        if (AreAllTrialsComplete() && !_endingCutscenePlayed)
         {
             PlayEndingCutsceneAndCredits();
             return;
