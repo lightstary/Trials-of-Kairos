@@ -58605,8 +58605,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 10
   tickInterval: 1
-  minTime: -1.25
-  maxTime: 1.25
+  minTime: -2
+  maxTime: 2
 --- !u!65 &498370559
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -120236,8 +120236,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 10
   tickInterval: 1
-  minTime: -1.25
-  maxTime: 1.25
+  minTime: -2
+  maxTime: 2
 --- !u!65 &1163564402
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -120754,8 +120754,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 10
   tickInterval: 1
-  minTime: -1.25
-  maxTime: 1.25
+  minTime: -2
+  maxTime: 2
 --- !u!65 &1192981296
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -161881,8 +161881,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 10
   tickInterval: 1
-  minTime: -1.25
-  maxTime: 1.25
+  minTime: -2
+  maxTime: 2
 --- !u!65 &1661491717
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -193537,8 +193537,8 @@ MonoBehaviour:
   moveDirection: {x: -1, y: 0, z: 0}
   moveDistance: 10
   tickInterval: 1
-  minTime: -1.25
-  maxTime: 1.25
+  minTime: -2
+  maxTime: 2
 --- !u!65 &1919437540
 BoxCollider:
   m_ObjectHideFlags: 0
