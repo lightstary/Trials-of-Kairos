@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-// In-game tutorial popup when stepping on a color-coded tile. One visible at a time.
+// Tile tooltip — shows while the player stands on a colored tile. One popup shared across all tiles.
 public class TutorialTilePopup : MonoBehaviour
 {
     public enum TileType { Forward, Frozen, Reverse }
@@ -12,17 +12,19 @@ public class TutorialTilePopup : MonoBehaviour
     [SerializeField] private TileType tileType = TileType.Forward;
 
     [Header("Display Settings")]
-    [SerializeField] private float displayDuration = 5f;
     [SerializeField] private float fadeInDuration = 0.3f;
     [SerializeField] private float fadeOutDuration = 0.5f;
 
     private const float DETECT_RANGE = 2.5f;
     private const float POPUP_WIDTH  = 520f;
     private const float POPUP_HEIGHT = 140f;
+    private const float FORWARD_DISMISS_OFFSET = 1.5f;
 
-    private bool _triggered;
+    // Per-tile: tracks whether the player is currently on this tile
+    private bool _playerAbove;
+    private Transform _playerTransform;
 
-    // ── Shared single-popup system ──────────────────────────────────────
+    // Shared popup — only one visible at a time, content swaps per tile
     private static GameObject      _sharedPopupGO;
     private static CanvasGroup     _sharedPopupCG;
     private static TextMeshProUGUI _sharedTitle;
@@ -31,7 +33,6 @@ public class TutorialTilePopup : MonoBehaviour
     private static Coroutine       _sharedRoutine;
     private static MonoBehaviour   _sharedOwner;
 
-    /// <summary>True when any tutorial tile popup is currently visible on screen.</summary>
     public static bool IsAnyVisible { get; private set; }
 
     private static readonly Color GOLD_COL   = new Color(0.961f, 0.784f, 0.259f, 1f);
@@ -42,8 +43,37 @@ public class TutorialTilePopup : MonoBehaviour
 
     void Update()
     {
-        if (_triggered) return;
-        CheckPlayerAbove();
+        // Block while full-screen modals are up
+        if (HowToPlayController.IsAnyOpen || TimeScaleIntroModal.IsModalOpen)
+        {
+            if (_playerAbove)
+            {
+                _playerAbove = false;
+                _playerTransform = null;
+                RequestHide();
+            }
+            return;
+        }
+
+        if (!_playerAbove)
+        {
+            // Not showing yet — check if the player just stepped on this tile
+            if (IsPlayerDetected())
+            {
+                _playerAbove = true;
+                ShowPopup();
+            }
+        }
+        else
+        {
+            // Already showing — only dismiss when the player walks forward past this tile
+            if (HasPlayerMovedForward())
+            {
+                _playerAbove = false;
+                _playerTransform = null;
+                RequestHide();
+            }
+        }
     }
 
     void OnDestroy()
@@ -61,20 +91,25 @@ public class TutorialTilePopup : MonoBehaviour
         }
     }
 
-    /// <summary>Resets the trigger so the popup can fire again.</summary>
-    public void ResetTrigger() { _triggered = false; }
-
-    private void CheckPlayerAbove()
+    private bool IsPlayerDetected()
     {
         Vector3 rayOrigin = transform.position + Vector3.up * 0.15f;
         if (Physics.Raycast(rayOrigin, Vector3.up, out RaycastHit hit, DETECT_RANGE))
         {
             if (hit.collider.CompareTag("Player"))
             {
-                _triggered = true;
-                ShowPopup();
+                _playerTransform = hit.collider.transform;
+                return true;
             }
         }
+        return false;
+    }
+
+    // Tooltip stays until the player walks forward (positive z) past this tile
+    private bool HasPlayerMovedForward()
+    {
+        if (_playerTransform == null) return true;
+        return _playerTransform.position.z > transform.position.z + FORWARD_DISMISS_OFFSET;
     }
 
     private void ShowPopup()
@@ -82,53 +117,68 @@ public class TutorialTilePopup : MonoBehaviour
         EnsureSharedPopup();
         if (_sharedPopupGO == null) return;
 
+        // Overwrite content for this tile
         Color accent = GetAccentColor();
         if (_sharedAccent != null) _sharedAccent.color = accent;
         if (_sharedTitle != null) { _sharedTitle.text = GetTitle(); _sharedTitle.color = accent; }
-        if (_sharedDesc != null)  _sharedDesc.text = GetDescription();
+        if (_sharedDesc != null) _sharedDesc.text = GetDescription();
 
-        // Cancel any running routine and start fresh
+        // Cancel whatever the previous owner was doing
         if (_sharedRoutine != null && _sharedOwner != null)
             _sharedOwner.StopCoroutine(_sharedRoutine);
 
         _sharedOwner = this;
-        _sharedRoutine = StartCoroutine(ShowRoutine());
+        _sharedRoutine = StartCoroutine(FadeInRoutine());
     }
 
-    private IEnumerator ShowRoutine()
+    // Only hides if this tile still owns the popup
+    private void RequestHide()
+    {
+        if (_sharedOwner != this) return;
+
+        if (_sharedRoutine != null)
+            StopCoroutine(_sharedRoutine);
+
+        _sharedRoutine = StartCoroutine(FadeOutRoutine());
+    }
+
+    private IEnumerator FadeInRoutine()
     {
         _sharedPopupGO.SetActive(true);
         IsAnyVisible = true;
-
-        // Fade out the area title strip if it's showing
         FadeOutAreaTitle();
 
         float elapsed = 0f;
         float startAlpha = _sharedPopupCG != null ? _sharedPopupCG.alpha : 0f;
         while (elapsed < fadeInDuration)
         {
-            elapsed += Time.deltaTime;
-            if (_sharedPopupCG != null) _sharedPopupCG.alpha = Mathf.Lerp(startAlpha, 1f, Mathf.Clamp01(elapsed / fadeInDuration));
+            elapsed += Time.unscaledDeltaTime;
+            if (_sharedPopupCG != null)
+                _sharedPopupCG.alpha = Mathf.Lerp(startAlpha, 1f, Mathf.Clamp01(elapsed / fadeInDuration));
             yield return null;
         }
         if (_sharedPopupCG != null) _sharedPopupCG.alpha = 1f;
+        _sharedRoutine = null;
+    }
 
-        yield return new WaitForSeconds(displayDuration);
-
-        elapsed = 0f;
+    private IEnumerator FadeOutRoutine()
+    {
+        float elapsed = 0f;
+        float startAlpha = _sharedPopupCG != null ? _sharedPopupCG.alpha : 1f;
         while (elapsed < fadeOutDuration)
         {
-            elapsed += Time.deltaTime;
-            if (_sharedPopupCG != null) _sharedPopupCG.alpha = 1f - Mathf.Clamp01(elapsed / fadeOutDuration);
+            elapsed += Time.unscaledDeltaTime;
+            if (_sharedPopupCG != null)
+                _sharedPopupCG.alpha = Mathf.Lerp(startAlpha, 0f, Mathf.Clamp01(elapsed / fadeOutDuration));
             yield return null;
         }
 
-        _sharedPopupGO.SetActive(false);
+        if (_sharedPopupGO != null) _sharedPopupGO.SetActive(false);
         _sharedRoutine = null;
         IsAnyVisible = false;
     }
 
-    /// <summary>Finds and immediately fades out the AreaTitleIntro strip.</summary>
+    // Fades out the AreaTitleIntro strip if it's showing.
     private static void FadeOutAreaTitle()
     {
         AreaTitleIntro areaTitleIntro = Object.FindObjectOfType<AreaTitleIntro>();

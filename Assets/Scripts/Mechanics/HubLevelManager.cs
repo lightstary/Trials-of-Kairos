@@ -178,6 +178,10 @@ public class HubLevelManager : MonoBehaviour
     private IEnumerator ShowTutorialDelayed(float delay)
     {
         yield return new WaitForSeconds(delay);
+
+        // Dismiss the trial intro flash if it's still showing
+        TrialIntroFlash.Dismiss();
+
         ShowHowToPlay();
         MarkVisited();
     }
@@ -405,6 +409,8 @@ public class HubLevelManager : MonoBehaviour
 
     private void AddTutorialTrigger(GameObject tile, TutorialTilePopup.TileType type)
     {
+        if (tile.GetComponent<TutorialTilePopup>() != null) return;
+
         TutorialTilePopup popup = tile.AddComponent<TutorialTilePopup>();
         var field = typeof(TutorialTilePopup).GetField("tileType",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);

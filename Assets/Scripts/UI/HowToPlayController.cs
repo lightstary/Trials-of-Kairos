@@ -40,6 +40,7 @@ public class HowToPlayController : MonoBehaviour
     private int              _currentPage;
     private bool             _transitioning;
     private bool             _built;
+    private float            _lastInputTime;
 
     // Animated elements
     private Image            _forwardGlow, _frozenGlow, _reverseGlow;
@@ -56,24 +57,56 @@ public class HowToPlayController : MonoBehaviour
 
     // ── Public API ───────────────────────────────────────────────────────
 
-    /// <summary>Shows the How To Play screen.</summary>
+    // Shows the How To Play screen.
     public void Show()
     {
         if (!_built) Build();
+
+        StopAllCoroutines();
+        _transitioning = false;
+        _lastInputTime = Time.unscaledTime;
+
         _currentPage = 0;
         for (int i = 0; i < _pages.Count; i++)
+        {
             _pages[i].SetActive(i == 0);
+            CanvasGroup pageCG = _pages[i].GetComponent<CanvasGroup>();
+            if (pageCG != null) pageCG.alpha = i == 0 ? 1f : 0f;
+        }
         UpdatePageCounter();
         _root.SetActive(true);
+        _rootCG.alpha = 0f;
         IsAnyOpen = true;
         Time.timeScale = 0f;
         StartCoroutine(FadeIn());
     }
 
-    /// <summary>Hides the How To Play screen.</summary>
+    // Hides the How To Play screen.
     public void Hide()
     {
+        // Kill FadeIn if it's still running
+        StopAllCoroutines();
+        _transitioning = false;
         StartCoroutine(FadeOutAndClose());
+    }
+
+    // Immediately kills all HTP UI without animation. Use when something goes wrong.
+    public void ForceClose()
+    {
+        StopAllCoroutines();
+        _transitioning = false;
+        IsAnyOpen = false;
+
+        if (_root != null)
+        {
+            _root.SetActive(false);
+            if (_rootCG != null) _rootCG.alpha = 0f;
+        }
+
+        for (int i = 0; i < _pages.Count; i++)
+        {
+            if (_pages[i] != null) _pages[i].SetActive(false);
+        }
     }
 
     // ── MonoBehaviour ────────────────────────────────────────────────────
@@ -81,6 +114,12 @@ public class HowToPlayController : MonoBehaviour
     void OnEnable()
     {
         InputPromptManager.OnInputModeChanged += OnInputModeChanged;
+    }
+
+    void OnDestroy()
+    {
+        // Safety: clear static flag if this instance is destroyed mid-display
+        IsAnyOpen = false;
     }
 
     void OnDisable()
@@ -97,11 +136,12 @@ public class HowToPlayController : MonoBehaviour
     {
         if (!IsOpen) return;
 
-        // Animate glow pulses on time state indicators
         AnimateGlows();
 
-        // Controller + keyboard input
         if (_transitioning) return;
+
+        // Debounce: 0.2s cooldown between page changes
+        if (Time.unscaledTime - _lastInputTime < 0.2f) return;
 
         bool nextPressed = Input.GetKeyDown(KeyCode.JoystickButton0)
                         || Input.GetKeyDown(KeyCode.Return)
@@ -117,6 +157,7 @@ public class HowToPlayController : MonoBehaviour
 
         if (nextPressed)
         {
+            _lastInputTime = Time.unscaledTime;
             if (_currentPage < _pages.Count - 1)
                 StartCoroutine(TransitionToPage(_currentPage + 1));
             else
@@ -124,6 +165,7 @@ public class HowToPlayController : MonoBehaviour
         }
         else if (backPressed)
         {
+            _lastInputTime = Time.unscaledTime;
             if (_currentPage > 0)
                 StartCoroutine(TransitionToPage(_currentPage - 1));
             else
@@ -401,7 +443,7 @@ public class HowToPlayController : MonoBehaviour
         UpdateNavHintsVisibility();
     }
 
-    /// <summary>Builds a horizontal row with two icon+label pairs.</summary>
+    // Builds a horizontal row with two icon+label pairs.
     private GameObject BuildNavHintRow(Transform parent, string name,
         Sprite confirmIcon, string confirmText,
         Sprite backIcon, string backText,
@@ -437,7 +479,6 @@ public class HowToPlayController : MonoBehaviour
         return row;
     }
 
-    /// <summary>Shows the correct nav hint row for the current input mode.</summary>
     private void UpdateNavHintsVisibility()
     {
         bool kb = InputPromptManager.IsKeyboardMouse;
@@ -445,7 +486,6 @@ public class HowToPlayController : MonoBehaviour
         if (_ctrlNavHints != null) _ctrlNavHints.SetActive(!kb);
     }
 
-    /// <summary>Refreshes nav hint visibility when input mode changes.</summary>
     private void RefreshNavHints()
     {
         UpdateNavHintsVisibility();
@@ -666,6 +706,14 @@ public class HowToPlayController : MonoBehaviour
             elapsed += Time.unscaledDeltaTime;
             _rootCG.alpha = 1f - Mathf.Clamp01(elapsed / FADE_IN_TIME);
             yield return null;
+        }
+
+        // Force-hide all pages and reset their alpha
+        for (int i = 0; i < _pages.Count; i++)
+        {
+            _pages[i].SetActive(false);
+            CanvasGroup pageCG = _pages[i].GetComponent<CanvasGroup>();
+            if (pageCG != null) pageCG.alpha = 0f;
         }
 
         _root.SetActive(false);

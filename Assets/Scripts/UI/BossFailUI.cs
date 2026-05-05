@@ -18,10 +18,8 @@ public class BossFailUI : MonoBehaviour
     private GameObject _overlayGO;
     private bool _shown;
 
-    /// <summary>True when the boss fail screen is currently displayed.</summary>
     public static bool IsOpen { get; private set; }
 
-    /// <summary>Shows the boss fail screen.</summary>
     public void ShowFail()
     {
         if (_shown) return;
@@ -103,7 +101,6 @@ public class BossFailUI : MonoBehaviour
         StartCoroutine(FadeIn(pCG));
     }
 
-    /// <summary>Respawns the player at the most recent checkpoint and resets the boss fight.</summary>
     private void RespawnAtCheckpoint()
     {
         Close();
@@ -135,11 +132,7 @@ public class BossFailUI : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Restarts whichever boss fight exists in the current scene and plays boss music.
-    /// Called after checkpoint respawn because OnTriggerEnter won't fire when the player
-    /// is teleported directly into the trigger volume.
-    /// </summary>
+    // Restarts whichever boss fight is active and plays boss music.
     private static void RestartActiveBossFight()
     {
         if (BossFight.Instance != null)
@@ -166,7 +159,6 @@ public class BossFailUI : MonoBehaviour
             SoundManager.Instance.PlayBossMusic();
     }
 
-    /// <summary>Reloads the entire scene from the beginning.</summary>
     private void RestartLevel()
     {
         Close();
@@ -180,7 +172,6 @@ public class BossFailUI : MonoBehaviour
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-    /// <summary>Returns to the trial selection screen.</summary>
     private void GoToTrialSelection()
     {
         Close();
@@ -194,7 +185,6 @@ public class BossFailUI : MonoBehaviour
             SceneManager.LoadScene("MainScene");
     }
 
-    /// <summary>Cleans up the overlay and resets state.</summary>
     private void Close()
     {
         _shown = false;

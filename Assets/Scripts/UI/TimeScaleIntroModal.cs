@@ -12,6 +12,9 @@ public class TimeScaleIntroModal : MonoBehaviour
     // Blocks time accrual until dismissed.
     public static bool IsTimeLocked { get; private set; } = false;
 
+    // True only while the modal UI is actually visible.
+    public static bool IsModalOpen { get; private set; } = false;
+
     private const float DETECT_RANGE = 2.0f;
     private const int GLOW_TEX_SIZE = 64;
 
@@ -108,6 +111,8 @@ public class TimeScaleIntroModal : MonoBehaviour
     {
         if (_hasShown) return;
         if (_isOpen) return;
+        // Don't trigger while the How To Play screen is open
+        if (HowToPlayController.IsAnyOpen) return;
 
         GameObject player = GameObject.FindWithTag("Player");
         if (player == null) return;
@@ -120,10 +125,10 @@ public class TimeScaleIntroModal : MonoBehaviour
         }
     }
 
-    /// <summary>Shows the modal, reveals the TimeScaleMeter, and pauses gameplay.</summary>
     private void Show()
     {
         _isOpen = true;
+        IsModalOpen = true;
         _currentPage = 0;
         Time.timeScale = 0f;
 
@@ -137,7 +142,7 @@ public class TimeScaleIntroModal : MonoBehaviour
         UpdatePage();
     }
 
-    /// <summary>Hides any active TutorialTilePopup shared popup so it doesn't bleed through.</summary>
+    // Hides any active TutorialTilePopup so it doesn't bleed through.
     private void DismissTutorialPopups()
     {
         GameObject popup = GameObject.Find("TutorialPopup_Shared");
@@ -147,10 +152,7 @@ public class TimeScaleIntroModal : MonoBehaviour
 
     // ── Soft Glow Texture ────────────────────────────────────────────────
 
-    /// <summary>
-    /// Generates an elliptical radial-gradient texture for soft glow effects.
-    /// Center is fully opaque, edges fade to transparent.
-    /// </summary>
+    // Radial gradient texture for soft glow effects.
     private Texture2D CreateSoftGlowTexture(int size)
     {
         Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
@@ -177,7 +179,6 @@ public class TimeScaleIntroModal : MonoBehaviour
         return tex;
     }
 
-    /// <summary>Creates a soft glow Image using the radial gradient sprite.</summary>
     private Image CreateSoftGlowImage(GameObject go, Color tint)
     {
         if (_glowTex == null)
@@ -197,10 +198,7 @@ public class TimeScaleIntroModal : MonoBehaviour
 
     // ── Meter Glow ──────────────────────────────────────────────────────
 
-    /// <summary>
-    /// Finds the TimeScaleMeter, activates it, and adds a soft pulsing glow
-    /// behind it so the player notices it appeared.
-    /// </summary>
+    // Activates the TimeScaleMeter and adds a pulsing glow behind it.
     private void RevealMeterWithGlow()
     {
         TimeScaleMeter meter = FindObjectOfType<TimeScaleMeter>(true);
@@ -228,7 +226,6 @@ public class TimeScaleIntroModal : MonoBehaviour
         StartCoroutine(PulseGlowRoutine());
     }
 
-    /// <summary>Removes the gold meter glow.</summary>
     private void RemoveMeterGlow()
     {
         if (_meterGlowGO != null)
@@ -239,7 +236,6 @@ public class TimeScaleIntroModal : MonoBehaviour
         }
     }
 
-    /// <summary>Pulses the soft glow behind the meter while it exists.</summary>
     private IEnumerator PulseGlowRoutine()
     {
         float t = 0f;
@@ -265,11 +261,7 @@ public class TimeScaleIntroModal : MonoBehaviour
 
     // ── Zone Highlights ─────────────────────────────────────────────────
 
-    /// <summary>
-    /// Creates soft glow overlays on the warning and danger zones of the meter bar.
-    /// Called when navigating to the danger zones page.
-    /// Also removes the gold meter glow so it doesn't compete visually.
-    /// </summary>
+    // Glow overlays on warning/danger zones. Shown on the danger-zones page.
     private void ShowZoneHighlights()
     {
         ClearZoneHighlights();
@@ -311,7 +303,6 @@ public class TimeScaleIntroModal : MonoBehaviour
         StartCoroutine(PulseZoneGlowsRoutine());
     }
 
-    /// <summary>Creates a single soft zone glow overlay within the meter.</summary>
     private void CreateZoneGlow(Transform parent, float xMin, float xMax, float yMin, float yMax,
         Color tint, float baseAlpha)
     {
@@ -332,7 +323,6 @@ public class TimeScaleIntroModal : MonoBehaviour
         _zoneGlowImages.Add(img);
     }
 
-    /// <summary>Pulses zone glow overlays while they're visible.</summary>
     private IEnumerator PulseZoneGlowsRoutine()
     {
         float t = 0f;
@@ -353,7 +343,6 @@ public class TimeScaleIntroModal : MonoBehaviour
         }
     }
 
-    /// <summary>Removes all zone glow overlays.</summary>
     private void ClearZoneHighlights()
     {
         foreach (GameObject go in _zoneGlowGOs)
@@ -541,33 +530,27 @@ public class TimeScaleIntroModal : MonoBehaviour
 
     private const float PAGE_COOLDOWN = 0.25f;
 
-    /// <summary>Returns true if enough time has passed since the last page change.</summary>
     private bool CanChangePage()
     {
         return Time.unscaledTime - _lastPageChangeTime >= PAGE_COOLDOWN;
     }
 
-    /// <summary>Click handler for the Continue button.</summary>
     private void OnContinueClicked()
     {
         if (!CanChangePage()) return;
         NextPage();
     }
 
-    /// <summary>Click handler for the Back button.</summary>
     private void OnBackClicked()
     {
         if (!CanChangePage()) return;
         PrevPage();
     }
 
-    /// <summary>
-    /// Listens for controller/keyboard input while the modal is open.
-    /// yield return null works even at Time.timeScale = 0.
-    /// </summary>
+    // Listens for controller/keyboard input while open.
     private IEnumerator InputListenRoutine()
     {
-        // Block for a short window so the input that opened the modal doesn't immediately advance
+        // Brief cooldown so the input that opened this doesn't immediately advance
         _lastPageChangeTime = Time.unscaledTime;
 
         while (_isOpen)
@@ -641,13 +624,10 @@ public class TimeScaleIntroModal : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Closes the modal, removes glows, keeps meter visible with zones shown,
-    /// and unlocks time accrual.
-    /// </summary>
     private void Dismiss()
     {
         _isOpen = false;
+        IsModalOpen = false;
         Time.timeScale = 1f;
         IsTimeLocked = false;
 
@@ -672,9 +652,20 @@ public class TimeScaleIntroModal : MonoBehaviour
             meter.AlwaysShowZones = true;
     }
 
+    void OnDestroy()
+    {
+        // Clear static flags so they don't persist into other scenes
+        IsTimeLocked = false;
+
+        if (_isOpen)
+        {
+            IsModalOpen = false;
+            InputPromptManager.OnInputModeChanged -= OnInputModeChanged;
+        }
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────
 
-    /// <summary>Updates button icons and page text when input mode changes.</summary>
     private void OnInputModeChanged(InputPromptManager.InputMode newMode)
     {
         if (!_isOpen) return;
@@ -690,10 +681,7 @@ public class TimeScaleIntroModal : MonoBehaviour
             _bodyTMP.text = GetPageText(_currentPage);
     }
 
-    /// <summary>
-    /// Returns the display text for the given page index.
-    /// Page 0 (camera movement) is dynamic based on current input mode.
-    /// </summary>
+    // Page 0 content changes based on input mode.
     private string GetPageText(int pageIndex)
     {
         if (pageIndex == 0)
@@ -701,7 +689,6 @@ public class TimeScaleIntroModal : MonoBehaviour
         return PAGES[pageIndex];
     }
 
-    /// <summary>Builds the camera movement page with input-mode-aware control labels.</summary>
     private string BuildCameraMovementPage()
     {
         bool kbm = InputPromptManager.IsKeyboardMouse;

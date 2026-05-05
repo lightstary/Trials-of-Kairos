@@ -23,11 +23,10 @@ public class SoundManager : MonoBehaviour
     private AudioSource musicSource;
 
     private float _targetMusicVolume = 0.5f;
+    private Coroutine _fadeCoroutine;
 
-    // When true, next SoundManager starts music silent and fades in.
-    // Set by ScreenTransitionManager before loading a scene.
+    // Next SoundManager instance starts music silent and fades in.
     public static bool PendingMusicFadeIn { get; set; }
-
     public static float PendingFadeInDuration { get; set; } = 8f;
 
     void Awake()
@@ -40,7 +39,6 @@ public class SoundManager : MonoBehaviour
         musicSource.loop = true;
         musicSource.volume = 0.5f;
 
-        // Apply saved volume settings
         GameSettings.ApplyAudio();
         GameSettings.OnAudioChanged += OnAudioSettingsChanged;
     }
@@ -48,6 +46,7 @@ public class SoundManager : MonoBehaviour
     void OnDestroy()
     {
         GameSettings.OnAudioChanged -= OnAudioSettingsChanged;
+        if (Instance == this) Instance = null;
     }
 
     private void OnAudioSettingsChanged()
@@ -62,10 +61,11 @@ public class SoundManager : MonoBehaviour
             PendingMusicFadeIn = false;
             float fadeDur = PendingFadeInDuration;
 
-            // Start music silently and fade in over the shimmer duration
+            // Start silent, fade in during the shimmer reveal
+            musicSource.clip = gameMusic;
             musicSource.volume = 0f;
-            PlayGameMusic();
-            StartCoroutine(FadeMusicCoroutine(0f, _targetMusicVolume, fadeDur));
+            musicSource.Play();
+            _fadeCoroutine = StartCoroutine(FadeMusicCoroutine(0f, _targetMusicVolume, fadeDur));
         }
         else
         {
@@ -80,46 +80,73 @@ public class SoundManager : MonoBehaviour
     public void PlayRespawn()    { if (respawnSound != null) sfxSource.PlayOneShot(respawnSound); }
     public void PlayMove()       { if (moveSound != null) sfxSource.PlayOneShot(moveSound); }
 
+    // Plays level music. Restores volume if it was faded out.
     public void PlayGameMusic()
     {
         if (gameMusic == null) return;
-        if (musicSource.clip == gameMusic && musicSource.isPlaying) return;
+        if (musicSource.clip == gameMusic && musicSource.isPlaying && musicSource.volume > 0.01f)
+            return;
+
+        KillFade();
+        PendingMusicFadeIn = false;
         musicSource.clip = gameMusic;
+        musicSource.volume = _targetMusicVolume;
         musicSource.Play();
     }
 
+    // Plays boss music. Restores volume if it was faded out.
     public void PlayBossMusic()
     {
         if (bossFightMusic == null) return;
-        if (musicSource.clip == bossFightMusic && musicSource.isPlaying) return;
+        if (musicSource.clip == bossFightMusic && musicSource.isPlaying && musicSource.volume > 0.01f)
+            return;
+
+        KillFade();
+        PendingMusicFadeIn = false;
         musicSource.clip = bossFightMusic;
+        musicSource.volume = _targetMusicVolume;
         musicSource.Play();
     }
 
     public void StopMusic()
     {
+        KillFade();
         musicSource.Stop();
     }
 
     public void FadeMusicOut(float duration)
     {
-        StopAllCoroutines();
-        StartCoroutine(FadeMusicCoroutine(musicSource.volume, 0f, duration));
+        KillFade();
+        _fadeCoroutine = StartCoroutine(FadeMusicCoroutine(musicSource.volume, 0f, duration));
     }
 
     public void FadeMusicIn(float duration)
     {
-        StopAllCoroutines();
-        StartCoroutine(FadeMusicCoroutine(0f, _targetMusicVolume, duration));
+        KillFade();
+        if (!musicSource.isPlaying && musicSource.clip != null)
+            musicSource.Play();
+        _fadeCoroutine = StartCoroutine(FadeMusicCoroutine(musicSource.volume, _targetMusicVolume, duration));
     }
 
     public void SetVolumes(float master, float music, float sfx)
     {
         _targetMusicVolume = music * master;
-        if (musicSource != null)
+
+        // Only apply immediately if no fade is in progress
+        if (_fadeCoroutine == null && musicSource != null)
             musicSource.volume = _targetMusicVolume;
+
         if (sfxSource != null)
             sfxSource.volume = sfx * master;
+    }
+
+    private void KillFade()
+    {
+        if (_fadeCoroutine != null)
+        {
+            StopCoroutine(_fadeCoroutine);
+            _fadeCoroutine = null;
+        }
     }
 
     private IEnumerator FadeMusicCoroutine(float from, float to, float duration)
@@ -138,5 +165,10 @@ public class SoundManager : MonoBehaviour
         }
 
         musicSource.volume = to;
+        _fadeCoroutine = null;
+
+        // Faded to silence — stop source so isPlaying reflects reality
+        if (to <= 0.001f)
+            musicSource.Stop();
     }
 }
