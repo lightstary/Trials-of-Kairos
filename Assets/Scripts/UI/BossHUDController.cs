@@ -2,12 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// Boss HUD with three variant modes:
-/// EdgeLimits — static min/max threshold markers on the meter.
-/// MovingPointer — sweeping danger pointer that speeds up each phase.
-/// RhythmPattern — scrolling danger segments across a lane.
-/// </summary>
+// Boss HUD with three modes: EdgeLimits, MovingPointer, RhythmPattern.
 public class BossHUDController : MonoBehaviour
 {
     public enum BossHUDVariant { EdgeLimits, MovingPointer, RhythmPattern }

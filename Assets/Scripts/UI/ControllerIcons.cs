@@ -2,12 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// Centralized lookup for input prompt sprites and labels.
-/// Loads icon sprites from Assets/Daniel's Assets/UI Images/ by filename.
-/// Provides mode-aware properties that return the correct icon/text
-/// based on the current InputPromptManager mode.
-/// </summary>
+// Input prompt sprite lookup. Mode-aware — returns the right icon for KB/M or controller.
 public static class ControllerIcons
 {
     private static bool _loaded;

@@ -5,9 +5,7 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 
-/// <summary>
-/// Level select / hub star-map screen.
-/// </summary>
+// Level select / hub star-map screen.
 public class LevelSelectController : MonoBehaviour
 {
     [Serializable]

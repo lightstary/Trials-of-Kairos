@@ -3,10 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// Full-width strip that slides in from the top to show the area title,
-/// holds briefly, then slides back out.
-/// </summary>
+// Area title strip that slides in from the top and back out.
 public class AreaTitleIntro : MonoBehaviour
 {
     [Header("References")]

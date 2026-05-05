@@ -1,9 +1,6 @@
 using UnityEngine;
 
-/// <summary>
-/// Enables the _EMISSION keyword on all materials attached to this renderer at startup.
-/// Required for Standard shader emission to actually work.
-/// </summary>
+// Enables _EMISSION keyword on all materials at startup (required for Standard shader).
 [RequireComponent(typeof(Renderer))]
 public class EnableEmission : MonoBehaviour
 {

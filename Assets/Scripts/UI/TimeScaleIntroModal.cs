@@ -4,21 +4,12 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// A multi-page modal that explains the Time Scale mechanic in the Hub.
-/// Triggers once when the player walks near its position.
-/// When shown, reveals the TimeScaleMeter UI with a soft glowing highlight,
-/// and highlights warning/danger zones on the relevant pages.
-/// After dismissal the meter stays visible and time accrual begins.
-/// </summary>
+// Time Scale tutorial modal in the Hub. Triggers once, reveals the meter, then unlocks accrual.
 public class TimeScaleIntroModal : MonoBehaviour
 {
     private static bool _hasShown = false;
 
-    /// <summary>
-    /// When true, TimeScaleLogic should not accumulate any time value.
-    /// Set true on Awake, cleared when the modal is dismissed.
-    /// </summary>
+    // Blocks time accrual until dismissed.
     public static bool IsTimeLocked { get; private set; } = false;
 
     private const float DETECT_RANGE = 2.0f;

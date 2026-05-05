@@ -2,11 +2,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 
-/// <summary>
-/// Automatically builds the Hub layout tiles whenever HubScene is loaded
-/// in the editor and tiles don't exist yet. Runs after every domain reload
-/// (script recompilation) so tiles are always visible in the Scene view.
-/// </summary>
+// Auto-builds Hub layout tiles when HubScene loads in the editor.
 [InitializeOnLoad]
 public static class HubLayoutAutoBuilder
 {

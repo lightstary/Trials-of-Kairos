@@ -2,12 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
-/// <summary>
-/// Left-stick free cursor: a soft glowing orb that moves freely over menus.
-/// Hovers UI Selectables, highlights them, and A-button activates.
-/// Automatically hidden during gameplay (HUD active, no menu overlay).
-/// Yields to D-pad when D-pad is used; reactivates when stick moves.
-/// </summary>
+// Left-stick free cursor for menus. Hovers and activates UI selectables.
+// Hidden during gameplay. Yields to D-pad when D-pad is used.
 public class UIStickCursor : MonoBehaviour
 {
     // ── Tuning ───────────────────────────────────────────────────────────
@@ -32,30 +28,18 @@ public class UIStickCursor : MonoBehaviour
     private static readonly Color DEFAULT_TRAIL_COLOR  = new Color(0.96f, 0.82f, 0.40f, 0.18f);
 
     // ── Shared state ────────────────────────────────────────────────────
-    /// <summary>True when the left stick is the active input mode.</summary>
     public static bool IsStickMode { get; set; }
-
-    /// <summary>True when the cursor orb is currently visible on screen.</summary>
     public static bool IsCursorVisible { get; private set; }
-
-    /// <summary>The Selectable currently under the cursor, or null.</summary>
     public static Selectable HoveredSelectable { get; private set; }
-
-    /// <summary>The cursor's current world position (screen-space for Overlay canvases).</summary>
     public static Vector3 CursorWorldPosition { get; private set; }
 
-    /// <summary>When true, the cursor will not clear the EventSystem selection.
-    /// Used by menus that manage their own D-pad navigation.</summary>
+    // When true, won't clear EventSystem selection (for menus with own D-pad nav).
     public static bool PreserveSelection { get; set; }
-
-    /// <summary>True when the mouse is the active input mode.</summary>
     public static bool IsMouseMode { get; set; }
 
-    /// <summary>Frames remaining to ignore mouse position changes (e.g. after resolution switch).</summary>
     private static int _ignoreMouseFrames;
 
-    /// <summary>Call after a resolution or display-mode change to prevent the cursor
-    /// from snapping to center when Unity resets Input.mousePosition.</summary>
+    // Call after resolution/display-mode change to prevent cursor snap.
     public static void SuppressMouseSwitch(int frames = 3)
     {
         _ignoreMouseFrames = frames;

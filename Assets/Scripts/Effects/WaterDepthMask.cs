@@ -1,11 +1,6 @@
 using UnityEngine;
 
-/// <summary>
-/// Attach to any GameObject with a ParticleSystem (e.g. "Water Particles").
-/// At runtime, creates an invisible depth-writing quad behind the particles
-/// so opaque objects (like the player) don't show through.
-/// Requires the "DepthMask" material at Resources or a direct reference.
-/// </summary>
+// Creates a depth-writing quad behind particles to occlude objects behind them.
 [RequireComponent(typeof(ParticleSystem))]
 public class WaterDepthMask : MonoBehaviour
 {
@@ -28,7 +23,6 @@ public class WaterDepthMask : MonoBehaviour
         CreateMask();
     }
 
-    /// <summary>Creates the depth-writing quad as a child of this transform.</summary>
     private void CreateMask()
     {
         if (depthMaskMaterial == null)
@@ -71,7 +65,6 @@ public class WaterDepthMask : MonoBehaviour
         }
     }
 
-    /// <summary>Attempts to find the DepthMask material by searching loaded materials.</summary>
     private static Material FindDepthMaskMaterial()
     {
         Shader shader = Shader.Find("Custom/DepthMask");

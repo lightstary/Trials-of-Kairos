@@ -3,15 +3,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// One-time modal popup that warns the player about death tiles in the Garden level.
-/// Triggers on the first forward move (W / left-stick up) and pauses gameplay
-/// until dismissed, following the same modal pattern as <see cref="BossIntroModal"/>.
-/// Attach this component to any GameObject in the Garden scene.
-/// </summary>
+// One-time warning popup for death tiles in the Garden level.
 public class DeathTileTutorial : MonoBehaviour
 {
-    /// <summary>True while the modal is displayed. Blocks pause menu.</summary>
     public static bool IsOpen { get; private set; }
 
     // ── Visual constants (matches BossIntroModal style with red accent) ──

@@ -1,25 +1,12 @@
 using UnityEngine;
 
-/// <summary>
-/// Spawns a slow, dramatic sand disintegration effect — particles gently
-/// peel away from the player's body over time, drifting upward and sideways
-/// like the character is crumbling into sand grains.
-/// Uses unscaled time so particles keep flowing through Time.timeScale = 0
-/// (allowing them to animate into the death/lose screen).
-/// Self-destructs after the effect finishes.
-/// </summary>
+// Sand disintegration particle effect. Uses unscaled time. Self-destructs when done.
 public class SandDisintegrationEffect : MonoBehaviour
 {
-    /// <summary>Total emission window — particles stream out over this duration.</summary>
     private const float EMIT_DURATION = 1.8f;
-
-    /// <summary>How long each particle lives after being emitted.</summary>
     private const float PARTICLE_LIFETIME = 2.5f;
-
-    /// <summary>Total particles emitted across the full duration.</summary>
     private const int TOTAL_PARTICLES = 600;
 
-    /// <summary>Spawns the disintegration effect at the given world position and bounds.</summary>
     public static SandDisintegrationEffect Spawn(Vector3 position, Vector3 size)
     {
         GameObject go = new GameObject("SandDisintegration");
@@ -29,7 +16,6 @@ public class SandDisintegrationEffect : MonoBehaviour
         return effect;
     }
 
-    /// <summary>Destroys all active disintegration effects in the scene.</summary>
     public static void DestroyAll()
     {
         SandDisintegrationEffect[] effects = FindObjectsOfType<SandDisintegrationEffect>();
@@ -46,16 +32,16 @@ public class SandDisintegrationEffect : MonoBehaviour
         ParticleSystem ps = gameObject.AddComponent<ParticleSystem>();
         ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
 
-        // ── Main module ─────────────────────────────────────────────────
+        // ── Main module ──
         var main = ps.main;
         main.duration = EMIT_DURATION;
         main.loop = false;
         main.playOnAwake = false;
-        main.useUnscaledTime = true; // Keep animating through timeScale = 0
+        main.useUnscaledTime = true;
         main.startLifetime = new ParticleSystem.MinMaxCurve(PARTICLE_LIFETIME * 0.7f, PARTICLE_LIFETIME);
         main.startSpeed = new ParticleSystem.MinMaxCurve(0.1f, 0.6f);
         main.startSize = new ParticleSystem.MinMaxCurve(0.015f, 0.055f);
-        main.gravityModifier = -0.15f; // Slight upward float
+        main.gravityModifier = -0.15f;
         main.simulationSpace = ParticleSystemSimulationSpace.World;
         main.maxParticles = TOTAL_PARTICLES + 50;
 
@@ -64,7 +50,7 @@ public class SandDisintegrationEffect : MonoBehaviour
         Color sandLight = new Color(0.95f, 0.85f, 0.55f, 1f);
         main.startColor = new ParticleSystem.MinMaxGradient(sandDark, sandLight);
 
-        // ── Emission: ramp up over time (slow start -> crescendo) ───────
+        // ── Emission ──
         var emission = ps.emission;
         emission.enabled = true;
 
@@ -78,13 +64,13 @@ public class SandDisintegrationEffect : MonoBehaviour
         float peakRate = TOTAL_PARTICLES / EMIT_DURATION;
         emission.rateOverTime = new ParticleSystem.MinMaxCurve(peakRate, emitCurve);
 
-        // ── Shape: emit from the player's full volume ───────────────────
+        // ── Shape ──
         var shape = ps.shape;
         shape.enabled = true;
         shape.shapeType = ParticleSystemShapeType.Box;
         shape.scale = size;
 
-        // ── Velocity: gentle drift to one side + upward ─────────────────
+        // ── Velocity ──
         var vel = ps.velocityOverLifetime;
         vel.enabled = true;
 
@@ -106,7 +92,7 @@ public class SandDisintegrationEffect : MonoBehaviour
         swayCurve.AddKey(1f, -0.1f);
         vel.z = new ParticleSystem.MinMaxCurve(0.5f, swayCurve);
 
-        // ── Size over lifetime: hold then slowly shrink ─────────────────
+        // ── Size over lifetime ──
         var sizeOverLife = ps.sizeOverLifetime;
         sizeOverLife.enabled = true;
         AnimationCurve shrinkCurve = new AnimationCurve();
@@ -116,7 +102,7 @@ public class SandDisintegrationEffect : MonoBehaviour
         shrinkCurve.AddKey(1f, 0f);
         sizeOverLife.size = new ParticleSystem.MinMaxCurve(1f, shrinkCurve);
 
-        // ── Color over lifetime: hold opaque then fade gently ───────────
+        // ── Color over lifetime ──
         var colorOverLife = ps.colorOverLifetime;
         colorOverLife.enabled = true;
         Gradient fadeGradient = new Gradient();
@@ -136,7 +122,7 @@ public class SandDisintegrationEffect : MonoBehaviour
         );
         colorOverLife.color = new ParticleSystem.MinMaxGradient(fadeGradient);
 
-        // ── Noise: slow organic turbulence for that drifting feel ────────
+        // ── Noise ──
         var noise = ps.noise;
         noise.enabled = true;
         noise.strength = 0.4f;
@@ -145,7 +131,7 @@ public class SandDisintegrationEffect : MonoBehaviour
         noise.damping = true;
         noise.octaveCount = 3;
 
-        // ── Renderer ────────────────────────────────────────────────────
+        // ── Renderer ──
         ParticleSystemRenderer psr = GetComponent<ParticleSystemRenderer>();
         psr.renderMode = ParticleSystemRenderMode.Billboard;
         Material mat = new Material(Shader.Find("Particles/Standard Unlit"));

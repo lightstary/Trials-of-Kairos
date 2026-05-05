@@ -2,10 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// Builds the full Options menu UI at runtime with three tabs: GAME, AUDIO, VIDEO.
-/// Matches the project's dark-blue/gold visual style.
-/// </summary>
+// Builds the Options menu UI at runtime with GAME, AUDIO, VIDEO tabs.
 public static class OptionsMenuBuilder
 {
     // ── Colors (matching HubPauseMenuBuilder palette) ────────────────────

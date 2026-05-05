@@ -2,11 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// Central broadcaster for time-state color changes.
-/// Applies a barely-visible flat color wash over the entire screen via a UI Image.
-/// No shader, no gradient — just a uniform tint at very low alpha.
-/// </summary>
+// Broadcasts time-state color changes and applies a subtle screen tint.
 public class TimeStateUIManager : MonoBehaviour
 {
     public static TimeStateUIManager Instance { get; private set; }

@@ -4,19 +4,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 
-/// <summary>
-/// Manages the trial selection screen with controller-first navigation:
-///   - LB/RB (bumpers) or Left/Right arrows to browse trial cards
-///   - D-pad horizontal also navigates with repeat delay
-///   - A / Space to confirm the currently browsed node
-///   - Two-phase selection: browse -> A confirm -> Enter Trial activates
-///   - LB/RB hint pills flanking the card row, gold-flash on press
-///   - Sand/dust particle background via MenuParticlesController
-///   - MainMenuAtmosphere for rotating squares + grain
-///
-/// Attach to the TrialSelectScreen GameObject. Integrates with the
-/// existing hierarchy (TrialGrid, BackButton) and MainMenuController.
-/// </summary>
+// Trial selection screen with controller-first navigation (LB/RB browse, A confirm).
 public class TrialSelectController : MonoBehaviour
 {
     [Header("References (auto-discovered if null)")]

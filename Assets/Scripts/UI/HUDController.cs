@@ -5,13 +5,9 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 
-/// <summary>
-/// Controls the in-game HUD: time-state indicator, objective panel,
-/// TimeScale meter, area title, and pause button.
-/// </summary>
+// In-game HUD: time-state indicator, objective panel, TimeScale meter, area title, pause.
 public class HUDController : MonoBehaviour
 {
-    /// <summary>Singleton for easy access from BossFight and other systems.</summary>
     public static HUDController Instance { get; private set; }
 
     [Header("Time State Indicator")]

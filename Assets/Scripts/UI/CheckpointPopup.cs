@@ -3,11 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// Shows a "CHECKPOINT REACHED" text popup that fades in and out.
-/// Uses unscaled time so it works even if time is paused.
-/// Singleton — attach to the GameCanvas.
-/// </summary>
+// "CHECKPOINT REACHED" popup that fades in/out. Uses unscaled time.
 public class CheckpointPopup : MonoBehaviour
 {
     public static CheckpointPopup Instance { get; private set; }

@@ -4,10 +4,7 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 
-/// <summary>
-/// Game Over screen — mirrors the WinScreen layout with a red/danger theme.
-/// Builds its own UI at runtime under this RectTransform for consistent layout.
-/// </summary>
+// Game Over screen with red/danger theme. Builds its own UI at runtime.
 public class GameOverScreenController : MonoBehaviour
 {
     [Header("Config")]
@@ -77,10 +74,8 @@ public class GameOverScreenController : MonoBehaviour
     private Image           _overlay;
     private bool            _built;
 
-    /// <summary>True while the game over screen is visible.</summary>
     public static bool IsOpen { get; private set; }
 
-    /// <summary>Shows the game over screen.</summary>
     public void Show(string customSubtitle = null)
     {
         gameObject.SetActive(true);
@@ -314,7 +309,6 @@ public class GameOverScreenController : MonoBehaviour
 
     private static float EaseOutCubic(float t) => 1f - Mathf.Pow(1f - t, 3f);
 
-    /// <summary>Red overlay: smooth ease-in, then gentle breathing pulse.</summary>
     private IEnumerator AnimateOverlay()
     {
         if (_overlay == null) yield break;
@@ -346,7 +340,7 @@ public class GameOverScreenController : MonoBehaviour
     //  HIDE GAMEPLAY UI
     // ================================================================
 
-    /// <summary>Forcefully hides ALL gameplay UI so nothing bleeds through.</summary>
+    // Hides all gameplay UI so nothing bleeds through.
     private void HideGameplayUI()
     {
         HUDController hud = HUDController.Instance;
@@ -380,7 +374,6 @@ public class GameOverScreenController : MonoBehaviour
     //  BUTTONS
     // ================================================================
 
-    /// <summary>Restarts the current level with a quick transition.</summary>
     private void RetryTrial()
     {
         IsOpen = false;
@@ -396,7 +389,6 @@ public class GameOverScreenController : MonoBehaviour
         }));
     }
 
-    /// <summary>Returns to trial selection with dissolve + shimmer transition.</summary>
     private void ReturnToHub()
     {
         IsOpen = false;
@@ -413,7 +405,6 @@ public class GameOverScreenController : MonoBehaviour
 
     private const float EXIT_PANEL_DUR = 0.25f;
 
-    /// <summary>Shrinks + fades the panel, then runs a cosmic fade before executing the callback.</summary>
     private IEnumerator ExitThenTransition(System.Action callback)
     {
         foreach (Button btn in _panel.GetComponentsInChildren<Button>())

@@ -1,9 +1,6 @@
 using UnityEngine;
 
-/// <summary>
-/// Kills the player when a pendulum physically collides with the hourglass.
-/// Attach to the player GameObject. Pendulums must be tagged "Pendulum".
-/// </summary>
+// Kills the player on pendulum collision. Pendulums must be tagged "Pendulum".
 public class PendulumCollision : MonoBehaviour
 {
     private FallDetection fallDetection;

@@ -1,10 +1,6 @@
 using UnityEngine;
 
-/// <summary>
-/// Configures the renderer's material as a soft glowing orb using the Standard
-/// shader in Fade mode with high emission. Adds gentle orbiting, vertical bobbing,
-/// and slow rotation for a living, ambient feel. Stays outside the play corridor.
-/// </summary>
+// Glowing orb with orbit/bob/rotation. Stays outside the play corridor.
 [RequireComponent(typeof(MeshRenderer))]
 public class GlowOrbSetup : MonoBehaviour
 {
@@ -51,7 +47,6 @@ public class GlowOrbSetup : MonoBehaviour
         InitMovement();
     }
 
-    /// <summary>Initialises per-instance randomised movement parameters.</summary>
     private void InitMovement()
     {
         _homePos = transform.position;
@@ -92,7 +87,6 @@ public class GlowOrbSetup : MonoBehaviour
         }
     }
 
-    /// <summary>Pushes the position outside the tile corridor so orbs never overlap gameplay.</summary>
     private static Vector3 ClampOutsideCorridor(Vector3 pos)
     {
         bool inCorridorZ = pos.z > CORRIDOR_Z_MIN && pos.z < CORRIDOR_Z_MAX;
@@ -120,7 +114,6 @@ public class GlowOrbSetup : MonoBehaviour
         return pos;
     }
 
-    /// <summary>Creates and applies a glowing transparent material to this orb.</summary>
     private void ApplyGlowMaterial()
     {
         MeshRenderer rend = GetComponent<MeshRenderer>();

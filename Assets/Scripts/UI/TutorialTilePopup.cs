@@ -3,10 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// Shows an in-game tutorial message when the player steps on a color-coded tile.
-/// Only one popup is visible at a time — a new trigger dismisses the previous one cleanly.
-/// </summary>
+// In-game tutorial popup when stepping on a color-coded tile. One visible at a time.
 public class TutorialTilePopup : MonoBehaviour
 {
     public enum TileType { Forward, Frozen, Reverse }

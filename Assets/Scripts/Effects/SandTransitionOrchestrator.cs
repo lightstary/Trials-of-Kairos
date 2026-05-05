@@ -3,17 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// Dissolves scene elements into sand grains before a scene transition.
-/// Auto-detects whether the current view is a UI screen (trial select,
-/// main menu) or a 3D level and dissolves elements accordingly.
-///
-/// For UI: spawns small amber-colored Image "grains" within the canvas
-/// that drift upward and fade — matching the player death sand palette.
-///
-/// For 3D: uses <see cref="SandDisintegrationEffect"/> on world objects
-/// (player, tiles, decorations) in a staggered sequence.
-/// </summary>
+// Dissolves scene elements into sand grains before a scene transition.
+// Detects whether we're on a UI screen or in a 3D level and handles both.
 public class SandTransitionOrchestrator : MonoBehaviour
 {
     // Sand colors matching SandDisintegrationEffect
@@ -40,18 +31,14 @@ public class SandTransitionOrchestrator : MonoBehaviour
         "TrialSelectScreen", "MainMenu"
     };
 
-    /// <summary>
-    /// Runs the full dissolve sequence.
-    /// If a full-screen UI panel is active (trial select, main menu), dissolve
-    /// just that panel. Otherwise dissolve the HUD and 3D scene objects.
-    /// </summary>
+    /// <summary>Runs the full dissolve sequence.</summary>
     public IEnumerator RunDissolve()
     {
         RectTransform fullscreenPanel = FindFullscreenPanel();
 
         if (fullscreenPanel != null)
         {
-            // Menu/selection screen covers the view — dissolve it, skip 3D
+            // Menu screen — dissolve it, skip 3D
             yield return DissolveUIPanel(fullscreenPanel);
         }
         else
@@ -67,8 +54,7 @@ public class SandTransitionOrchestrator : MonoBehaviour
     // ════════════════════════════════════════════════════════════════════
 
     /// <summary>
-    /// Looks for a known full-screen UI panel that's active and visible.
-    /// Returns null if none found (we're in gameplay, not a menu).
+    /// Looks for a known full-screen UI panel that's active.
     /// </summary>
     private RectTransform FindFullscreenPanel()
     {
@@ -89,10 +75,7 @@ public class SandTransitionOrchestrator : MonoBehaviour
         return null;
     }
 
-    /// <summary>
-    /// Dissolves HUD elements (time scale bar, objective text, etc.)
-    /// that sit under overlay canvases during gameplay.
-    /// </summary>
+    /// <summary>Dissolves HUD elements during gameplay.</summary>
     private IEnumerator DissolveHUD()
     {
         Canvas[] canvases = FindObjectsOfType<Canvas>();
@@ -139,11 +122,7 @@ public class SandTransitionOrchestrator : MonoBehaviour
             yield return c;
     }
 
-    /// <summary>
-    /// Dissolves all visible elements within a UI panel into sand grains.
-    /// Elements dissolve sorted smallest-first so peripheral UI (hints,
-    /// dividers) goes before cards, and titles go last.
-    /// </summary>
+    // Dissolves visible elements in a UI panel, smallest-first.
     private IEnumerator DissolveUIPanel(RectTransform panel)
     {
         // Create a container for grains that renders above all elements
@@ -178,10 +157,7 @@ public class SandTransitionOrchestrator : MonoBehaviour
         Destroy(containerGO);
     }
 
-    /// <summary>
-    /// Dissolves a single UI element: fades it out while spawning amber
-    /// sand grains that drift upward from its position.
-    /// </summary>
+    // Fades a single UI element out while spawning sand grains from its position.
     private IEnumerator DissolveUIElement(RectTransform element, RectTransform grainContainer)
     {
         if (element == null) yield break;
@@ -301,11 +277,7 @@ public class SandTransitionOrchestrator : MonoBehaviour
     //  3D SCENE DISSOLVE
     // ════════════════════════════════════════════════════════════════════
 
-    /// <summary>
-    /// Dissolves 3D scene objects: player first, then tiles in a wave
-    /// outward from the player, then decorations and remaining geometry.
-    /// Covers all level layouts (Hub, Garden, Citadel, Clock).
-    /// </summary>
+    // Dissolves 3D scene objects: player first, then tiles outward, then decorations.
     private IEnumerator DissolveSceneObjects()
     {
         Vector3 waveOrigin = Vector3.zero;
@@ -316,8 +288,7 @@ public class SandTransitionOrchestrator : MonoBehaviour
         {
             waveOrigin = player.transform.position;
 
-            // Disable FallDetection and PlayerMovement before shrinking so they
-            // don't trigger death sounds or game-over sequences.
+            // Disable fall/movement before shrinking to avoid triggering death
             FallDetection fallDetection = player.GetComponent<FallDetection>();
             if (fallDetection != null) fallDetection.enabled = false;
             PlayerMovement movement = player.GetComponent<PlayerMovement>();
@@ -364,11 +335,7 @@ public class SandTransitionOrchestrator : MonoBehaviour
         yield return new WaitForSecondsRealtime(0.4f);
     }
 
-    /// <summary>
-    /// Dissolves children of a named root GameObject in a wave pattern,
-    /// sorted by distance from the origin. Each child shrinks to zero
-    /// with a small sand burst.
-    /// </summary>
+    // Dissolves children in a wave sorted by distance from origin.
     private IEnumerator DissolveGroupWave(string rootName, Vector3 origin, float stagger)
     {
         GameObject root = GameObject.Find(rootName);
@@ -413,10 +380,7 @@ public class SandTransitionOrchestrator : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Immediately hides all children of a named root (no animation).
-    /// Used for minor geometry that doesn't need a fancy dissolve.
-    /// </summary>
+    // Immediately hides all children of a named root (no animation).
     private void DissolveGroupImmediate(string rootName)
     {
         GameObject root = GameObject.Find(rootName);
@@ -424,10 +388,7 @@ public class SandTransitionOrchestrator : MonoBehaviour
         root.SetActive(false);
     }
 
-    /// <summary>
-    /// Hides any remaining visible renderers (goal tiles, checkpoints, etc.)
-    /// that weren't covered by the specific group dissolves.
-    /// </summary>
+    // Hides any remaining visible renderers not covered by group dissolves.
     private void DissolveRemainingVisible()
     {
         string[] skipNames =
@@ -461,11 +422,7 @@ public class SandTransitionOrchestrator : MonoBehaviour
     //  HELPERS
     // ════════════════════════════════════════════════════════════════════
 
-    /// <summary>
-    /// Collects all dissolvable UI elements under a panel.
-    /// Recurses into layout groups (TrialGrid) to get individual cards.
-    /// Skips the grain container and any inactive elements.
-    /// </summary>
+    // Collects dissolvable UI elements. Recurses into layout groups to get individual cards.
     private List<RectTransform> CollectUIElements(RectTransform panel, Transform grainContainer)
     {
         List<RectTransform> result = new List<RectTransform>();
@@ -485,11 +442,8 @@ public class SandTransitionOrchestrator : MonoBehaviour
             RectTransform rt = child as RectTransform;
             if (rt == null) continue;
 
-            // If this is a pure layout container (has LayoutGroup but no Graphic
-            // of its own, like TrialGrid), recurse into it to dissolve individual
-            // items. If it has BOTH a LayoutGroup and a Graphic (like BackButton
-            // which gets a HorizontalLayoutGroup at runtime for icon+label), treat
-            // it as a single dissolvable element instead.
+            // Pure layout container (no graphic of its own) — recurse into children.
+            // If it has BOTH a LayoutGroup and a Graphic, treat as a single element.
             LayoutGroup layout = rt.GetComponent<LayoutGroup>();
             if (layout != null && rt.GetComponent<Graphic>() == null)
             {
@@ -497,7 +451,7 @@ public class SandTransitionOrchestrator : MonoBehaviour
                 continue;
             }
 
-            // Only dissolve elements that have visible graphics
+            // Only dissolve elements with visible graphics
             Graphic graphic = rt.GetComponent<Graphic>();
             bool hasVisibleChild = rt.GetComponentInChildren<Graphic>() != null;
             if (graphic != null || hasVisibleChild)
@@ -505,7 +459,6 @@ public class SandTransitionOrchestrator : MonoBehaviour
         }
     }
 
-    /// <summary>Returns the world-space area of a RectTransform.</summary>
     private float GetWorldArea(RectTransform rt)
     {
         float w = rt.rect.width  * rt.lossyScale.x;
@@ -513,7 +466,6 @@ public class SandTransitionOrchestrator : MonoBehaviour
         return w * h;
     }
 
-    /// <summary>Returns the bounds size of a 3D object.</summary>
     private Vector3 GetObjectBoundsSize(GameObject go)
     {
         Renderer rend = go.GetComponentInChildren<Renderer>();
@@ -521,7 +473,6 @@ public class SandTransitionOrchestrator : MonoBehaviour
         return go.transform.localScale;
     }
 
-    /// <summary>Smoothly shrinks a transform to zero and deactivates it.</summary>
     private IEnumerator ShrinkAndHide(Transform target, float duration)
     {
         if (target == null) yield break;

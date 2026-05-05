@@ -1,11 +1,7 @@
 using UnityEngine;
 using TMPro;
 
-/// <summary>
-/// ScriptableObject that holds references to all runtime UI assets (fonts, icons).
-/// Lives in Assets/Resources/ so it can be loaded via Resources.Load in builds.
-/// This ensures all referenced assets are included in the build.
-/// </summary>
+// Runtime UI asset references (fonts, icons). Lives in Resources/ so it's always included in builds.
 [CreateAssetMenu(fileName = "GameAssets", menuName = "Trials of Kairos/Game Assets")]
 public class GameAssets : ScriptableObject
 {
@@ -32,9 +28,6 @@ public class GameAssets : ScriptableObject
     public Sprite iconMouse;
     public Sprite iconMouseLeft;
 
-    /// <summary>
-    /// Loads and caches the GameAssets instance from Resources.
-    /// </summary>
     public static GameAssets Instance
     {
         get

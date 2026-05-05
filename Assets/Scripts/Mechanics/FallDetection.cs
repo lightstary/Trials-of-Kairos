@@ -14,7 +14,6 @@ public class FallDetection : MonoBehaviour
     private bool hasCheckpoint = false;
     private float respawnGraceTimer = 0f;
 
-    /// <summary>Number of seconds after respawn where fall checks are skipped.</summary>
     private const float RESPAWN_GRACE_PERIOD = 0.3f;
 
     void Start()
@@ -37,7 +36,6 @@ public class FallDetection : MonoBehaviour
         CheckFall();
     }
 
-    /// <summary>Gentle drift speed toward nearest tile center.</summary>
     private const float CENTER_DRIFT_SPEED = 2f;
 
     void LateUpdate()
@@ -134,7 +132,6 @@ public class FallDetection : MonoBehaviour
         }
     }
 
-    /// <summary>Starts the appropriate fall flow (boss lose or fall modal).</summary>
     private void StartFallFlow()
     {
         if (IsAnyBossActive())
@@ -143,7 +140,6 @@ public class FallDetection : MonoBehaviour
             StartCoroutine(FallWithModal());
     }
 
-    /// <summary>Returns true if at least one point in the array has a tile below it.</summary>
     private bool HasAnySupport(Vector3[] points)
     {
         foreach (Vector3 p in points)
@@ -153,10 +149,7 @@ public class FallDetection : MonoBehaviour
         return false;
     }
 
-    /// <summary>
-    /// Topples the hourglass over the unsupported edge, then triggers the fall flow.
-    /// Pivots around the center-bottom edge of the block (the boundary between the two halves).
-    /// </summary>
+    // Topples over the unsupported edge, pivoting at the center-bottom boundary.
     private IEnumerator ToppleAndFall(Vector3 toppleDir)
     {
         if (isFalling) yield break;
@@ -273,9 +266,7 @@ public class FallDetection : MonoBehaviour
         // isFalling stays true — DoCheckpointRespawn or scene reload clears it
     }
 
-    /// <summary>
-    /// Splits the flat hourglass footprint into two halves with their outward directions.
-    /// </summary>
+    // Splits the flat footprint into two halves with outward directions.
     private void GetFlatHalfPoints(out Vector3[] sideA, out Vector3[] sideB,
                                     out Vector3 dirA, out Vector3 dirB)
     {
@@ -329,7 +320,6 @@ public class FallDetection : MonoBehaviour
         return false;
     }
 
-    /// <summary>Checks whether any boss fight is currently running.</summary>
     private bool IsAnyBossActive()
     {
         if (BossFight.Instance  != null && BossFight.Instance.bossActive)  return true;
@@ -391,9 +381,6 @@ public class FallDetection : MonoBehaviour
         return false;
     }
 
-    /// <summary>
-    /// Checks if the player is currently standing on a tile with a <see cref="DeathTile"/> component.
-    /// </summary>
     private bool IsOnDeathTile()
     {
         Vector3 origin = transform.position;
@@ -455,7 +442,7 @@ public class FallDetection : MonoBehaviour
     //  PENDULUM KILL
     // ════════════════════════════════════════════════════════════════════
 
-    /// <summary>Kills the player when struck by a pendulum. Called by PendulumCollision.</summary>
+    /// <summary>Called by PendulumCollision.</summary>
     public void TriggerPendulumDeath()
     {
         if (isFalling) return;
@@ -516,32 +503,23 @@ public class FallDetection : MonoBehaviour
     //  DISINTEGRATION EFFECT
     // ════════════════════════════════════════════════════════════════════
 
-    /// <summary>Duration before the player model is hidden after particles spawn.</summary>
     private const float DISINTEGRATE_HIDE_DELAY = 0.08f;
-
-    /// <summary>Hold time after disintegration before showing death UI, letting particles breathe.</summary>
     private const float POST_DISINTEGRATE_HOLD = 0.2f;
-
-    /// <summary>Total duration of the shrink-to-nothing dissolve.</summary>
     private const float DISINTEGRATE_SHRINK_DUR = 0.3f;
 
-    /// <summary>
-    /// Runs the sand disintegration visual: spawns particles, then gradually
-    /// shrinks and fades the player model so it dissolves into the particle cloud
-    /// rather than just vanishing.
-    /// </summary>
+    // Spawns sand particles and shrinks the player model into them.
     private IEnumerator PlayDisintegration()
     {
         Vector3 effectSize = transform.lossyScale;
         SandDisintegrationEffect.Spawn(transform.position, effectSize);
 
-        // Cache the original local scale
+        // Cache the original scale
         Vector3 originalScale = transform.localScale;
 
-        // Brief overlap: particles play alongside the full model
+        // Brief overlap before shrinking
         yield return new WaitForSecondsRealtime(DISINTEGRATE_HIDE_DELAY);
 
-        // Gradually shrink the model into the particle cloud
+        // Gradually shrink into the particle cloud
         Renderer[] renderers = GetComponentsInChildren<Renderer>();
         float elapsed = 0f;
 
@@ -549,7 +527,7 @@ public class FallDetection : MonoBehaviour
         {
             elapsed += Time.unscaledDeltaTime;
             float t = Mathf.Clamp01(elapsed / DISINTEGRATE_SHRINK_DUR);
-            // Ease-in: starts slow, accelerates — feels like it's being pulled apart
+            // Ease-in shrink
             float eased = t * t;
             float scale = Mathf.Lerp(1f, 0f, eased);
             transform.localScale = originalScale * scale;
@@ -569,7 +547,7 @@ public class FallDetection : MonoBehaviour
     private Quaternion[] _cachedChildLocalRotations;
     private Transform[] _cachedChildren;
 
-    /// <summary>Caches local transforms of direct children so root motion drift can be undone on respawn.</summary>
+    // Caches child transforms so root motion drift can be undone on respawn.
     private void CacheChildTransforms()
     {
         int count = transform.childCount;
@@ -585,7 +563,7 @@ public class FallDetection : MonoBehaviour
         }
     }
 
-    /// <summary>Restores all player renderers, scale, child transforms, and resets the Animator to its default pose.</summary>
+    // Restores renderers, scale, child transforms, and resets Animator.
     private void RestorePlayerVisuals()
     {
         transform.localScale = _cachedOriginalScale;
@@ -596,19 +574,18 @@ public class FallDetection : MonoBehaviour
             if (r != null) r.enabled = true;
         }
 
-        // Reset the character Animator so bones return to the idle pose
+        // Reset Animator so bones return to idle
         Animator anim = GetComponentInChildren<Animator>(true);
         if (anim != null)
         {
             anim.Rebind();
             anim.Update(0f);
 
-            // Disable root motion so the character model stays centered
-            // inside the hourglass after respawn instead of drifting out
+            // Disable root motion so the model stays centered after respawn
             anim.applyRootMotion = false;
         }
 
-        // Restore child local transforms to undo any root motion drift
+        // Restore child transforms to undo root motion drift
         if (_cachedChildren != null)
         {
             for (int i = 0; i < _cachedChildren.Length; i++)
@@ -626,10 +603,7 @@ public class FallDetection : MonoBehaviour
     //  PUBLIC API — for external death triggers (TimeScaleLogic)
     // ════════════════════════════════════════════════════════════════════
 
-    /// <summary>
-    /// Called by TimeScaleLogic when the player hits +/-10.
-    /// Disintegrates the player, then shows the GameOverScreenController.
-    /// </summary>
+    /// <summary>Called by TimeScaleLogic when the meter hits +/-10.</summary>
     public void TriggerTimelineDeath(string subtitle)
     {
         if (isFalling) return;
@@ -647,7 +621,7 @@ public class FallDetection : MonoBehaviour
 
         yield return StartCoroutine(PlayDisintegration());
 
-        // Brief hold — particles keep drifting into the death screen
+        // Brief hold — let particles drift
         yield return new WaitForSecondsRealtime(POST_DISINTEGRATE_HOLD);
 
         Time.timeScale = 0f;
@@ -673,7 +647,7 @@ public class FallDetection : MonoBehaviour
     //  DEATH TILE KILL (vines)
     // ════════════════════════════════════════════════════════════════════
 
-    /// <summary>Kills the player on a vine/death tile with disintegration and a vine-themed modal.</summary>
+    /// <summary>Kills the player on a vine/death tile.</summary>
     private IEnumerator DeathTileKill()
     {
         if (isFalling) yield break;
@@ -686,7 +660,7 @@ public class FallDetection : MonoBehaviour
 
         yield return StartCoroutine(PlayDisintegration());
 
-        // Let particles drift before the death modal
+        // Let particles drift before the modal
         yield return new WaitForSecondsRealtime(POST_DISINTEGRATE_HOLD);
 
         Time.timeScale = 0f;
@@ -723,10 +697,8 @@ public class FallDetection : MonoBehaviour
     //  NORMAL FALL (off edge, no boss)
     // ════════════════════════════════════════════════════════════════════
 
-    /// <summary>
-    /// Non-boss fall: falls through the ground, then shows the fall modal.
-    /// If no checkpoint has been reached, only "Restart Level" is shown.
-    /// </summary>
+    // Non-boss fall: drops through the ground, then shows FallModal.
+    // If no checkpoint, only "Restart Level" is shown.
     private IEnumerator FallWithModal()
     {
         if (isFalling) yield break;
@@ -773,9 +745,7 @@ public class FallDetection : MonoBehaviour
     //  BOSS FALL (off edge during boss fight)
     // ════════════════════════════════════════════════════════════════════
 
-    /// <summary>
-    /// Boss fight fall: falls through the ground, stops boss, shows game over screen.
-    /// </summary>
+    // Boss fall: drops through the ground, stops boss, shows fail UI.
     private IEnumerator BossFallLose()
     {
         if (isFalling) yield break;
@@ -835,14 +805,13 @@ public class FallDetection : MonoBehaviour
     //  SILENT RESPAWN (boss round failure)
     // ════════════════════════════════════════════════════════════════════
 
-    /// <summary>Instantly respawns at checkpoint without modal (used during boss fights).</summary>
+    /// <summary>Silent respawn (boss round failure).</summary>
     public void RespawnSilent()
     {
         if (isFalling) return;
         StartCoroutine(FallThenRespawn());
     }
 
-    /// <summary>Public respawn for external callers (boss round failure, etc.).</summary>
     public void Respawn()
     {
         if (isFalling) return;
@@ -902,22 +871,21 @@ public class FallDetection : MonoBehaviour
     //  CHECKPOINT / SPAWN
     // ════════════════════════════════════════════════════════════════════
 
-    /// <summary>Teleports the player back to the last checkpoint.</summary>
     private void DoCheckpointRespawn()
     {
-        // Stop any lingering fall/topple coroutines on this component
+        // Stop any lingering coroutines
         StopAllCoroutines();
         isFalling = false;
 
-        // Clean up any leftover disintegration effects and restore visuals
+        // Clean up disintegration effects
         SandDisintegrationEffect.DestroyAll();
         RestorePlayerVisuals();
 
-        // Reset the time scale meter back to 0 on every checkpoint respawn
+        // Reset time scale meter
         if (TimeScaleLogic.Instance != null)
             TimeScaleLogic.Instance.ResetMeter();
 
-        // Clear any residual physics velocity to prevent spazzing on respawn
+        // Clear residual velocity to prevent spazzing on respawn
         Rigidbody rb = GetComponent<Rigidbody>();
         if (rb != null)
         {
@@ -931,16 +899,15 @@ public class FallDetection : MonoBehaviour
         playerMovement.orientation = PlayerMovement.Orientation.Standing;
         playerMovement.ResetMovement();
 
-        // Force physics to recognize the new position before raycasts fire
+        // Force physics sync before raycasts
         Physics.SyncTransforms();
 
-        // Grace period so CheckFall doesn't trigger while physics settles
+        // Grace period so CheckFall doesn't fire while physics settles
         respawnGraceTimer = RESPAWN_GRACE_PERIOD;
 
         SoundManager.Instance?.PlayRespawn();
     }
 
-    /// <summary>Forces the fall state to clear so Respawn() or checkpoint respawn can proceed.</summary>
     public void ForceResetFallState()
     {
         StopAllCoroutines();
@@ -949,13 +916,11 @@ public class FallDetection : MonoBehaviour
         RestorePlayerVisuals();
     }
 
-    /// <summary>Public wrapper around DoCheckpointRespawn for external callers like BossFailUI.</summary>
     public void DoCheckpointRespawnPublic()
     {
         DoCheckpointRespawn();
     }
 
-    /// <summary>Updates the checkpoint spawn position.</summary>
     public void UpdateSpawnPoint(Vector3 newPosition, Quaternion newRotation)
     {
         spawnPosition = new Vector3(
@@ -968,7 +933,6 @@ public class FallDetection : MonoBehaviour
         Debug.Log("Spawn point updated to: " + spawnPosition);
     }
 
-    /// <summary>Reloads the current scene with a quick transition (no dissolve).</summary>
     private static void LoadSceneWithTransition(string sceneName)
     {
         if (ScreenTransitionManager.Instance != null)

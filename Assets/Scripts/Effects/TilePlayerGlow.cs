@@ -2,14 +2,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-/// <summary>
-/// Detects tiles beneath the player during boss fights and creates
-/// visible glowing edge quads that pulse green (safe) or red (danger)
-/// from the outer edges of each tile. Checks XZ overlap between the
-/// player's collider footprint and each tracked boss tile to ensure
-/// only tiles the player is physically on will glow.
-/// Auto-attaches to the Player at runtime.
-/// </summary>
+// Glowing edge quads on boss tiles the player is standing on.
+// Pulses green (safe) or red (danger). Auto-attaches to the Player.
 public class TilePlayerGlow : MonoBehaviour
 {
     private const float GLOW_PULSE_SPEED = 3f;
@@ -19,11 +13,8 @@ public class TilePlayerGlow : MonoBehaviour
     private const float EDGE_THICKNESS = 0.08f;
     private const float TRANSITION_SPEED = 10f;
 
-    /// <summary>How much to shrink the player footprint inward on each side to avoid edge bleed.</summary>
-    private const float FOOTPRINT_SHRINK = 0.35f;
-
-    /// <summary>Max vertical distance between player bottom and tile top to count as "on" it.</summary>
-    private const float Y_TOLERANCE = 1.5f;
+    private const float FOOTPRINT_SHRINK = 0.35f; // shrink inward to avoid edge bleed
+    private const float Y_TOLERANCE = 1.5f; // max vertical gap to count as "on" a tile
 
     private static readonly Color SAFE_COLOR   = new Color(0f, 1f, 0.3f);
     private static readonly Color DANGER_COLOR = new Color(1f, 0.15f, 0f);
@@ -104,7 +95,6 @@ public class TilePlayerGlow : MonoBehaviour
         _tileMaterials.Clear();
     }
 
-    /// <summary>Checks if any boss fight is currently active.</summary>
     private bool IsBossActive()
     {
         if (BossFight.Instance != null && BossFight.Instance.bossActive) return true;
@@ -113,11 +103,7 @@ public class TilePlayerGlow : MonoBehaviour
         return false;
     }
 
-    /// <summary>
-    /// Iterates every tracked boss tile and checks if the player's shrunk
-    /// XZ footprint overlaps with it. No raycasting -- pure geometry check
-    /// that works correctly regardless of player orientation.
-    /// </summary>
+    // XZ footprint overlap check (no raycasting, works regardless of player orientation).
     private HashSet<GameObject> GetTilesPlayerIsOn()
     {
         HashSet<GameObject> tiles = new HashSet<GameObject>();
@@ -159,7 +145,6 @@ public class TilePlayerGlow : MonoBehaviour
         return tiles;
     }
 
-    /// <summary>Returns the tile list from whichever boss fight is active.</summary>
     private List<GameObject> GetAllTrackedTiles()
     {
         if (BossFight.Instance != null && BossFight.Instance.bossActive)
@@ -171,7 +156,6 @@ public class TilePlayerGlow : MonoBehaviour
         return null;
     }
 
-    /// <summary>Creates 4 glowing edge quads on the top surface edges of a tile.</summary>
     private void CreateEdgeGlow(GameObject tile)
     {
         Material mat = CreateGlowMaterial();
@@ -211,7 +195,6 @@ public class TilePlayerGlow : MonoBehaviour
         _glowActive = true;
     }
 
-    /// <summary>Creates a single edge quad with a specific material, oriented face-up.</summary>
     private void CreateEdgeQuad(string name, Material mat, Vector3 worldPos, Vector2 size)
     {
         GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
@@ -232,7 +215,6 @@ public class TilePlayerGlow : MonoBehaviour
         _edgeQuads.Add(quad);
     }
 
-    /// <summary>Pulses all tile glow materials.</summary>
     private void AnimateGlow()
     {
         float pulse = Mathf.Sin(Time.time * GLOW_PULSE_SPEED) * 0.5f + 0.5f;
@@ -260,11 +242,7 @@ public class TilePlayerGlow : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Creates a glow material using the same approach as GlowOrbSetup (Fade mode
-    /// with _ALPHABLEND_ON) to ensure the shader variant is included in builds.
-    /// Uses additive destination blend for the bright glow effect.
-    /// </summary>
+    // Uses Fade mode + additive blend for bright glow. Falls back to Standard shader.
     private Material CreateGlowMaterial()
     {
         Material mat;
@@ -303,7 +281,6 @@ public class TilePlayerGlow : MonoBehaviour
         return mat;
     }
 
-    /// <summary>Checks all active boss fight safe tile lists.</summary>
     private bool IsTileSafe(GameObject tile)
     {
         if (BossFight.Instance != null && BossFight.Instance.bossActive)
@@ -315,7 +292,6 @@ public class TilePlayerGlow : MonoBehaviour
         return false;
     }
 
-    /// <summary>Destroys all glow edge quads and resets state.</summary>
     private void ClearGlow()
     {
         foreach (GameObject quad in _edgeQuads)
@@ -335,7 +311,6 @@ public class TilePlayerGlow : MonoBehaviour
         _glowActive = false;
     }
 
-    /// <summary>Compares two tile sets for equality.</summary>
     private static bool SetsEqual(HashSet<GameObject> a, HashSet<GameObject> b)
     {
         if (a.Count != b.Count) return false;

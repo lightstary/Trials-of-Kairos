@@ -5,19 +5,10 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 
-/// <summary>
-/// Displays the game credits with a staggered sand-grain entrance and
-/// sand-dissolve exit. Builds the entire UI programmatically.
-///
-/// When opened from the main menu: destroys itself and returns to menu.
-/// When opened after the ending cutscene: loads MainScene cleanly.
-/// </summary>
+// Credits screen with sand-grain entrance and dissolve exit.
+// From main menu: returns to menu. After ending cutscene: loads MainScene.
 public class CreditsController : MonoBehaviour
 {
-    /// <summary>
-    /// When true, the credits were opened from the main menu (overlay mode).
-    /// When false, the credits are a standalone screen after the ending cutscene.
-    /// </summary>
     public bool IsOverlay { get; set; } = false;
 
     private CanvasGroup _canvasGroup;

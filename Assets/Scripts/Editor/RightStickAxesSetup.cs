@@ -3,13 +3,9 @@ using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 
-/// <summary>
-/// Ensures the Input System package is installed and Active Input Handling is set to "Both".
-/// Phase 1: If the package is not installed, reverts to Old input (to avoid compile errors)
-///          and starts installing com.unity.inputsystem.
-/// Phase 2: After the package is installed, sets Active Input Handling to "Both" so
-///          Gamepad.current works at runtime alongside legacy Input.
-/// </summary>
+// Ensures Input System package is installed and Active Input Handling is set to "Both".
+// Phase 1: if missing, reverts to Old input and installs com.unity.inputsystem.
+// Phase 2: after installed, sets handling to Both.
 [InitializeOnLoad]
 public static class RightStickAxesSetup
 {
@@ -87,11 +83,7 @@ public static class RightStickAxesSetup
         return false;
     }
 
-    /// <summary>
-    /// Removes any "Submit" Input Manager axis entry that uses "space" as its
-    /// positive button. Keeps Return/Enter and JoystickButton0 bindings intact.
-    /// This prevents Spacebar from acting as UI submit / left-click.
-    /// </summary>
+    // Removes "Submit" axis entries bound to space to prevent spacebar acting as UI submit.
     private static void RemoveSpaceFromSubmitAxis()
     {
         var inputManager = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/InputManager.asset")[0];

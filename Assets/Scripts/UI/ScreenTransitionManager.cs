@@ -4,18 +4,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
-/// <summary>
-/// Manages all screen transitions using a shimmer-wipe that matches
-/// MenuShimmerController exactly: same speed (8s), same band width,
-/// same 25-degree angle, same barely-there alpha.
-///
-/// How it works:
-/// 1. Captures a screenshot of the current scene.
-/// 2. Loads the new scene (or runs a midpoint action).
-/// 3. Displays the screenshot as a full-screen RawImage overlay.
-/// 4. The ShimmerWipe shader slowly dissolves the screenshot from
-///    left to right, revealing the live new scene underneath.
-/// </summary>
+// Screen transitions using a shimmer-wipe that matches MenuShimmerController.
+// Captures a screenshot, loads the new scene, then dissolves the screenshot away.
 public class ScreenTransitionManager : MonoBehaviour
 {
     public static ScreenTransitionManager Instance { get; private set; }

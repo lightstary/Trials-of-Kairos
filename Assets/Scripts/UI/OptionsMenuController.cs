@@ -6,18 +6,11 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 
-/// <summary>
-/// Controls the Options menu: tab switching (click, LB/RB),
-/// slider/toggle interaction with controller hold-A + LS support,
-/// and origin-aware back navigation.
-/// Built at runtime by <see cref="OptionsMenuBuilder"/>.
-/// </summary>
+// Options menu controller: tab switching, slider/toggle interaction, back navigation.
 public class OptionsMenuController : MonoBehaviour
 {
-    /// <summary>Where this screen was opened from.</summary>
     public enum OptionsOrigin { MainMenu, PauseMenu }
 
-    /// <summary>Set before enabling to control where B/back returns to.</summary>
     public OptionsOrigin Origin { get; set; } = OptionsOrigin.MainMenu;
 
     // ── Assigned by OptionsMenuBuilder ───────────────────────────────────

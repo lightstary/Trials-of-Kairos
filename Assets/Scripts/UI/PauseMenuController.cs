@@ -6,10 +6,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Rendering.PostProcessing;
 using TMPro;
 
-/// <summary>
-/// Pause menu with Resume, Restart Trial, How To Play, Controls, Trial Selection, Return to Hub.
-/// Auto-creates itself in any scene that doesn't already have one.
-/// </summary>
+// Pause menu. Auto-creates itself in scenes that don't have one.
 public class PauseMenuController : MonoBehaviour
 {
     [Header("Panel")]

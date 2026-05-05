@@ -5,9 +5,7 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 
-/// <summary>
-/// Endgame screen shown when all trials are complete.
-/// </summary>
+// Endgame screen shown when all trials are complete.
 public class EndgameScreenController : MonoBehaviour
 {
     [Header("Panel")]

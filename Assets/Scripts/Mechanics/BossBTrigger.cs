@@ -19,8 +19,7 @@ public class BossBTrigger : MonoBehaviour
         if (triggered && bossBFight != null && !bossBFight.bossActive)
             triggered = false;
 
-        // Raycast-based detection ensures the boss starts the instant
-        // the player is on the checkpoint tile, even after a teleport/respawn
+    // Raycast detection so the boss starts even after teleport/respawn
         if (triggered) return;
 
         Vector3 rayOrigin = transform.position + Vector3.up * 0.2f;
@@ -36,7 +35,6 @@ public class BossBTrigger : MonoBehaviour
         BossIntroModal.OnPageChanged -= OnTutorialPageChanged;
     }
 
-    /// <summary>Attempts to start the boss intro/fight when the player is detected.</summary>
     private void TryTrigger(GameObject playerObj)
     {
         if (triggered) return;
@@ -66,7 +64,7 @@ public class BossBTrigger : MonoBehaviour
     {
         string[] pages = BossIntroContent.GetPages("THE GARDEN");
 
-        // Make the boss pointer visible on the meter during the tutorial
+        // Show boss pointer on the meter during tutorial
         TimeScaleMeter meter = FindObjectOfType<TimeScaleMeter>();
         if (meter != null)
         {
@@ -75,7 +73,7 @@ public class BossBTrigger : MonoBehaviour
             meter.SetBossPointer(0f, minV, maxV);
         }
 
-        // Listen for page changes to toggle the boss pointer glow
+        // Toggle boss pointer glow based on tutorial page
         BossIntroModal.OnPageChanged += OnTutorialPageChanged;
 
         BossIntroModal.Show(pages, () =>
@@ -91,7 +89,6 @@ public class BossBTrigger : MonoBehaviour
         });
     }
 
-    /// <summary>Shows/hides the boss pointer glow ring based on the current tutorial page.</summary>
     private void OnTutorialPageChanged(int currentPage, int totalPages)
     {
         bool showGlow = currentPage == BossIntroContent.GARDEN_POINTER_GLOW_PAGE;

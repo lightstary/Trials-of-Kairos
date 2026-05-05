@@ -5,24 +5,15 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 
-/// <summary>
-/// Full-screen How To Play tutorial screen with three pages:
-/// Movement, Time States, and Goal. Procedurally built UI using Cinzel font.
-/// Controller-friendly: A = next page, B = back/exit.
-/// Features animated color pulses and smooth page transitions.
-/// </summary>
+// How To Play screen with three pages. Controller-friendly (A=next, B=back).
 public class HowToPlayController : MonoBehaviour
 {
-    /// <summary>Where this screen was opened from.</summary>
     public enum HTPOrigin { HubFirstVisit, PauseMenu }
 
-    /// <summary>Set before Show() to control exit behavior.</summary>
     public HTPOrigin Origin { get; set; } = HTPOrigin.HubFirstVisit;
 
-    /// <summary>True when the screen is currently visible.</summary>
     public bool IsOpen => _root != null && _root.activeSelf;
 
-    /// <summary>Static check for any HowToPlayController instance being open.</summary>
     public static bool IsAnyOpen { get; private set; }
 
     // ── Colors ───────────────────────────────────────────────────────────

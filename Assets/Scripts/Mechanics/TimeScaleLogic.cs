@@ -166,7 +166,6 @@ public class TimeScaleLogic : MonoBehaviour
             failUI.ShowFail();
     }
 
-    /// <summary>Resets time to 0 and clears death state.</summary>
     public void ResetMeter()
     {
         currentValue = 0f;
@@ -174,7 +173,7 @@ public class TimeScaleLogic : MonoBehaviour
         currentThreat = ThreatState.Safe;
     }
 
-    /// <summary>Sets the time scale value directly (used by boss fights to push the meter).</summary>
+    /// <summary>Used by boss fights to push the meter directly.</summary>
     public void SetValue(float value)
     {
         currentValue = Mathf.Clamp(value, minValue, maxValue);

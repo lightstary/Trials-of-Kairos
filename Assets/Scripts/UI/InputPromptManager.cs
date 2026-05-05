@@ -1,23 +1,15 @@
 using UnityEngine;
 using System;
 
-/// <summary>
-/// Detects whether the player is using keyboard/mouse or a controller
-/// and fires an event when the active input device changes.
-/// Auto-creates itself via RuntimeInitializeOnLoadMethod.
-/// </summary>
+// Detects KB/M vs controller input and fires events on change. Auto-creates itself.
 public class InputPromptManager : MonoBehaviour
 {
-    /// <summary>The two supported input modes.</summary>
     public enum InputMode { KeyboardMouse, Controller }
 
-    /// <summary>Fires when the active input device changes.</summary>
     public static event Action<InputMode> OnInputModeChanged;
 
-    /// <summary>The current active input mode.</summary>
     public static InputMode CurrentMode { get; private set; } = InputMode.Controller;
 
-    /// <summary>True when the current input mode is keyboard + mouse.</summary>
     public static bool IsKeyboardMouse => CurrentMode == InputMode.KeyboardMouse;
 
     private static InputPromptManager _instance;

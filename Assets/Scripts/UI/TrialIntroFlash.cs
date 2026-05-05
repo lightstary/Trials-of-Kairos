@@ -4,10 +4,7 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 
-/// <summary>
-/// Shows a brief trial name title card at the start of each level.
-/// Auto-spawns once per scene load and fades in/out cleanly.
-/// </summary>
+// Brief trial name title card shown at the start of each level.
 public class TrialIntroFlash : MonoBehaviour
 {
     private static readonly Color GOLD = new Color(0.961f, 0.784f, 0.259f, 1f);
@@ -18,7 +15,6 @@ public class TrialIntroFlash : MonoBehaviour
     private const float TITLE_SIZE   = 64f;
     private const float CHAR_SPACING = 16f;
 
-    /// <summary>Reference to the active flash instance for dismissal.</summary>
     private static TrialIntroFlash _activeInstance;
 
     private GameObject _overlayGO;

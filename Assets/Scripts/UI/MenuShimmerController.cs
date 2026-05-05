@@ -1,12 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// Diagonal gradient shimmer that sweeps very slowly across the menu.
-/// Exposes static color, intensity and normalized progress so other
-/// systems can react (e.g. rotating squares absorb the color as the
-/// band passes through them).
-/// </summary>
+// Diagonal shimmer sweep across the menu. Exposes static color/intensity/progress
+// so other systems (e.g. rotating squares) can react.
 public class MenuShimmerController : MonoBehaviour
 {
     // ── Palette ──────────────────────────────────────────────────────────────

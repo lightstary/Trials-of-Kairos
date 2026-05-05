@@ -3,11 +3,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
 
-/// <summary>
-/// Displays the current time state (FORWARD / FROZEN / REVERSE)
-/// as a large, color-coded label directly underneath the Time Scale meter.
-/// Present in every gameplay scene (Citadel, Garden, Clock, Hub).
-/// </summary>
+// Time state label (FORWARD / FROZEN / REVERSE) positioned below the meter.
 public class TimeStateLabel : MonoBehaviour
 {
     private static readonly Color FORWARD_COLOR = new Color(0.961f, 0.784f, 0.259f, 1f);
@@ -20,10 +16,7 @@ public class TimeStateLabel : MonoBehaviour
     private TextMeshProUGUI _label;
     private bool _subscribed;
 
-    /// <summary>
-    /// Call this to create the TimeStateLabel. Safe to call multiple times —
-    /// it cleans up any existing instances first.
-    /// </summary>
+    // Safe to call multiple times — cleans up existing instances.
     public static void EnsureExists()
     {
         // Destroy any stale instances

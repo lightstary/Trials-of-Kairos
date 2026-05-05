@@ -22,16 +22,12 @@ public class SoundManager : MonoBehaviour
     private AudioSource sfxSource;
     private AudioSource musicSource;
 
-    /// <summary>Target music volume (master * music setting).</summary>
     private float _targetMusicVolume = 0.5f;
 
-    /// <summary>
-    /// When true, the next SoundManager instance starts music at zero volume
-    /// and fades in. Set by ScreenTransitionManager before loading a scene.
-    /// </summary>
+    // When true, next SoundManager starts music silent and fades in.
+    // Set by ScreenTransitionManager before loading a scene.
     public static bool PendingMusicFadeIn { get; set; }
 
-    /// <summary>Duration for the pending fade-in (matches shimmer sweep).</summary>
     public static float PendingFadeInDuration { get; set; } = 8f;
 
     void Awake()
@@ -105,21 +101,18 @@ public class SoundManager : MonoBehaviour
         musicSource.Stop();
     }
 
-    /// <summary>Fades the music volume out over the given duration.</summary>
     public void FadeMusicOut(float duration)
     {
         StopAllCoroutines();
         StartCoroutine(FadeMusicCoroutine(musicSource.volume, 0f, duration));
     }
 
-    /// <summary>Fades the music volume in from zero to the target level.</summary>
     public void FadeMusicIn(float duration)
     {
         StopAllCoroutines();
         StartCoroutine(FadeMusicCoroutine(0f, _targetMusicVolume, duration));
     }
 
-    /// <summary>Applies volume levels from GameSettings.</summary>
     public void SetVolumes(float master, float music, float sfx)
     {
         _targetMusicVolume = music * master;

@@ -5,9 +5,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Video;
 using TMPro;
 
-/// <summary>
-/// Win screen — animated stat counters, gold radiance, and navigation.
-/// </summary>
+// Win screen with animated stat counters and navigation.
 public class WinScreenController : MonoBehaviour
 {
     [Header("Panel")]

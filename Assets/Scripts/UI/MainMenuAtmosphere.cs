@@ -1,15 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// Provides atmospheric background visuals: two slowly rotating gold squares
-/// and a layer of drifting grain/dust particles with a twinkle effect.
-/// Works in unscaled time so it animates during timeScale = 0 menus.
-///
-/// Add to any UI screen root (MainMenu, TrialSelectScreen, ControlsScreen).
-/// Call DisableSubtitleBreathing() from MainMenuController to prevent
-/// this component from interfering with subtitle fade ownership.
-/// </summary>
+// Atmospheric background: rotating gold squares + drifting grain particles.
+// Uses unscaled time for menus.
 public class MainMenuAtmosphere : MonoBehaviour
 {
     [Header("Rotating Squares")]

@@ -6,19 +6,13 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Video;
 using TMPro;
 
-/// <summary>
-/// In-scene main menu with rotating squares, shimmer tinting, crossfade transitions,
-/// skip-to-gameplay and trial-select-on-load flags, shared dust/shimmer layers.
-/// </summary>
+// Main menu with transitions, skip-to-gameplay, and trial-select-on-load.
 public class MainMenuController : MonoBehaviour
 {
-    /// <summary>Singleton instance for easy access.</summary>
     public static MainMenuController Instance { get; private set; }
 
-    /// <summary>
-    /// When true, MainMenuController skips the main menu and goes directly to gameplay on load.
-    /// Set by TrialSelectController or GoalTile when loading MainScene for the Citadel.
-    /// </summary>
+    // When true, skips the menu and goes straight to gameplay.
+    // Set by TrialSelectController or GoalTile when loading MainScene.
     public static bool SkipMenuOnLoad { get; set; }
 
     [Header("Panels")]

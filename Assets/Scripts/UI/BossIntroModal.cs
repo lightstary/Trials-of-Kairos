@@ -4,23 +4,16 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// A reusable multi-page modal that introduces a boss fight before it starts.
-/// Called by BossArenaEntry when the player reaches the boss trigger tile.
-/// Blocks gameplay and pause input while open.
-/// </summary>
+// Multi-page boss intro modal. Blocks gameplay and pause input while open.
 public class BossIntroModal : MonoBehaviour
 {
     // ── Static state ───────────────────────────────────────────────────
     private static BossIntroModal _instance;
 
-    /// <summary>True while the modal is displayed. Blocks pause menu.</summary>
     public static bool IsOpen { get; private set; }
 
-    /// <summary>Fired on every page change and on dismiss. Args: (currentPage, totalPages). Page -1 means dismissed.</summary>
     public static event Action<int, int> OnPageChanged;
 
-    /// <summary>Current page index (0-based). -1 when closed.</summary>
     public static int CurrentPage => _instance != null && IsOpen ? _instance._currentPage : -1;
 
     // ── Visual constants ───────────────────────────────────────────────

@@ -1,11 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// Spawns and animates canvas-based dust mote particles inside the Main Menu.
-/// Works with Screen Space Overlay — no 3D camera tricks required.
-/// Uses unscaled time so it animates while timeScale = 0.
-/// </summary>
+// Canvas-based dust motes for the main menu. Uses unscaled time.
 public class MenuParticlesController : MonoBehaviour
 {
     private const int   MOTE_COUNT    = 180;

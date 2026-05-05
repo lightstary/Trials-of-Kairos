@@ -6,17 +6,9 @@ using UnityEngine.UI;
 using UnityEngine.Video;
 using TMPro;
 
-/// <summary>
-/// Plays a full-screen video cutscene with hold-to-skip support.
-/// Creates its own Canvas, VideoPlayer, and RawImage overlay at runtime.
-/// Shows the correct input icon (ESC for KB/M, A Xbox for controller)
-/// with a radial fill indicator around the icon while held.
-/// Uses a sand-grain dissolve effect for entrance and exit transitions.
-/// Call Play() with a video clip and a callback for when playback finishes.
-/// </summary>
+// Full-screen video cutscene player with hold-to-skip and sand dissolve transitions.
 public class CutscenePlayer : MonoBehaviour
 {
-    /// <summary>Singleton for easy access. Destroyed after each playback.</summary>
     public static CutscenePlayer Instance { get; private set; }
 
     private VideoPlayer _videoPlayer;
@@ -240,7 +232,6 @@ public class CutscenePlayer : MonoBehaviour
         skipTextLE.preferredHeight = RING_SIZE;
     }
 
-    /// <summary>Updates the skip icon sprite based on the current input mode.</summary>
     private void UpdateSkipIcon()
     {
         if (_iconImage == null) return;
@@ -337,7 +328,6 @@ public class CutscenePlayer : MonoBehaviour
         FinishPlayback();
     }
 
-    /// <summary>Spawns sand grains across the screen for a dissolve transition effect.</summary>
     private void SpawnDissolveGrains(bool isEntrance)
     {
         if (_rootGO == null) return;
@@ -348,7 +338,6 @@ public class CutscenePlayer : MonoBehaviour
         }
     }
 
-    /// <summary>Animates a single sand grain for the dissolve transition.</summary>
     private IEnumerator AnimateGrain(bool isEntrance)
     {
         if (_rootGO == null) yield break;
@@ -446,7 +435,6 @@ public class CutscenePlayer : MonoBehaviour
         }
     }
 
-    /// <summary>Returns true when the skip button is being held.</summary>
     private bool IsSkipHeld()
     {
         // ESC for keyboard, B button (JoystickButton1) for controller

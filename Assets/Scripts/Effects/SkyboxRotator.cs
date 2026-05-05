@@ -1,9 +1,6 @@
 using UnityEngine;
 
-/// <summary>
-/// Slowly rotates the camera to create a dynamic, gently shifting skybox background.
-/// Uses unscaled time so it works even when Time.timeScale is 0 (e.g. in menus).
-/// </summary>
+// Slowly rotates the skybox camera. Uses unscaled time so it works in menus.
 public class SkyboxRotator : MonoBehaviour
 {
     [Tooltip("Rotation speed in degrees per second around the Y axis.")]

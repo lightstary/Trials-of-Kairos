@@ -3,11 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// Controls reference screen with Cinzel font, single centered column,
-/// staggered fade-in per row, and origin-aware back navigation.
-/// Sections: MOVEMENT, TIME MECHANICS, ACTIONS, SYSTEM.
-/// </summary>
+// Controls reference screen with staggered fade-in and origin-aware back navigation.
 public class ControlsScreenController : MonoBehaviour
 {
     [Header("Existing References (auto-discovered if null)")]

@@ -11,8 +11,7 @@ public class PlayerMovement : MonoBehaviour
 
     private const float TILE_TOP       = 0.1f;
 
-    /// <summary>Threshold for analog stick input to register as a directional tap.
-    /// Falls back to 0.5 when the left stick deadzone is lower.</summary>
+    // Analog stick threshold; falls back to 0.5 when deadzone is lower.
     private float AxisThreshold => Mathf.Max(GameSettings.LeftStickDeadzone, 0.25f);
 
     private float prevH = 0f;
@@ -22,9 +21,7 @@ public class PlayerMovement : MonoBehaviour
     private float inputBufferTimer = 0f;
     private Vector3 bufferedInput = Vector3.zero;
 
-    /// <summary>Short grace period after scene load to prevent input during the
-    /// initial transition reveal. Shorter than the full shimmer so the player
-    /// doesn't feel stuck while already seeing their character.</summary>
+    // Short grace period after scene load to block input during the transition reveal.
     private const float SCENE_LOAD_GRACE = 1.5f;
     private float _sceneLoadTimer;
     private bool _wasBlocked;
@@ -49,14 +46,12 @@ public class PlayerMovement : MonoBehaviour
     {
         if (Time.timeScale == 0f) return;
 
-        // Block input for a short grace period at scene start so the
-        // player can't move before the level is visually stable.
+        // Block input briefly at scene start until visuals are stable
         if (_sceneLoadTimer > 0f)
         {
             _sceneLoadTimer -= Time.unscaledDeltaTime;
             _wasBlocked = true;
-            // Drain axis tracking so threshold-crossing doesn't
-            // fire a phantom tap on the first unlocked frame.
+            // Drain axis tracking so threshold-crossing doesn't fire a phantom tap
             prevH = Input.GetAxisRaw("Horizontal");
             prevV = Input.GetAxisRaw("Vertical");
             return;
@@ -94,8 +89,7 @@ public class PlayerMovement : MonoBehaviour
             else if (h >  threshold && prevH <=  threshold) rawIntent = Vector2.right;
         }
 
-        // Always sync axis tracking to prevent the analog threshold-crossing
-        // from re-firing after a GetKeyDown already consumed the input.
+        // Sync axis tracking to prevent re-firing after GetKeyDown
         prevH = h;
         prevV = v;
 
@@ -124,11 +118,7 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Converts a 2D input intent (up/down/left/right) into a world-space
-    /// cardinal direction (Vector3.forward/back/left/right) relative to
-    /// the current gameplay camera's facing direction on the horizontal plane.
-    /// </summary>
+    // Converts 2D input intent to a world-space cardinal direction relative to the camera.
     private Vector3 ResolveCameraRelativeDirection(Vector2 intent)
     {
         Camera cam = Camera.main;
@@ -153,9 +143,7 @@ public class PlayerMovement : MonoBehaviour
         return SnapToCardinal(desiredDir);
     }
 
-    /// <summary>
-    /// Returns the nearest cardinal direction (±X or ±Z) for a given vector.
-    /// </summary>
+    // Snaps to nearest cardinal direction (+-X or +-Z).
     private static Vector3 SnapToCardinal(Vector3 dir)
     {
         if (Mathf.Abs(dir.x) >= Mathf.Abs(dir.z))
@@ -248,7 +236,6 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    /// <summary>Maximum horizontal distance to snap onto a moving tile after a roll.</summary>
     private const float MOVING_TILE_SNAP_RADIUS = 0.75f;
 
     void SnapAfterRoll()
@@ -272,11 +259,10 @@ public class PlayerMovement : MonoBehaviour
         SnapToNearbyMovingTile();
     }
 
-    /// <summary>Finds the closest moving tile within snap range and aligns the player to its center.</summary>
+    // Snap onto nearby moving tile so the player doesn't end up half-on half-off.
     private void SnapToNearbyMovingTile()
     {
-        // Only snap when tiles are actually moving — in Frozen state
-        // the tiles are stationary so snapping would pull the player sideways
+        // Only snap when tiles are moving — in Frozen state they're stationary
         if (TimeState.Instance != null
             && TimeState.Instance.currentState == TimeState.State.Frozen)
             return;

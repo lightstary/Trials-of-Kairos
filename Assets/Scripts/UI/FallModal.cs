@@ -4,11 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// Modal popup shown when the player falls off the map outside of a boss fight.
-/// Offers "Restart from Checkpoint" or "Restart Level" options.
-/// Builds its own UI at runtime on the first Canvas it finds.
-/// </summary>
+// Fall death modal. Offers checkpoint/restart options. Builds its own UI at runtime.
 public class FallModal : MonoBehaviour
 {
     // ── Theme (matches GameOverScreen / WinScreen style) ────────────
@@ -51,12 +47,8 @@ public class FallModal : MonoBehaviour
     private static GameObject _root;
     private static bool _dismissing;
 
-    /// <summary>True while the fall modal is visible.</summary>
     public static bool IsOpen => _root != null;
 
-    /// <summary>
-    /// Shows the fall modal with options based on whether a checkpoint exists.
-    /// </summary>
     public static void Show(bool hasCheckpoint, Action onCheckpoint, Action onRestartLevel,
         string title = null, string message = null)
     {
@@ -164,7 +156,7 @@ public class FallModal : MonoBehaviour
     //  ANIMATIONS
     // ════════════════════════════════════════════════════════════════════
 
-    /// <summary>Layered entrance: dimmer fades first, then panel scales + slides up.</summary>
+    /// <summary>Layered entrance animation.</summary>
     private IEnumerator AnimateIn(Image dimmer, CanvasGroup panelCG, RectTransform panelRT)
     {
         Vector2 panelTarget = panelRT.anchoredPosition;
@@ -214,7 +206,6 @@ public class FallModal : MonoBehaviour
         }
     }
 
-    /// <summary>Smooth exit: panel shrinks + fades, dimmer follows, then cosmic transition.</summary>
     private IEnumerator AnimateOut(Action callback)
     {
         if (_root == null) yield break;
@@ -261,7 +252,6 @@ public class FallModal : MonoBehaviour
     //  DISMISS
     // ════════════════════════════════════════════════════════════════════
 
-    /// <summary>Plays exit animation, then executes the callback.</summary>
     private static void DismissAndExecute(Action callback)
     {
         if (_dismissing) return;

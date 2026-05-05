@@ -4,12 +4,7 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 
-/// <summary>
-/// Boss-fight fail screen with three options:
-///   1. RESPAWN AT CHECKPOINT — teleports player to last checkpoint, resets boss fight
-///   2. RESTART LEVEL — reloads the entire scene from scratch
-///   3. TRIAL SELECTION — returns to the trial selection menu
-/// </summary>
+// Boss-fight fail screen: checkpoint, restart, or trial selection.
 public class BossFailUI : MonoBehaviour
 {
     private static readonly Color OVERLAY_COL = new Color(0f, 0f, 0f, 0.70f);

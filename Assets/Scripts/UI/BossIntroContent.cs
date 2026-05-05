@@ -1,14 +1,8 @@
-/// <summary>
-/// Static content for each boss intro modal.
-/// Each boss gets its own set of pages explaining the mechanic,
-/// objective, and fail conditions.
-/// </summary>
+// Static content for boss intro modals.
 public static class BossIntroContent
 {
-    /// <summary>Page index where the boss pointer glow should appear during Garden tutorial.</summary>
     public const int GARDEN_POINTER_GLOW_PAGE = 1;
 
-    /// <summary>Intro pages for The Citadel (Boss A) -- tile-fall survival.</summary>
     public static readonly string[] Citadel = new string[]
     {
         "<color=#F5C842><size=32>THE CITADEL</size></color>\n\n" +

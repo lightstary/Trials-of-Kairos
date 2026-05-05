@@ -3,13 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// Clock face HUD for Boss C (The Clock). Cosmic-styled circular clock
-/// with procedural particles, asymmetric ring warp, orbiting center motes,
-/// smooth hand, pulsing targets, tutorial integration, full-clock color
-/// state, and dynamic objective updates.
-/// Reads directly from BossCFight — no duplicated gameplay logic.
-/// </summary>
+// Clock face HUD for Boss C. Reads directly from BossCFight.
 public class ClockBossHUD : MonoBehaviour
 {
     // ── Layout ───────────────────────────────────────────────────────────

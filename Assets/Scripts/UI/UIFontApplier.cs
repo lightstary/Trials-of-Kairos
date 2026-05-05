@@ -2,12 +2,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
 
-/// <summary>
-/// Global Cinzel font enforcer. Auto-spawns on application start and applies
-/// Cinzel to every TextMeshProUGUI and TextMeshPro in the scene — both
-/// serialized (Inspector-assigned) and dynamically created components.
-/// Runs on every scene load to catch late additions.
-/// </summary>
+// Global Cinzel font enforcer. Applies to all TMP components on every scene load.
 public class UIFontApplier : MonoBehaviour
 {
     private static UIFontApplier _instance;

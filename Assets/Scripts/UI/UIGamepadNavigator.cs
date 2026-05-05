@@ -2,12 +2,8 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-/// <summary>
-/// D-pad step navigation and A/B button handling for UI menus.
-/// Left stick is NEVER used here — it belongs exclusively to UIStickCursor.
-/// When cursor mode is active (IsStickMode), this script does NOT fire submit/cancel
-/// and does NOT auto-select. The cursor handles its own hover+click.
-/// </summary>
+// D-pad navigation and A/B button handling for UI.
+// Left stick is handled by UIStickCursor, not here.
 public class UIGamepadNavigator : MonoBehaviour
 {
     private const float REPEAT_DELAY    = 0.40f;
@@ -16,10 +12,8 @@ public class UIGamepadNavigator : MonoBehaviour
     private float   _nextMoveTime;
     private Vector2 _lastDir;
 
-    /// <summary>Set by UIStickCursor when it consumes the A press this frame.</summary>
     public static bool AConsumedThisFrame { get; set; }
 
-    /// <summary>When true, this navigator yields ALL input to another handler (e.g., TrialSelectController).</summary>
     public static bool SuppressInput { get; set; }
 
     void Awake()
