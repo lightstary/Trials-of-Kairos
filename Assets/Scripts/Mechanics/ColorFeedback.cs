@@ -1,11 +1,5 @@
 using UnityEngine;
 
-/// <summary>
-/// Smoothly transitions camera background, ambient light, and fog color
-/// based on the current TimeState (Forward / Frozen / Reverse).
-/// Kept very subtle — the edge vignette in TimeStateUIManager is the
-/// primary stance feedback; these world tints are barely perceptible.
-/// </summary>
 public class ColorFeedback : MonoBehaviour
 {
     [Header("Camera Background (subtle shift)")]
@@ -24,7 +18,6 @@ public class ColorFeedback : MonoBehaviour
     public Color reverseFog = new Color(0.07f, 0.03f, 0.09f);
 
     [Header("Transition")]
-    [Tooltip("Duration in seconds for the full color crossfade.")]
     public float transitionDuration = 1.2f;
 
     private Camera _cam;
@@ -55,7 +48,6 @@ public class ColorFeedback : MonoBehaviour
     {
         if (TimeState.Instance == null) return;
 
-        // Late-bind on first frame if TimeState was not ready during OnEnable
         if (!_initialized)
         {
             TimeState.Instance.OnStateChanged -= HandleStateChanged;
@@ -66,8 +58,6 @@ public class ColorFeedback : MonoBehaviour
 
         _fadeTimer += Time.deltaTime;
         float t = Mathf.Clamp01(_fadeTimer / transitionDuration);
-
-        // Smooth ease-in-out (hermite) to match the vignette crossfade feel
         t = t * t * (3f - 2f * t);
 
         if (_cam != null)
@@ -79,20 +69,17 @@ public class ColorFeedback : MonoBehaviour
             RenderSettings.fogColor = Color.Lerp(_fromFog, _toFog, t);
     }
 
-    /// <summary>Called once on the first frame to set colors without a transition.</summary>
     private void SnapToState(TimeState.State state)
     {
         GetTargetColors(state, out _toBg, out _toAmbient, out _toFog);
         _fromBg      = _toBg;
         _fromAmbient = _toAmbient;
         _fromFog     = _toFog;
-        _fadeTimer   = transitionDuration; // already at target
+        _fadeTimer   = transitionDuration;
     }
 
-    /// <summary>Handles state changes — begins a smooth crossfade.</summary>
     private void HandleStateChanged(TimeState.State newState)
     {
-        // Snapshot current interpolated values as the new starting point
         float t = Mathf.Clamp01(_fadeTimer / transitionDuration);
         t = t * t * (3f - 2f * t);
 
@@ -104,7 +91,6 @@ public class ColorFeedback : MonoBehaviour
         _fadeTimer = 0f;
     }
 
-    /// <summary>Maps a time state to its target color set.</summary>
     private void GetTargetColors(TimeState.State state, out Color bg, out Color ambient, out Color fog)
     {
         switch (state)

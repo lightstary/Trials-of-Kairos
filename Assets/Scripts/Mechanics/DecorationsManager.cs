@@ -1,12 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Manages floating decorations with optional orbiting, rotation, and fluid sine-wave
-/// bobbing. Movement direction responds to the player's current TimeState:
-/// forward plays normally, reverse plays backward, frozen stops.
-/// Set orbitRadius and rotateSpeed to 0 for simple float-only behavior.
-/// </summary>
 public class DecorationsManager : MonoBehaviour
 {
     [Header("Decorations List")]
@@ -17,18 +11,13 @@ public class DecorationsManager : MonoBehaviour
     public float floatSpeed = 0.3f;
 
     [Header("Orbit Settings (0 = disabled)")]
-    [Tooltip("Radius of the gentle orbit around each decoration's home position. Set to 0 to disable.")]
     public float orbitRadius = 0f;
-
-    [Tooltip("Base orbit speed multiplier.")]
     public float orbitSpeed = 0f;
 
     [Header("Rotation Settings (0 = disabled)")]
-    [Tooltip("Base rotation speed in degrees per second. Set to 0 to disable.")]
     public float rotateSpeed = 0f;
 
     [Header("Safety (0 = disabled)")]
-    [Tooltip("Minimum horizontal distance from world origin. Set to 0 to disable.")]
     public float minDistanceFromCenter = 0f;
 
     private struct DecorState
@@ -44,8 +33,6 @@ public class DecorationsManager : MonoBehaviour
     }
 
     private DecorState[] _states;
-
-    /// <summary>Internal time accumulator driven by TimeState.</summary>
     private float _simulatedTime;
 
     void Start()
@@ -87,13 +74,11 @@ public class DecorationsManager : MonoBehaviour
             ref DecorState s = ref _states[i];
             float t = _simulatedTime;
 
-            // ── Vertical bobbing (sine wave) ──
             float bobY = Mathf.Sin(t * floatSpeed * s.floatSpeedMul + s.phaseOffset) * floatHeight;
 
             Vector3 newPos = s.homePosition;
             newPos.y += bobY;
 
-            // ── Horizontal orbit (only if enabled) ──
             if (hasOrbit)
             {
                 float orbitAngle = t * orbitSpeed * s.orbitSpeedMul + s.orbitPhase;
@@ -102,7 +87,6 @@ public class DecorationsManager : MonoBehaviour
                 newPos.z += Mathf.Sin(orbitAngle * 0.7f + 1.3f) * r * 0.6f;
             }
 
-            // ── Clamp to minimum distance from play area center (only if enabled) ──
             if (hasClamp)
             {
                 float horizDist = Mathf.Sqrt(newPos.x * newPos.x + newPos.z * newPos.z);
@@ -116,7 +100,6 @@ public class DecorationsManager : MonoBehaviour
 
             allDecor[i].transform.position = newPos;
 
-            // ── Gentle rotation (only if enabled) ──
             if (hasRotation && timeDirection != 0f)
             {
                 float rotDelta = rotateSpeed * s.rotationRate * Time.deltaTime * timeDirection;
@@ -125,10 +108,6 @@ public class DecorationsManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Returns +1 for forward, -1 for reverse, 0 for frozen.
-    /// Falls back to +1 if TimeState is unavailable.
-    /// </summary>
     private float GetTimeDirection()
     {
         if (TimeState.Instance == null) return 1f;

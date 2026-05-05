@@ -1,17 +1,10 @@
 using UnityEngine;
 using UnityEngine.Serialization;
 
-/// <summary>
-/// Global time value that progresses continuously based on player orientation.
-/// Upright = forward, upside down = reverse, flat = frozen at exact current value.
-/// Value progresses at (1 / tickInterval) * rateMultiplier units per second.
-/// Reaching minValue or maxValue triggers a lose condition in all game modes.
-/// </summary>
 public class TimeScaleLogic : MonoBehaviour
 {
     public static TimeScaleLogic Instance;
 
-    /// <summary>Threat level for escalating UI feedback.</summary>
     public enum ThreatState { Safe, Warning, Danger, Fail }
 
     [Header("References")]
@@ -25,7 +18,6 @@ public class TimeScaleLogic : MonoBehaviour
     public float dangerZone = 8f;
 
     [Header("Rate")]
-    [Tooltip("Global rate multiplier (< 1 = slower progression). Applied in all modes.")]
     [FormerlySerializedAs("bossRateMultiplier")]
     public float rateMultiplier = 0.4f;
 
@@ -33,13 +25,8 @@ public class TimeScaleLogic : MonoBehaviour
     private bool isDead = false;
     private ThreatState currentThreat = ThreatState.Safe;
 
-    /// <summary>Current time scale value (continuous float, can be negative).</summary>
     public float CurrentValue => currentValue;
-
-    /// <summary>True when the player has hit a fatal time boundary.</summary>
     public bool IsDead => isDead;
-
-    /// <summary>Current threat level.</summary>
     public ThreatState CurrentThreatState => currentThreat;
 
     void Awake()
@@ -52,19 +39,15 @@ public class TimeScaleLogic : MonoBehaviour
         if (isDead) return;
         if (TimeState.Instance == null) return;
 
-        // Don't tick the meter while the shimmer transition is still revealing
         if (ScreenTransitionManager.Instance != null && ScreenTransitionManager.Instance.IsRevealing) return;
 
         bool bossActive = (BossFight.Instance != null && BossFight.Instance.bossActive)
                        || (BossBFight.Instance != null && BossBFight.Instance.bossActive)
                        || (BossCFight.Instance != null && BossCFight.Instance.bossActive);
 
-        // Don't accrue time until the intro modal has been dismissed (hub only)
         if (!bossActive && TimeScaleIntroModal.IsTimeLocked) return;
 
-        // During Boss B, the boss controls time scale movement directly.
-        // Player's own accrual is paused — opposing/same-direction logic
-        // is handled entirely by BossBFight.UpdateTimeScale().
+        // Boss B controls time scale movement directly — player accrual is paused
         if (BossBFight.Instance != null && BossBFight.Instance.bossActive) return;
 
         float rate = tickInterval > 0f ? (1f / tickInterval) : 1f;
@@ -95,7 +78,6 @@ public class TimeScaleLogic : MonoBehaviour
         UpdateThreatState();
     }
 
-    /// <summary>Evaluates threat level and triggers fail at extremes.</summary>
     private void UpdateThreatState()
     {
         bool bossActive = (BossFight.Instance != null && BossFight.Instance.bossActive)
@@ -131,10 +113,8 @@ public class TimeScaleLogic : MonoBehaviour
         }
     }
 
-    /// <summary>Triggers the lose flow during normal gameplay (no boss active).</summary>
     private void TriggerNormalLose()
     {
-        // Route through FallDetection for the disintegration effect
         FallDetection fd = FindObjectOfType<FallDetection>();
         if (fd != null)
         {
@@ -142,7 +122,6 @@ public class TimeScaleLogic : MonoBehaviour
             return;
         }
 
-        // Fallback: no FallDetection found, show screen directly
         SoundManager sm = FindObjectOfType<SoundManager>();
         if (sm != null) sm.PlayLose();
 
@@ -157,7 +136,6 @@ public class TimeScaleLogic : MonoBehaviour
         Debug.LogWarning("[TimeScaleLogic] GameOverScreenController not found. No lose screen shown.");
     }
 
-    /// <summary>Triggers the boss fight lose flow — shows fail UI with options.</summary>
     private void TriggerBossLose()
     {
         if (BossFight.Instance != null && BossFight.Instance.bossActive)

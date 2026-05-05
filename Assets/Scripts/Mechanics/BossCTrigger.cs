@@ -1,9 +1,5 @@
 using UnityEngine;
 
-/// <summary>
-/// Trigger zone that starts Boss C (The Clock). Shows the boss intro modal
-/// on first entry, then starts the fight directly on subsequent retries.
-/// </summary>
 public class BossCTrigger : MonoBehaviour
 {
     public BossCFight bossCFight;

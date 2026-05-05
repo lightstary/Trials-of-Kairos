@@ -3,13 +3,6 @@ using UnityEngine.UI;
 using System;
 using System.Reflection;
 
-/// <summary>
-/// Over-the-shoulder third-person orbit camera.
-/// Mouse controls yaw/pitch via legacy Input.
-/// Xbox right stick controls yaw/pitch via the new Input System (accessed through
-/// reflection to avoid compile-time dependency on the package).
-/// Camera look is disabled only when menus or pause are open.
-/// </summary>
 public class CameraFollow : MonoBehaviour
 {
     [Header("Target")]
@@ -38,11 +31,10 @@ public class CameraFollow : MonoBehaviour
 
     private const float MOUSE_DEAD_ZONE = 0.02f;
 
-    // ── Reflection cache for Input System Gamepad.current.rightStick ──
     private bool _inputSystemAvailable;
-    private PropertyInfo _gamepadCurrentProp;   // Gamepad.current (static)
-    private PropertyInfo _rightStickProp;       // gamepad.rightStick
-    private MethodInfo _readValueMethod;        // stickControl.ReadValue()
+    private PropertyInfo _gamepadCurrentProp;
+    private PropertyInfo _rightStickProp;
+    private MethodInfo _readValueMethod;
 
     void Start()
     {
@@ -58,11 +50,6 @@ public class CameraFollow : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Attempts to locate InputSystem types via reflection.
-    /// If the package is installed and the backend is active, Gamepad.current
-    /// will return a live device. If not, controller look is gracefully skipped.
-    /// </summary>
     private void InitInputSystemReflection()
     {
         try
@@ -111,9 +98,6 @@ public class CameraFollow : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Reads the right stick value via cached reflection. Returns Vector2.zero on failure.
-    /// </summary>
     private Vector2 ReadRightStick()
     {
         if (!_inputSystemAvailable) return Vector2.zero;
@@ -144,7 +128,6 @@ public class CameraFollow : MonoBehaviour
 
         if (!canLook) return;
 
-        // ── Mouse look (legacy Input) ────────────────────────────────────
         float mx = Input.GetAxisRaw("Mouse X");
         float my = Input.GetAxisRaw("Mouse Y");
         float currentMouseSens = GameSettings.MouseSensitivity;
@@ -155,7 +138,6 @@ public class CameraFollow : MonoBehaviour
             _pitch += my * invertMul * currentMouseSens;
         }
 
-        // ── Controller right stick (Input System via reflection) ─────────
         float stickDead = GameSettings.StickDeadzone;
         float currentStickSens = GameSettings.StickSensitivity;
         Vector2 rs = ReadRightStick();
@@ -200,42 +182,26 @@ public class CameraFollow : MonoBehaviour
         return player.position + lookOffset + offset;
     }
 
-    /// <summary>
-    /// Camera look is blocked by any modal overlay: main menu, pause, tutorials,
-    /// boss intros, fail screens, how-to-play, goal popups, or time-scale intro.
-    /// NOT blocked by Time.timeScale — the game's time-freeze mechanic
-    /// sets timeScale to 0 during normal gameplay.
-    /// </summary>
     private bool IsLookEnabled()
     {
-        // Main menu
         if (MainMenuController.Instance != null
             && MainMenuController.Instance.menuPanel != null
             && MainMenuController.Instance.menuPanel.activeSelf)
             return false;
 
-        // Pause menu
         PauseMenuController pmc = GetPauseMenu();
         if (pmc != null && pmc.IsPaused) return false;
 
-        // Modal popups and tutorials
         if (BossIntroModal.IsOpen) return false;
         if (BossFailUI.IsOpen) return false;
         if (GoalTile.IsOpen) return false;
         if (HowToPlayController.IsAnyOpen) return false;
 
-        // Block look when interactive UI is present (win/gameover/completion screens).
-        // Uses the same Selectable scan as UIStickCursor so behavior is consistent.
         if (HasActiveNonHUDButton()) return false;
 
         return true;
     }
 
-    /// <summary>
-    /// Returns true if any active, interactable Button exists outside the HUD.
-    /// Catches win screens, game over screens, and any other interactive overlay
-    /// without needing a dedicated static flag for each one.
-    /// </summary>
     private static bool HasActiveNonHUDButton()
     {
         var selectables = UnityEngine.UI.Selectable.allSelectablesArray;
@@ -249,7 +215,6 @@ public class CameraFollow : MonoBehaviour
             if (!s.interactable) continue;
             if (!s.gameObject.activeInHierarchy) continue;
 
-            // Exclude HUD buttons
             Transform t = s.transform;
             bool isHud = false;
             while (t != null)

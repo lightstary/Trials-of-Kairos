@@ -2,18 +2,6 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-/// <summary>
-/// Manages the HUB tutorial level. Can build the tile layout either at runtime
-/// or in the Editor via the context menu (right-click component → Build Hub Layout).
-/// Tiles match MainScene setup exactly: scale (1,0.2,1), BoxCollider center=(0,0,0) size=(1,1,1).
-/// Also bootstraps the PauseMenu UI if its references are null (HubScene ships with an empty PauseMenu).
-///
-/// To edit the Hub in the Scene view without Play mode:
-///   1. Right-click this component in the Inspector
-///   2. Choose "Build Hub Layout" to generate all tiles
-///   3. Edit tiles freely (move, delete, change materials)
-///   4. Use "Clear Hub Layout" to remove generated tiles and rebuild fresh
-/// </summary>
 [ExecuteAlways]
 public class HubLevelManager : MonoBehaviour
 {
@@ -38,7 +26,6 @@ public class HubLevelManager : MonoBehaviour
     [Header("Trial Scene")]
     [SerializeField] private string mainTrialScene = "MainScene";
 
-    /// <summary>True when the How To Play screen is showing.</summary>
     public bool IsTutorialOpen => howToPlayScreen != null && howToPlayScreen.IsOpen;
 
     private static readonly Color ACCENT_GOLD    = new Color(0.961f, 0.784f, 0.259f);
@@ -48,7 +35,6 @@ public class HubLevelManager : MonoBehaviour
     private static readonly Color TILE_EDGE_COL  = new Color(0.14f, 0.18f, 0.28f);
     private static readonly Color COSMIC_AMBIENT = new Color(0.04f, 0.05f, 0.08f);
 
-    /// <summary>Singleton for easy access.</summary>
     public static HubLevelManager Instance { get; private set; }
 
     void Awake()
@@ -63,13 +49,10 @@ public class HubLevelManager : MonoBehaviour
 
         LoadRealAssets();
 
-        // Only build tiles at runtime if they don't already exist in the scene
-        // (they were pre-built in edit mode and saved with the scene).
         Transform existingTiles = transform.Find("HubTiles");
         if (existingTiles == null || existingTiles.childCount == 0)
             BuildVisualLayout();
 
-        // Always attach runtime components (gameplay scripts) to existing tiles
         existingTiles = transform.Find("HubTiles");
         if (existingTiles != null)
             AttachRuntimeComponents(existingTiles);
@@ -85,29 +68,21 @@ public class HubLevelManager : MonoBehaviour
             StartCoroutine(ShowTutorialDelayed(1.5f));
     }
 
-    /// <summary>
-    /// Attaches runtime-only components (tutorial triggers, goal tile, moving platform,
-    /// floating orb animation, modal trigger) to pre-built tiles that already exist.
-    /// Called every time the scene enters play mode.
-    /// </summary>
     private void AttachRuntimeComponents(Transform root)
     {
         foreach (Transform child in root)
         {
             string name = child.name;
 
-            // Parse tile position from name: "Tile_X_Z"
             if (name.StartsWith("Tile_"))
             {
                 string[] parts = name.Split('_');
                 if (parts.Length >= 3 && int.TryParse(parts[1], out int x) && int.TryParse(parts[2], out int z))
                 {
-                    // Tutorial triggers — color state section
                     if (x == 0 && z == 9)  AddTutorialTrigger(child.gameObject, TutorialTilePopup.TileType.Reverse);
                     if (x == 0 && z == 10) AddTutorialTrigger(child.gameObject, TutorialTilePopup.TileType.Frozen);
                     if (x == 0 && z == 12) AddTutorialTrigger(child.gameObject, TutorialTilePopup.TileType.Forward);
 
-                    // Goal tile
                     if (x == 0 && z == 35 && child.GetComponent<GoalTile>() == null)
                     {
                         child.gameObject.name = "GoalTile";
@@ -116,7 +91,6 @@ public class HubLevelManager : MonoBehaviour
                 }
             }
 
-            // Moving platform
             if (name == "DemoPlatform" && child.GetComponent<MovingTile>() == null)
             {
                 MovingTile mt = child.gameObject.AddComponent<MovingTile>();
@@ -127,17 +101,14 @@ public class HubLevelManager : MonoBehaviour
                 mt.maxTime = 2f;
             }
 
-            // Floating orbs — add animation component at runtime
             if (name == "CosmicOrb" && child.GetComponent<HubFloatingOrb>() == null)
                 child.gameObject.AddComponent<HubFloatingOrb>();
         }
 
-        // Time Scale intro modal trigger
         Transform existingTrigger = root.Find("TimeScaleIntroTrigger");
         if (existingTrigger == null)
             CreateTimeScaleModalTrigger(root);
 
-        // Player spawn
         if (playerTransform == null)
         {
             GameObject p = GameObject.FindWithTag("Player");
@@ -153,7 +124,6 @@ public class HubLevelManager : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    /// <summary>Builds (or rebuilds) the Hub tile layout in the Editor. Tiles persist in the scene.</summary>
     [ContextMenu("Build Hub Layout")]
     private void EditorBuildLayout()
     {
@@ -169,7 +139,6 @@ public class HubLevelManager : MonoBehaviour
         Debug.Log("[HubLevelManager] Hub layout built. Save the scene to persist changes.");
     }
 
-    /// <summary>Removes all generated hub tiles so you can rebuild fresh.</summary>
     [ContextMenu("Clear Hub Layout")]
     private void EditorClearLayout()
     {
@@ -182,7 +151,6 @@ public class HubLevelManager : MonoBehaviour
     }
 #endif
 
-    /// <summary>Shows the How To Play screen.</summary>
     public void ShowHowToPlay()
     {
         if (howToPlayScreen == null)
@@ -191,7 +159,6 @@ public class HubLevelManager : MonoBehaviour
             howToPlayScreen.Show();
     }
 
-    /// <summary>Loads the main trial scene.</summary>
     public void EnterTrial()
     {
         if (ScreenTransitionManager.Instance != null)
@@ -200,10 +167,8 @@ public class HubLevelManager : MonoBehaviour
             SceneManager.LoadScene(mainTrialScene);
     }
 
-    /// <summary>Checks first visit via PlayerPrefs.</summary>
     public bool IsFirstVisit() => PlayerPrefs.GetInt(FIRST_VISIT_KEY, 1) == 1;
 
-    /// <summary>Marks the hub as visited.</summary>
     public void MarkVisited()
     {
         PlayerPrefs.SetInt(FIRST_VISIT_KEY, 0);
@@ -216,8 +181,6 @@ public class HubLevelManager : MonoBehaviour
         ShowHowToPlay();
         MarkVisited();
     }
-
-    // ── Asset Loading ────────────────────────────────────────────────────
 
     private void LoadRealAssets()
     {
@@ -232,12 +195,9 @@ public class HubLevelManager : MonoBehaviour
         if (darkPlatformMat == null)
             darkPlatformMat = LoadMat("Assets/Zutzuy's Assets/black purple/citadelPlatform.mat");
 
-        // BLUE: Do NOT load from asset — the Zutzuy blue material is too dark/subtle.
-        // Create a guaranteed bright, clearly-blue material for the tutorial tile.
         if (blueGlowMat == null)
             blueGlowMat = MakeTutorialMat(ACCENT_BLUE);
 
-        // Load the REAL tile mesh — TileNew.fbx, same mesh used in MainScene
         if (tileMesh == null)
         {
             GameObject fbx = LoadAsset<GameObject>("Assets/Zutzuy's Assets/TileNew.fbx");
@@ -248,12 +208,11 @@ public class HubLevelManager : MonoBehaviour
             }
         }
 
-        // Fallback materials if loading fails
-        if (basePlatformMat == null) basePlatformMat = MakeFallbackMat(new Color(0.08f, 0.10f, 0.16f));
-        if (goldGlowMat == null)    goldGlowMat = MakeTutorialMat(ACCENT_GOLD);
-        if (purpleGlowMat == null)  purpleGlowMat = MakeTutorialMat(ACCENT_PURPLE);
-        if (goalTileMat == null)    goalTileMat = MakeTutorialMat(GOAL_COLOR);
-        if (darkPlatformMat == null) darkPlatformMat = basePlatformMat;
+        if (basePlatformMat == null)  basePlatformMat = MakeFallbackMat(new Color(0.08f, 0.10f, 0.16f));
+        if (goldGlowMat == null)      goldGlowMat = MakeTutorialMat(ACCENT_GOLD);
+        if (purpleGlowMat == null)    purpleGlowMat = MakeTutorialMat(ACCENT_PURPLE);
+        if (goalTileMat == null)      goalTileMat = MakeTutorialMat(GOAL_COLOR);
+        if (darkPlatformMat == null)  darkPlatformMat = basePlatformMat;
     }
 
     private Material LoadMat(string path)
@@ -303,10 +262,6 @@ public class HubLevelManager : MonoBehaviour
         return m;
     }
 
-    /// <summary>
-    /// Creates a bright, clearly-visible tutorial tile material.
-    /// Uses full color with strong emission so the tile is unmistakably the intended color.
-    /// </summary>
     private Material MakeTutorialMat(Color c)
     {
         Shader shader = Shader.Find("Standard");
@@ -324,33 +279,22 @@ public class HubLevelManager : MonoBehaviour
         return m;
     }
 
-    // ── Level Building ───────────────────────────────────────────────────
-
-    /// <summary>
-    /// Builds the visual layout of the hub: tiles, pillars, orbs.
-    /// Does NOT add runtime gameplay components (those are added by AttachRuntimeComponents).
-    /// Works in both edit mode and play mode.
-    /// </summary>
     private void BuildVisualLayout()
     {
         Transform root = new GameObject("HubTiles").transform;
         root.SetParent(transform);
 
-        // Use a dictionary so each (x, z) position gets exactly ONE tile.
         var tiles = new System.Collections.Generic.Dictionary<(int, int), Material>();
 
-        // ── Spawn Platform (5x5) ──
         for (int x = -2; x <= 2; x++)
             for (int z = -2; z <= 2; z++)
                 tiles[(x, z)] = basePlatformMat;
 
-        // Gold corners (override base)
         tiles[(-2, -2)] = goldGlowMat;
         tiles[( 2, -2)] = goldGlowMat;
         tiles[(-2,  2)] = goldGlowMat;
         tiles[( 2,  2)] = goldGlowMat;
 
-        // ── Corridor (z=3..8) ──
         for (int z = 3; z <= 8; z++)
         {
             tiles[(0, z)] = basePlatformMat;
@@ -359,12 +303,10 @@ public class HubLevelManager : MonoBehaviour
             tiles[( 1, z)] = edgeMat;
         }
 
-        // ── Time States Arena (z=9..16) ──
         for (int x = -3; x <= 3; x++)
             for (int z = 9; z <= 16; z++)
                 tiles[(x, z)] = basePlatformMat;
 
-        // Tutorial tiles
         Material tutGold   = MakeTutorialMat(ACCENT_GOLD);
         Material tutBlue   = MakeTutorialMat(ACCENT_BLUE);
         Material tutPurple = MakeTutorialMat(ACCENT_PURPLE);
@@ -374,12 +316,10 @@ public class HubLevelManager : MonoBehaviour
         tiles[(0, 11)] = tutBlue;
         tiles[(0, 12)] = tutGold;
 
-        // ── Path to Time Scale section (z=17..19) ──
         for (int z = 17; z <= 19; z++)
             for (int x = -1; x <= 1; x++)
                 tiles[(x, z)] = basePlatformMat;
 
-        // ── TIME SCALE TUTORIAL SECTION (z=20..32) ──
         for (int x = -3; x <= 3; x++)
             for (int z = 20; z <= 23; z++)
                 tiles[(x, z)] = basePlatformMat;
@@ -398,15 +338,12 @@ public class HubLevelManager : MonoBehaviour
             for (int x = -1; x <= 1; x++)
                 tiles[(x, z)] = basePlatformMat;
 
-        // ── Path to goal (z=33..34) ──
         for (int z = 33; z <= 34; z++)
             for (int x = -1; x <= 1; x++)
                 tiles[(x, z)] = basePlatformMat;
 
-        // ── Goal tile ──
         tiles[(0, 35)] = goalTileMat;
 
-        // ── Create all tiles (exactly one per position) ──
         foreach (var kvp in tiles)
         {
             int x = kvp.Key.Item1;
@@ -414,10 +351,8 @@ public class HubLevelManager : MonoBehaviour
             CreateTile(root, x, z, kvp.Value);
         }
 
-        // ── Moving demo platform (bridges the gap at z=25, center) ──
         CreateMovingDemoPlatformVisual(root);
 
-        // ── Decorative pillars ──
         MakePillar(root, new Vector3(-4f, 0f, 0f), 0.4f, 4f);
         MakePillar(root, new Vector3(4f, 0f, 0f), 0.4f, 4f);
         MakePillar(root, new Vector3(-5f, 0f, 12.5f), 0.5f, 6f);
@@ -425,7 +360,6 @@ public class HubLevelManager : MonoBehaviour
         MakePillar(root, new Vector3(-5f, 0f, 25f), 0.5f, 6f);
         MakePillar(root, new Vector3(5f, 0f, 25f), 0.5f, 6f);
 
-        // ── Floating orbs (visual only — HubFloatingOrb added at runtime) ──
         MakeOrb(root, new Vector3(-3f, 5f, 6f), 0.3f, ACCENT_GOLD);
         MakeOrb(root, new Vector3(3f, 7f, 10f), 0.25f, ACCENT_BLUE);
         MakeOrb(root, new Vector3(-4f, 6f, 15f), 0.2f, ACCENT_PURPLE);
@@ -434,10 +368,6 @@ public class HubLevelManager : MonoBehaviour
         MakeOrb(root, new Vector3(0f, 8f, 36f), 0.4f, GOAL_COLOR);
     }
 
-    /// <summary>
-    /// Creates a tile matching MainScene setup exactly:
-    /// TileNew.fbx mesh, scale (1,0.2,1), BoxCollider center=(0,0,0) size=(1,1,1), tag=Tile.
-    /// </summary>
     private GameObject CreateTile(Transform parent, int x, int z, Material mat)
     {
         GameObject tile;
@@ -456,18 +386,15 @@ public class HubLevelManager : MonoBehaviour
             tile.name = $"Tile_{x}_{z}";
             Renderer rend = tile.GetComponent<Renderer>();
             if (rend != null && mat != null) rend.material = mat;
-            // Cube already has BoxCollider — remove so we add our own consistently
             BoxCollider existing = tile.GetComponent<BoxCollider>();
             if (existing != null) SafeDestroy(existing);
         }
 
-        // Match MainScene tile transform: scale (1,0.2,1), position at integer coords
         tile.transform.SetParent(parent);
         tile.transform.localPosition = new Vector3(x, 0f, z);
         tile.transform.localScale = new Vector3(1f, 0.2f, 1f);
         tile.transform.localRotation = Quaternion.identity;
 
-        // BoxCollider matching MainScene exactly: center=(0,0,0), size=(1,1,1)
         BoxCollider col = tile.AddComponent<BoxCollider>();
         col.center = Vector3.zero;
         col.size = Vector3.one;
@@ -484,10 +411,6 @@ public class HubLevelManager : MonoBehaviour
         if (field != null) field.SetValue(popup, type);
     }
 
-    /// <summary>
-    /// Creates the visual demo platform tile at z=24. The MovingTile component
-    /// is added at runtime by AttachRuntimeComponents.
-    /// </summary>
     private void CreateMovingDemoPlatformVisual(Transform root)
     {
         Material demoMat = MakeTutorialMat(ACCENT_GOLD);
@@ -495,17 +418,11 @@ public class HubLevelManager : MonoBehaviour
         platform.name = "DemoPlatform";
     }
 
-    /// <summary>
-    /// Creates an invisible trigger at z=16 that shows the TimeScaleIntroModal
-    /// once the player walks past the color-state tutorial tiles.
-    /// Uses proximity detection (no Rigidbody needed).
-    /// </summary>
     private void CreateTimeScaleModalTrigger(Transform root)
     {
         GameObject trigger = new GameObject("TimeScaleIntroTrigger");
         trigger.transform.SetParent(root);
         trigger.transform.localPosition = new Vector3(0f, TILE_TOP + 1.0f, 16f);
-
         trigger.AddComponent<TimeScaleIntroModal>();
     }
 
@@ -544,12 +461,10 @@ public class HubLevelManager : MonoBehaviour
             }
             r.material = m;
         }
-        // HubFloatingOrb animation is added at runtime by AttachRuntimeComponents
         Collider c = o.GetComponent<Collider>();
         if (c != null) SafeDestroy(c);
     }
 
-    /// <summary>Destroys an object safely in both edit mode and play mode.</summary>
     private static void SafeDestroy(Object obj)
     {
         if (Application.isPlaying)
@@ -557,8 +472,6 @@ public class HubLevelManager : MonoBehaviour
         else
             DestroyImmediate(obj);
     }
-
-    // ── Environment ──────────────────────────────────────────────────────
 
     private void SetupEnvironment()
     {
@@ -580,9 +493,6 @@ public class HubLevelManager : MonoBehaviour
         dirLight.shadows = LightShadows.Soft;
     }
 
-    // ── PauseMenu Bootstrap ──────────────────────────────────────────────
-
-    /// <summary>Ensures an AudioListener exists in the scene.</summary>
     private void EnsureAudioListener()
     {
         if (FindObjectOfType<AudioListener>() == null)
@@ -595,7 +505,6 @@ public class HubLevelManager : MonoBehaviour
         }
     }
 
-    /// <summary>Ensures a UIStickCursor exists in the scene (HubScene doesn't have one by default).</summary>
     private void EnsureStickCursor()
     {
         if (FindObjectOfType<UIStickCursor>() != null) return;
@@ -605,11 +514,6 @@ public class HubLevelManager : MonoBehaviour
             es.gameObject.AddComponent<UIStickCursor>();
     }
 
-    /// <summary>
-    /// Creates a TimeScaleMeter in HubScene, matching MainScene's setup.
-    /// Starts HIDDEN — the TimeScaleIntroModal reveals it with a glow
-    /// when the player reaches that part of the tutorial.
-    /// </summary>
     private void EnsureTimeScaleMeter()
     {
         if (FindObjectOfType<TimeScaleMeter>(true) != null) return;
@@ -617,7 +521,6 @@ public class HubLevelManager : MonoBehaviour
         Canvas canvas = FindObjectOfType<Canvas>();
         if (canvas == null) return;
 
-        // Create HUD parent if needed
         Transform hud = canvas.transform.Find("HUD");
         if (hud == null)
         {
@@ -642,18 +545,12 @@ public class HubLevelManager : MonoBehaviour
 
         TimeScaleMeter meter = meterGO.AddComponent<TimeScaleMeter>();
 
-        // Wire into TimeScaleLogic
         if (TimeScaleLogic.Instance != null)
             TimeScaleLogic.Instance.meter = meter;
 
-        // Start hidden — TimeScaleIntroModal will reveal it
         meterGO.SetActive(false);
     }
 
-    /// <summary>
-    /// Replaces the player's mesh with the real hourglass model from Citadel
-    /// if the player is currently using a placeholder (cube/capsule).
-    /// </summary>
     private void EnsurePlayerModel()
     {
         if (playerTransform == null) return;
@@ -661,7 +558,6 @@ public class HubLevelManager : MonoBehaviour
         MeshFilter mf = playerTransform.GetComponent<MeshFilter>();
         if (mf == null) return;
 
-        // Load the hourglass mesh used in Citadel
         Mesh hourglassMesh = null;
         Material hourglassMat = null;
 
@@ -687,21 +583,15 @@ public class HubLevelManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// If the PauseMenu in this scene has null references (empty shell),
-    /// build the full pause menu UI at runtime matching MainScene.
-    /// </summary>
     private void BootstrapPauseMenu()
     {
         PauseMenuController pmc = FindObjectOfType<PauseMenuController>(true);
         if (pmc == null) return;
 
-        // Check if pausePanel is already wired up
         var field = typeof(PauseMenuController).GetField("pausePanel",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         if (field != null && field.GetValue(pmc) != null) return;
 
-        // Build the full PauseMenu UI
         HubPauseMenuBuilder.Build(pmc);
     }
 }

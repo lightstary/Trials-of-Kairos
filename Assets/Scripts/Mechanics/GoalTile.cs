@@ -4,11 +4,6 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 
-/// <summary>
-/// Goal tile that detects when the player reaches it.
-/// In HubScene: shows a themed completion popup to proceed to the Citadel.
-/// In other scenes: triggers standard level completion.
-/// </summary>
 public class GoalTile : MonoBehaviour
 {
     public Color goalColor = new Color(1f, 0.8f, 0f);
@@ -16,16 +11,15 @@ public class GoalTile : MonoBehaviour
     private bool _completed;
     private Renderer _renderer;
 
-    /// <summary>True when the hub completion popup is showing.</summary>
     public static bool IsOpen { get; private set; }
 
-    private static readonly Color BG_COL       = new Color(0.020f, 0.025f, 0.050f, 0.92f);
-    private static readonly Color OVERLAY_COL  = new Color(0f, 0f, 0f, 0.55f);
-    private static readonly Color GOLD_COL     = new Color(0.961f, 0.784f, 0.259f, 1f);
-    private static readonly Color TEXT_COL     = new Color(0.910f, 0.918f, 0.965f, 0.95f);
-    private static readonly Color BTN_BG       = new Color(0.059f, 0.102f, 0.188f, 0.85f);
-    private static readonly Color BTN_HOVER    = new Color(0.12f, 0.15f, 0.25f, 0.95f);
-    private static readonly Color BTN_PRESSED  = new Color(0.18f, 0.22f, 0.35f, 1f);
+    private static readonly Color BG_COL      = new Color(0.020f, 0.025f, 0.050f, 0.92f);
+    private static readonly Color OVERLAY_COL = new Color(0f, 0f, 0f, 0.55f);
+    private static readonly Color GOLD_COL    = new Color(0.961f, 0.784f, 0.259f, 1f);
+    private static readonly Color TEXT_COL    = new Color(0.910f, 0.918f, 0.965f, 0.95f);
+    private static readonly Color BTN_BG      = new Color(0.059f, 0.102f, 0.188f, 0.85f);
+    private static readonly Color BTN_HOVER   = new Color(0.12f, 0.15f, 0.25f, 0.95f);
+    private static readonly Color BTN_PRESSED = new Color(0.18f, 0.22f, 0.35f, 1f);
 
     private const string CITADEL_COMPLETE_KEY = "Level_Citadel_Complete";
 
@@ -66,21 +60,18 @@ public class GoalTile : MonoBehaviour
         }
         else
         {
-            // Mark Citadel as complete for level progression
             PlayerPrefs.SetInt(CITADEL_COMPLETE_KEY, 1);
             PlayerPrefs.Save();
             Debug.Log("Level Complete! Citadel marked as finished.");
         }
     }
 
-    /// <summary>Builds and shows a themed completion popup for the Hub tutorial.</summary>
     private void ShowHubCompletionPopup()
     {
         IsOpen = true;
         Canvas canvas = FindObjectOfType<Canvas>();
         if (canvas == null) return;
 
-        // Dark overlay
         GameObject overlayGO = new GameObject("CompletionOverlay");
         overlayGO.transform.SetParent(canvas.transform, false);
         RectTransform ovRT = overlayGO.AddComponent<RectTransform>();
@@ -89,7 +80,6 @@ public class GoalTile : MonoBehaviour
         Image ovImg = overlayGO.AddComponent<Image>();
         ovImg.color = OVERLAY_COL; ovImg.raycastTarget = true;
 
-        // Panel
         GameObject panelGO = new GameObject("CompletionPanel");
         panelGO.transform.SetParent(overlayGO.transform, false);
         RectTransform pRT = panelGO.AddComponent<RectTransform>();
@@ -99,26 +89,20 @@ public class GoalTile : MonoBehaviour
         pBg.color = BG_COL; pBg.raycastTarget = true;
         CanvasGroup pCG = panelGO.AddComponent<CanvasGroup>();
 
-        // Gold accent bar at top
         MakeAccent(panelGO.transform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -3f), 3f);
 
-        // Title
         MakeText(panelGO.transform, "TRIAL COMPLETE", 36f, GOLD_COL, true,
             new Vector2(0.05f, 0.72f), new Vector2(0.95f, 0.93f), 8f);
 
-        // Subtitle
         MakeText(panelGO.transform, "You have proven yourself worthy.\nThree trials now await — each more unforgiving than the last.", 18f, TEXT_COL, false,
             new Vector2(0.08f, 0.45f), new Vector2(0.92f, 0.72f), 0f);
 
-        // ── TRIAL SELECTION button ──
         Button continueBtn = MakePopupButton(panelGO.transform, "TRIAL SELECTION", new Vector2(0f, 120f));
         continueBtn.onClick.AddListener(GoToTrialSelection);
 
-        // ── RETRY HUB button ──
         Button retryBtn = MakePopupButton(panelGO.transform, "RETRY HUB", new Vector2(0f, 55f));
         retryBtn.onClick.AddListener(RetryHub);
 
-        // Wire navigation between the two buttons
         Navigation contNav = new Navigation();
         contNav.mode = Navigation.Mode.Explicit;
         contNav.selectOnDown = retryBtn;
@@ -131,11 +115,9 @@ public class GoalTile : MonoBehaviour
         retryNav.selectOnDown = continueBtn;
         retryBtn.navigation = retryNav;
 
-        // Select Continue button for controller
         if (UnityEngine.EventSystems.EventSystem.current != null)
             UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(continueBtn.gameObject);
 
-        // Fade in
         StartCoroutine(FadeInPopup(pCG));
     }
 
@@ -161,7 +143,6 @@ public class GoalTile : MonoBehaviour
         cb.fadeDuration = 0.05f;
         btn.colors = cb;
 
-        // Gold accent bar on left edge
         GameObject accentGO = new GameObject("Accent");
         accentGO.transform.SetParent(btnGO.transform, false);
         RectTransform accRT = accentGO.AddComponent<RectTransform>();
@@ -171,7 +152,6 @@ public class GoalTile : MonoBehaviour
         Image accImg = accentGO.AddComponent<Image>();
         accImg.color = GOLD_COL; accImg.raycastTarget = false;
 
-        // Gold text on dark background = readable contrast
         MakeText(btnGO.transform, label, 20f, GOLD_COL, true,
             Vector2.zero, Vector2.one, 5f);
 
