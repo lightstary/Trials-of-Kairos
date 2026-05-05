@@ -50,14 +50,14 @@ public class CreditsController : MonoBehaviour
         "Production Lead|Lily Miska",
         "Programmers|Alexandra Arizmendi Cortes, Daniel Chaviano",
         "UI / UX Design|Daniel Chaviano",
-        "Level Design|Frederick Clay, Lily Miska",
+        "Level Design|Fredrick Clay, Lily Miska",
         "Environment Design|Reagan Jewett",
         "Asset Integration|Reagan Jewett",
         "Asset Artists|Zutzuy Ayala-Zeferino, Kayla Stromp",
         "Texture Artists|Zutzuy Ayala-Zeferino, Kayla Stromp",
         "Character Designer|Chanai Rhodes",
         "Animation|Reagan Jewett, Chanai Rhodes",
-        "Audio / SFX Design|Frederick Clay, Samantha Perry",
+        "Audio / SFX Design|Fredrick Clay, Samantha Perry",
         "Marketing Materials|Lily Miska, Kayla Stromp",
     };
 
